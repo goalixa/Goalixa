@@ -5,6 +5,7 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+RUN mkdir -p /app/data
 RUN pip install --no-cache-dir flask
 
 COPY . .
