@@ -22,3 +22,6 @@ class TaskService:
 
     def stop_task(self, task_id):
         self.repository.stop_task(task_id, datetime.utcnow().isoformat())
+
+    def delete_task(self, task_id):
+        self.repository.delete_task(task_id)

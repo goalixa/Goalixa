@@ -56,6 +56,9 @@ function renderTasks(tasks) {
         : `<form method="post" action="/tasks/${task.id}/start" data-action="start" data-task-id="${task.id}">
              <button class="start" type="submit">Start</button>
            </form>`;
+      const remove = `<form method="post" action="/tasks/${task.id}/delete" data-action="delete" data-task-id="${task.id}">
+                        <button class="delete" type="submit">Delete</button>
+                      </form>`;
       return `<li class="task-item">
                 <div class="task-info">
                   <span class="task-name">${name}</span>
@@ -63,6 +66,7 @@ function renderTasks(tasks) {
                 </div>
                 <div class="task-actions">
                   ${action}
+                  ${remove}
                 </div>
               </li>`;
     })
@@ -164,6 +168,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       event.preventDefault();
+      if (action === "delete" && !window.confirm("Delete this task?")) {
+        return;
+      }
       try {
         const tasks = await updateTaskState(taskId, action);
         renderTasks(tasks);

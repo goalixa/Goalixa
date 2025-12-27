@@ -95,3 +95,9 @@ class SQLiteTaskRepository:
             (ended_at, task_id),
         )
         db.commit()
+
+    def delete_task(self, task_id):
+        db = self._get_db()
+        db.execute("DELETE FROM time_entries WHERE task_id = ?", (task_id,))
+        db.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+        db.commit()

@@ -43,6 +43,11 @@ def register_routes(app, service):
         service.stop_task(task_id)
         return list_tasks()
 
+    @app.route("/api/tasks/<int:task_id>/delete", methods=["POST"])
+    def delete_task_api(task_id):
+        service.delete_task(task_id)
+        return list_tasks()
+
     @app.route("/tasks/<int:task_id>/start", methods=["POST"])
     def start_task(task_id):
         service.start_task(task_id)
@@ -51,6 +56,11 @@ def register_routes(app, service):
     @app.route("/tasks/<int:task_id>/stop", methods=["POST"])
     def stop_task(task_id):
         service.stop_task(task_id)
+        return redirect(url_for("index"))
+
+    @app.route("/tasks/<int:task_id>/delete", methods=["POST"])
+    def delete_task(task_id):
+        service.delete_task(task_id)
         return redirect(url_for("index"))
 
     @app.route("/init", methods=["POST"])

@@ -33,14 +33,17 @@
                 </div>
                 <div class="task-actions">
                   {% if task['is_running'] %}
-                    <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}">
+                    <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}" data-action="stop" data-task-id="{{ task['id'] }}">
                       <button class="stop" type="submit">Stop</button>
                     </form>
                   {% else %}
-                    <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}">
+                    <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}" data-action="start" data-task-id="{{ task['id'] }}">
                       <button class="start" type="submit">Start</button>
                     </form>
                   {% endif %}
+                  <form method="post" action="{{ url_for('delete_task', task_id=task['id']) }}" data-action="delete" data-task-id="{{ task['id'] }}">
+                    <button class="delete" type="submit">Delete</button>
+                  </form>
                 </div>
               </li>
             {% endfor %}
