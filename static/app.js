@@ -78,19 +78,22 @@ function renderTasks(tasks) {
       const remove = `<form method="post" action="/tasks/${task.id}/delete" data-action="delete" data-task-id="${task.id}">
                         <button class="delete icon-button" type="submit" aria-label="Delete">×</button>
                       </form>`;
+      const labelToggle = `<button class="label-toggle icon-button" type="button" data-task-id="${task.id}" aria-label="Labels">🏷️</button>`;
       const labelForm = availableLabels.length
-        ? `<form class="label-form" method="post" action="/tasks/${task.id}/labels">
-             <select name="label_id" required>
-               <option value="" disabled selected>Add label</option>
-               ${availableLabels
-                 .map(
-                   (label) =>
-                     `<option value="${label.id}">${escapeHtml(label.name)}</option>`,
-                 )
-                 .join("")}
-             </select>
-             <button type="submit">Add</button>
-           </form>`
+        ? `<div class="label-picker" data-task-id="${task.id}">
+             <form class="label-form" method="post" action="/tasks/${task.id}/labels">
+               <select name="label_id" required>
+                 <option value="" disabled selected>Add label</option>
+                 ${availableLabels
+                   .map(
+                     (label) =>
+                       `<option value="${label.id}">${escapeHtml(label.name)}</option>`,
+                   )
+                   .join("")}
+               </select>
+               <button type="submit">Add</button>
+             </form>
+           </div>`
         : "";
       return `<li class="task-item">
                 <div class="task-info">
@@ -102,6 +105,7 @@ function renderTasks(tasks) {
                 <div class="task-actions">
                   ${action}
                   ${remove}
+                  ${labelToggle}
                 </div>
                 ${labelForm}
               </li>`;
@@ -165,9 +169,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("task-name");
   const projectSelect = document.getElementById("task-project");
   const labelsSelect = document.getElementById("task-labels");
+  const createLabelToggle = document.getElementById("create-label-toggle");
+  const createLabelPicker = document.getElementById("create-label-picker");
   const taskList = document.getElementById("task-list");
 
   if (form && input) {
+    if (createLabelToggle && createLabelPicker) {
+      createLabelToggle.addEventListener("click", () => {
+        createLabelPicker.classList.toggle("is-open");
+      });
+    }
+
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const name = input.value.trim();
@@ -200,6 +212,23 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (taskList) {
+    taskList.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+      if (!target.classList.contains("label-toggle")) {
+        return;
+      }
+      const taskId = target.dataset.taskId;
+      const picker = taskList.querySelector(
+        `.label-picker[data-task-id="${taskId}"]`,
+      );
+      if (picker) {
+        picker.classList.toggle("is-open");
+      }
+    });
+
     taskList.addEventListener("submit", async (event) => {
       const target = event.target;
       if (!(target instanceof HTMLFormElement)) {

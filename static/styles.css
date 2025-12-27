@@ -204,6 +204,20 @@ body {
   margin-top: 8px;
 }
 
+.label-picker {
+  display: none;
+}
+
+.label-picker.is-open {
+  display: block;
+}
+
+.label-toggle {
+  background: #f0f0f0;
+  color: #333;
+  border: 1px solid #d7d7d7;
+}
+
 .label-form select {
   padding: 6px 10px;
   border-radius: 10px;
