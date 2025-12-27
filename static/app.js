@@ -172,6 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const createLabelToggle = document.getElementById("create-label-toggle");
   const createLabelPicker = document.getElementById("create-label-picker");
   const taskList = document.getElementById("task-list");
+  const labelToggles = document.querySelectorAll(".label-toggle[data-target]");
 
   if (form && input) {
     if (createLabelToggle && createLabelPicker) {
@@ -253,4 +254,17 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  labelToggles.forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      const targetSelector = toggle.dataset.target;
+      if (!targetSelector) {
+        return;
+      }
+      const target = document.querySelector(targetSelector);
+      if (target) {
+        target.classList.toggle("is-open");
+      }
+    });
+  });
 });
