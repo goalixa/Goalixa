@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Projects</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <div class="header-top">
+        <h1>Projects</h1>
+        <nav class="nav">
+          <a href="{{ url_for('index') }}">Tasks</a>
+        </nav>
+      </div>
+      <p>Manage your project list</p>
+    </header>
+
+    <section class="card">
+      <form class="task-form" method="post" action="{{ url_for('create_project') }}">
+        <input type="text" name="name" placeholder="Project name" required />
+        <button type="submit">Add</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Projects</h2>
+      {% if projects %}
+        <ul class="task-list">
+          {% for project in projects %}
+            <li class="task-item">
+              <div class="task-info">
+                <span class="task-name">{{ project['name'] }}</span>
+              </div>
+              <div class="task-actions">
+                <form method="post" action="{{ url_for('delete_project', project_id=project['id']) }}">
+                  <button class="delete" type="submit">Delete</button>
+                </form>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">No projects yet.</p>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

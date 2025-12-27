@@ -29,6 +29,23 @@ body {
   margin-bottom: 24px;
 }
 
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.nav a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.nav a:hover {
+  text-decoration: underline;
+}
+
 .header h1 {
   margin: 0 0 8px;
   font-size: 2.4rem;
@@ -58,6 +75,14 @@ body {
   border-radius: 12px;
   border: 1px solid #ddd;
   font-size: 1rem;
+}
+
+.task-form select {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-size: 1rem;
+  background: #fff;
 }
 
 .task-form button {
@@ -97,6 +122,11 @@ body {
   font-weight: 600;
 }
 
+.task-project {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .task-time {
   color: var(--muted);
   font-size: 0.95rem;
@@ -117,6 +147,11 @@ body {
 
 .task-actions .stop {
   background: #e85d75;
+  color: white;
+}
+
+.task-actions .delete {
+  background: #2d2d2d;
   color: white;
 }
 
