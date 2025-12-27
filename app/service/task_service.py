@@ -16,6 +16,9 @@ class TaskService:
     def list_tasks(self):
         return self.repository.fetch_tasks()
 
+    def list_tasks_by_project(self, project_id):
+        return self.repository.fetch_tasks_by_project(project_id)
+
     def add_task(self, name, project_id):
         name = (name or "").strip()
         if name and project_id:
@@ -25,6 +28,9 @@ class TaskService:
 
     def list_projects(self):
         return self.repository.fetch_projects()
+
+    def get_project(self, project_id):
+        return self.repository.fetch_project(project_id)
 
     def add_project(self, name):
         name = (name or "").strip()

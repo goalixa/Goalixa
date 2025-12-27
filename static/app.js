@@ -131,32 +131,31 @@ document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("task-name");
   const projectSelect = document.getElementById("task-project");
   const taskList = document.getElementById("task-list");
-  if (!form || !input || !projectSelect) {
-    return;
+
+  if (form && input && projectSelect) {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const name = input.value.trim();
+      const projectId = projectSelect.value;
+      if (!name || !projectId) {
+        return;
+      }
+
+      try {
+        const tasks = await createTask(name, projectId);
+        renderTasks(tasks);
+        input.value = "";
+        input.focus();
+      } catch (error) {
+        form.submit();
+      }
+    });
+
+    loadTasks()
+      .then(renderTasks)
+      .catch(() => {});
+    startLiveTimer();
   }
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const name = input.value.trim();
-    const projectId = projectSelect.value;
-    if (!name || !projectId) {
-      return;
-    }
-
-    try {
-      const tasks = await createTask(name, projectId);
-      renderTasks(tasks);
-      input.value = "";
-      input.focus();
-    } catch (error) {
-      form.submit();
-    }
-  });
-
-  loadTasks()
-    .then(renderTasks)
-    .catch(() => {});
-  startLiveTimer();
 
   if (taskList) {
     taskList.addEventListener("submit", async (event) => {

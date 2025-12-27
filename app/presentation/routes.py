@@ -79,6 +79,14 @@ def register_routes(app, service):
         projects_list = service.list_projects()
         return render_template("projects.html", projects=projects_list)
 
+    @app.route("/projects/<int:project_id>", methods=["GET"])
+    def project_detail(project_id):
+        project = service.get_project(project_id)
+        if project is None:
+            return redirect(url_for("projects"))
+        tasks = service.list_tasks_by_project(project_id)
+        return render_template("project_detail.html", project=project, tasks=tasks)
+
     @app.route("/projects", methods=["POST"])
     def create_project():
         service.add_project(request.form.get("name", ""))

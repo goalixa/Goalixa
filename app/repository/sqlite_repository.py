@@ -94,6 +94,37 @@ class SQLiteTaskRepository:
         ).fetchall()
         return tasks
 
+    def fetch_tasks_by_project(self, project_id):
+        db = self._get_db()
+        tasks = db.execute(
+            """
+            SELECT t.id, t.name, t.project_id, p.name AS project_name,
+                   IFNULL(SUM(
+                       CASE
+                           WHEN te.id IS NULL THEN 0
+                           WHEN te.ended_at IS NULL THEN (strftime('%s','now') - strftime('%s', te.started_at))
+                           ELSE (strftime('%s', te.ended_at) - strftime('%s', te.started_at))
+                       END
+                   ), 0) AS total_seconds,
+                   MAX(CASE WHEN te.id IS NOT NULL AND te.ended_at IS NULL THEN 1 ELSE 0 END) AS is_running
+            FROM tasks t
+            LEFT JOIN projects p ON p.id = t.project_id
+            LEFT JOIN time_entries te ON te.task_id = t.id
+            WHERE t.project_id = ?
+            GROUP BY t.id
+            ORDER BY t.created_at DESC
+            """,
+            (project_id,),
+        ).fetchall()
+        return tasks
+
+    def fetch_project(self, project_id):
+        db = self._get_db()
+        return db.execute(
+            "SELECT id, name, created_at FROM projects WHERE id = ?",
+            (project_id,),
+        ).fetchone()
+
     def create_task(self, name, created_at, project_id):
         db = self._get_db()
         db.execute(

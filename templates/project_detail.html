@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ project['name'] }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <div class="header-top">
+        <h1>{{ project['name'] }}</h1>
+        <nav class="nav">
+          <a href="{{ url_for('projects') }}">Projects</a>
+          <a href="{{ url_for('index') }}">All Tasks</a>
+        </nav>
+      </div>
+      <p>Tasks for this project</p>
+    </header>
+
+    <section class="card">
+      <h2>Tasks</h2>
+      {% if tasks %}
+        <ul class="task-list">
+          {% for task in tasks %}
+            <li class="task-item">
+              <div class="task-info">
+                <span class="task-name">{{ task['name'] }}</span>
+                <span class="task-time">{{ task['total_seconds'] | format_seconds }}</span>
+              </div>
+              <div class="task-actions">
+                {% if task['is_running'] %}
+                  <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}" data-action="stop" data-task-id="{{ task['id'] }}">
+                    <button class="stop" type="submit">Stop</button>
+                  </form>
+                {% else %}
+                  <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}" data-action="start" data-task-id="{{ task['id'] }}">
+                    <button class="start" type="submit">Start</button>
+                  </form>
+                {% endif %}
+                <form method="post" action="{{ url_for('delete_task', task_id=task['id']) }}" data-action="delete" data-task-id="{{ task['id'] }}">
+                  <button class="delete" type="submit">Delete</button>
+                </form>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">No tasks yet.</p>
+      {% endif %}
+    </section>
+  </main>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

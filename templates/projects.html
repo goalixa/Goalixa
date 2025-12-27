@@ -32,7 +32,7 @@
           {% for project in projects %}
             <li class="task-item">
               <div class="task-info">
-                <span class="task-name">{{ project['name'] }}</span>
+                <a class="task-name" href="{{ url_for('project_detail', project_id=project['id']) }}">{{ project['name'] }}</a>
               </div>
               <div class="task-actions">
                 <form method="post" action="{{ url_for('delete_project', project_id=project['id']) }}">
