@@ -48,6 +48,7 @@ function renderTasks(tasks) {
   const items = tasks
     .map((task) => {
       const name = escapeHtml(task.name);
+      const project = escapeHtml(task.project_name || "Unassigned");
       const time = formatSeconds(task.total_seconds || 0);
       const action = task.is_running
         ? `<form method="post" action="/tasks/${task.id}/stop" data-action="stop" data-task-id="${task.id}">
@@ -62,6 +63,7 @@ function renderTasks(tasks) {
       return `<li class="task-item">
                 <div class="task-info">
                   <span class="task-name">${name}</span>
+                  <span class="task-project">${project}</span>
                   <span class="task-time" data-task-id="${task.id}">${time}</span>
                 </div>
                 <div class="task-actions">
@@ -75,11 +77,11 @@ function renderTasks(tasks) {
   container.innerHTML = `<ul class="task-list">${items}</ul>`;
 }
 
-async function createTask(name) {
+async function createTask(name, projectId) {
   const response = await fetch("/api/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name, project_id: projectId }),
   });
 
   if (!response.ok) {
@@ -127,20 +129,22 @@ function startLiveTimer() {
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("task-form");
   const input = document.getElementById("task-name");
+  const projectSelect = document.getElementById("task-project");
   const taskList = document.getElementById("task-list");
-  if (!form || !input) {
+  if (!form || !input || !projectSelect) {
     return;
   }
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const name = input.value.trim();
-    if (!name) {
+    const projectId = projectSelect.value;
+    if (!name || !projectId) {
       return;
     }
 
     try {
-      const tasks = await createTask(name);
+      const tasks = await createTask(name, projectId);
       renderTasks(tasks);
       input.value = "";
       input.focus();

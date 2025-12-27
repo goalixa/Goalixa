@@ -11,6 +11,7 @@ class SQLiteTaskRepository:
         if "db" not in g:
             g.db = sqlite3.connect(self.db_path)
             g.db.row_factory = sqlite3.Row
+            g.db.execute("PRAGMA foreign_keys = ON")
         return g.db
 
     def close_db(self, exception=None):
@@ -22,10 +23,17 @@ class SQLiteTaskRepository:
         db = self._get_db()
         db.executescript(
             """
+            CREATE TABLE IF NOT EXISTS projects (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                created_at TEXT NOT NULL
+            );
+
             CREATE TABLE IF NOT EXISTS tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                created_at TEXT NOT NULL
+                created_at TEXT NOT NULL,
+                project_id INTEGER
             );
 
             CREATE TABLE IF NOT EXISTS time_entries (
@@ -37,13 +45,38 @@ class SQLiteTaskRepository:
             );
             """
         )
+        columns = db.execute("PRAGMA table_info(tasks)").fetchall()
+        column_names = {column["name"] for column in columns}
+        if "project_id" not in column_names:
+            db.execute("ALTER TABLE tasks ADD COLUMN project_id INTEGER")
+        db.commit()
+
+    def ensure_default_project(self, name, created_at):
+        db = self._get_db()
+        db.execute(
+            "INSERT OR IGNORE INTO projects (name, created_at) VALUES (?, ?)",
+            (name, created_at),
+        )
+        row = db.execute(
+            "SELECT id FROM projects WHERE name = ?",
+            (name,),
+        ).fetchone()
+        return row["id"] if row else None
+
+    def backfill_tasks_project(self, project_id):
+        db = self._get_db()
+        db.execute(
+            "UPDATE tasks SET project_id = ? WHERE project_id IS NULL OR project_id = 0",
+            (project_id,),
+        )
+        db.commit()
         db.commit()
 
     def fetch_tasks(self):
         db = self._get_db()
         tasks = db.execute(
             """
-            SELECT t.id, t.name,
+            SELECT t.id, t.name, t.project_id, p.name AS project_name,
                    IFNULL(SUM(
                        CASE
                            WHEN te.id IS NULL THEN 0
@@ -53,6 +86,7 @@ class SQLiteTaskRepository:
                    ), 0) AS total_seconds,
                    MAX(CASE WHEN te.id IS NOT NULL AND te.ended_at IS NULL THEN 1 ELSE 0 END) AS is_running
             FROM tasks t
+            LEFT JOIN projects p ON p.id = t.project_id
             LEFT JOIN time_entries te ON te.task_id = t.id
             GROUP BY t.id
             ORDER BY t.created_at DESC
@@ -60,12 +94,39 @@ class SQLiteTaskRepository:
         ).fetchall()
         return tasks
 
-    def create_task(self, name, created_at):
+    def create_task(self, name, created_at, project_id):
         db = self._get_db()
         db.execute(
-            "INSERT INTO tasks (name, created_at) VALUES (?, ?)",
+            "INSERT INTO tasks (name, created_at, project_id) VALUES (?, ?, ?)",
+            (name, created_at, project_id),
+        )
+        db.commit()
+
+    def fetch_projects(self):
+        db = self._get_db()
+        return db.execute(
+            "SELECT id, name, created_at FROM projects ORDER BY created_at DESC"
+        ).fetchall()
+
+    def create_project(self, name, created_at):
+        db = self._get_db()
+        db.execute(
+            "INSERT INTO projects (name, created_at) VALUES (?, ?)",
             (name, created_at),
         )
+        db.commit()
+
+    def delete_project(self, project_id):
+        db = self._get_db()
+        db.execute(
+            """
+            DELETE FROM time_entries
+            WHERE task_id IN (SELECT id FROM tasks WHERE project_id = ?)
+            """,
+            (project_id,),
+        )
+        db.execute("DELETE FROM tasks WHERE project_id = ?", (project_id,))
+        db.execute("DELETE FROM projects WHERE id = ?", (project_id,))
         db.commit()
 
     def is_task_running(self, task_id):

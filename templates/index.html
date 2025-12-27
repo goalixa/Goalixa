@@ -9,13 +9,24 @@
 <body>
   <main class="container">
     <header class="header">
-      <h1>StudyTimmer</h1>
+      <div class="header-top">
+        <h1>StudyTimmer</h1>
+        <nav class="nav">
+          <a href="{{ url_for('projects') }}">Projects</a>
+        </nav>
+      </div>
       <p>Track tasks and time spent</p>
     </header>
 
     <section class="card">
       <form class="task-form" id="task-form" method="post" action="{{ url_for('create_task') }}">
         <input type="text" id="task-name" name="name" placeholder="Task name" required />
+        <select id="task-project" name="project_id" required>
+          <option value="" disabled {% if not projects %}selected{% endif %}>Select project</option>
+          {% for project in projects %}
+            <option value="{{ project['id'] }}" {% if loop.first %}selected{% endif %}>{{ project['name'] }}</option>
+          {% endfor %}
+        </select>
         <button type="submit">Add</button>
       </form>
     </section>
@@ -29,6 +40,7 @@
               <li class="task-item">
                 <div class="task-info">
                   <span class="task-name">{{ task['name'] }}</span>
+                  <span class="task-project">{{ task['project_name'] or 'Unassigned' }}</span>
                   <span class="task-time">{{ task['total_seconds'] | format_seconds }}</span>
                 </div>
                 <div class="task-actions">
