@@ -25,7 +25,12 @@
     <section class="card">
       <form class="task-form" method="post" action="{{ url_for('create_label') }}">
         <input type="text" name="name" placeholder="Label name" required />
-        <input type="color" name="color" value="#9c27b0" />
+        <select name="color" required>
+          <option value="#e85d75">Rose</option>
+          <option value="#1f6feb">Blue</option>
+          <option value="#f2a900">Amber</option>
+          <option value="#2d7d46">Green</option>
+        </select>
         <button type="submit">Add</button>
       </form>
     </section>

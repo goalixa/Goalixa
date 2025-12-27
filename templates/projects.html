@@ -25,11 +25,14 @@
     <section class="card">
       <form class="task-form" method="post" action="{{ url_for('create_project') }}">
         <input type="text" name="name" placeholder="Project name" required />
-        <select name="label_ids" multiple>
-          {% for label in labels %}
-            <option value="{{ label['id'] }}">{{ label['name'] }}</option>
-          {% endfor %}
-        </select>
+        <button class="label-toggle icon-button" type="button" data-target="#project-label-picker" aria-label="Labels">🏷️</button>
+        <div class="label-picker" id="project-label-picker">
+          <select name="label_ids" multiple>
+            {% for label in labels %}
+              <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+            {% endfor %}
+          </select>
+        </div>
         <button type="submit">Add</button>
       </form>
     </section>
