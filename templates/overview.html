@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Overview</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">StudyTimmer</div>
+      <nav class="sidebar-nav">
+        <a class="sidebar-link active" href="{{ url_for('overview') }}">📊 Overview</a>
+        <a class="sidebar-link" href="{{ url_for('index') }}">🧭 Tasks</a>
+        <a class="sidebar-link" href="{{ url_for('projects') }}">📁 Projects</a>
+        <a class="sidebar-link" href="{{ url_for('labels') }}">🏷️ Labels</a>
+      </nav>
+    </aside>
+    <main class="container">
+      <header class="header">
+        <h1>Overview</h1>
+        <p>High-level insights from your projects and tasks.</p>
+      </header>
+
+      <section class="card">
+        <h2>Focus by Project</h2>
+        <div class="chart-placeholder">Chart placeholder</div>
+      </section>
+
+      <section class="card">
+        <h2>Top Labels</h2>
+        <div class="chart-placeholder">Chart placeholder</div>
+      </section>
+
+      <section class="card">
+        <h2>Daily Time Trend</h2>
+        <div class="chart-placeholder">Chart placeholder</div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

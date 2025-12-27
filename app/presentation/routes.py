@@ -3,6 +3,10 @@ from flask import redirect, render_template, request, url_for
 
 def register_routes(app, service):
     @app.route("/", methods=["GET"])
+    def overview():
+        return render_template("overview.html")
+
+    @app.route("/tasks", methods=["GET"])
     def index():
         tasks = service.list_tasks()
         projects = service.list_projects()
