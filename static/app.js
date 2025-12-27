@@ -132,11 +132,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const projectSelect = document.getElementById("task-project");
   const taskList = document.getElementById("task-list");
 
-  if (form && input && projectSelect) {
+  if (form && input) {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const name = input.value.trim();
-      const projectId = projectSelect.value;
+      const projectId =
+        (projectSelect && projectSelect.value) || form.dataset.projectId;
       if (!name || !projectId) {
         return;
       }

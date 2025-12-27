@@ -20,6 +20,13 @@
     </header>
 
     <section class="card">
+      <form class="task-form" id="task-form" method="post" action="{{ url_for('create_task') }}" data-project-id="{{ project['id'] }}">
+        <input type="text" id="task-name" name="name" placeholder="Task name" required />
+        <button type="submit">Add</button>
+      </form>
+    </section>
+
+    <section class="card">
       <h2>Tasks</h2>
       {% if tasks %}
         <ul class="task-list">
