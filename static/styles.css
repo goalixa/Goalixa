@@ -148,8 +148,9 @@ body {
 
 .task-info {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
 }
 
 .task-name {
@@ -190,6 +191,7 @@ body {
 .task-time {
   color: var(--muted);
   font-size: 0.95rem;
+  margin-left: auto;
 }
 
 .task-actions button {
