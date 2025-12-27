@@ -33,6 +33,16 @@ def register_routes(app, service):
         service.add_task(payload.get("name", ""))
         return list_tasks()
 
+    @app.route("/api/tasks/<int:task_id>/start", methods=["POST"])
+    def start_task_api(task_id):
+        service.start_task(task_id)
+        return list_tasks()
+
+    @app.route("/api/tasks/<int:task_id>/stop", methods=["POST"])
+    def stop_task_api(task_id):
+        service.stop_task(task_id)
+        return list_tasks()
+
     @app.route("/tasks/<int:task_id>/start", methods=["POST"])
     def start_task(task_id):
         service.start_task(task_id)

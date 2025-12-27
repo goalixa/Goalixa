@@ -27,10 +27,10 @@ function renderTasks(tasks) {
       const name = escapeHtml(task.name);
       const time = formatSeconds(task.total_seconds || 0);
       const action = task.is_running
-        ? `<form method="post" action="/tasks/${task.id}/stop">
+        ? `<form method="post" action="/tasks/${task.id}/stop" data-action="stop" data-task-id="${task.id}">
              <button class="stop" type="submit">Stop</button>
            </form>`
-        : `<form method="post" action="/tasks/${task.id}/start">
+        : `<form method="post" action="/tasks/${task.id}/start" data-action="start" data-task-id="${task.id}">
              <button class="start" type="submit">Start</button>
            </form>`;
       return `<li class="task-item">
@@ -63,9 +63,23 @@ async function createTask(name) {
   return payload.tasks || [];
 }
 
+async function updateTaskState(taskId, action) {
+  const response = await fetch(`/api/tasks/${taskId}/${action}`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update task");
+  }
+
+  const payload = await response.json();
+  return payload.tasks || [];
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("task-form");
   const input = document.getElementById("task-name");
+  const taskList = document.getElementById("task-list");
   if (!form || !input) {
     return;
   }
@@ -86,4 +100,27 @@ document.addEventListener("DOMContentLoaded", () => {
       form.submit();
     }
   });
+
+  if (taskList) {
+    taskList.addEventListener("submit", async (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLFormElement)) {
+        return;
+      }
+
+      const action = target.dataset.action;
+      const taskId = target.dataset.taskId;
+      if (!action || !taskId) {
+        return;
+      }
+
+      event.preventDefault();
+      try {
+        const tasks = await updateTaskState(taskId, action);
+        renderTasks(tasks);
+      } catch (error) {
+        target.submit();
+      }
+    });
+  }
 });
