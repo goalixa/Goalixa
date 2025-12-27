@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Labels</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <div class="header-top">
+        <h1>Labels</h1>
+        <nav class="nav">
+          <a href="{{ url_for('index') }}">Tasks</a>
+          <a href="{{ url_for('projects') }}">Projects</a>
+        </nav>
+      </div>
+      <p>Create and manage labels</p>
+    </header>
+
+    <section class="card">
+      <form class="task-form" method="post" action="{{ url_for('create_label') }}">
+        <input type="text" name="name" placeholder="Label name" required />
+        <input type="color" name="color" value="#9c27b0" />
+        <button type="submit">Add</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Labels</h2>
+      {% if labels %}
+        <ul class="task-list">
+          {% for label in labels %}
+            <li class="task-item">
+              <div class="task-info">
+                <span class="label-chip" style="background-color: {{ label['color'] }}">{{ label['name'] }}</span>
+              </div>
+              <div class="task-actions">
+                <form method="post" action="{{ url_for('delete_label', label_id=label['id']) }}">
+                  <button class="delete" type="submit">Delete</button>
+                </form>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">No labels yet.</p>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

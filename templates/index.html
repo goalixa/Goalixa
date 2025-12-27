@@ -13,6 +13,7 @@
         <h1>StudyTimmer</h1>
         <nav class="nav">
           <a href="{{ url_for('projects') }}">Projects</a>
+          <a href="{{ url_for('labels') }}">Labels</a>
         </nav>
       </div>
       <p>Track tasks and time spent</p>
@@ -27,6 +28,11 @@
             <option value="{{ project['id'] }}" {% if loop.first %}selected{% endif %}>{{ project['name'] }}</option>
           {% endfor %}
         </select>
+        <select id="task-labels" name="label_ids" multiple>
+          {% for label in labels %}
+            <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+          {% endfor %}
+        </select>
         <button type="submit">Add</button>
       </form>
     </section>
@@ -38,12 +44,19 @@
           <ul class="task-list">
             {% for task in tasks %}
               <li class="task-item">
-                <div class="task-info">
-                  <span class="task-name">{{ task['name'] }}</span>
-                  <span class="task-project">{{ task['project_name'] or 'Unassigned' }}</span>
-                  <span class="task-time">{{ task['total_seconds'] | format_seconds }}</span>
-                </div>
-                <div class="task-actions">
+              <div class="task-info">
+                <span class="task-name">{{ task['name'] }}</span>
+                <span class="task-project">{{ task['project_name'] or 'Unassigned' }}</span>
+                {% if task['labels'] %}
+                  <div class="label-list">
+                    {% for label in task['labels'] %}
+                      <span class="label-chip" style="background-color: {{ label['color'] }}">{{ label['name'] }}</span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+                <span class="task-time">{{ task['total_seconds'] | format_seconds }}</span>
+              </div>
+              <div class="task-actions">
                   {% if task['is_running'] %}
                     <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}" data-action="stop" data-task-id="{{ task['id'] }}">
                       <button class="stop icon-button" type="submit" aria-label="Pause">⏸</button>
@@ -52,20 +65,32 @@
                     <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}" data-action="start" data-task-id="{{ task['id'] }}">
                       <button class="start icon-button" type="submit" aria-label="Resume">▶</button>
                     </form>
-                  {% endif %}
-                  <form method="post" action="{{ url_for('delete_task', task_id=task['id']) }}" data-action="delete" data-task-id="{{ task['id'] }}">
-                    <button class="delete icon-button" type="submit" aria-label="Delete">×</button>
-                  </form>
-                </div>
-              </li>
-            {% endfor %}
-          </ul>
+                {% endif %}
+                <form method="post" action="{{ url_for('delete_task', task_id=task['id']) }}" data-action="delete" data-task-id="{{ task['id'] }}">
+                  <button class="delete icon-button" type="submit" aria-label="Delete">×</button>
+                </form>
+              </div>
+              <form class="label-form" method="post" action="{{ url_for('add_task_label', task_id=task['id']) }}">
+                <select name="label_id" required>
+                  <option value="" disabled selected>Add label</option>
+                  {% for label in labels %}
+                    <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit">Add</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
         {% else %}
           <p class="empty">No tasks yet.</p>
         {% endif %}
       </div>
     </section>
   </main>
+  <script>
+    window.availableLabels = {{ labels | tojson }};
+  </script>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>

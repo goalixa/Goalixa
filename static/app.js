@@ -12,6 +12,9 @@ function formatSeconds(totalSeconds) {
 }
 
 let tasksState = new Map();
+const availableLabels = Array.isArray(window.availableLabels)
+  ? window.availableLabels
+  : [];
 
 function setTasksState(tasks) {
   tasksState = new Map(
@@ -32,6 +35,20 @@ function updateTimeDisplay(taskId, totalSeconds) {
   }
 }
 
+function renderLabelChips(labels) {
+  if (!labels || !labels.length) {
+    return "";
+  }
+  return `<div class="label-list">
+    ${labels
+      .map(
+        (label) =>
+          `<span class="label-chip" style="background-color: ${escapeHtml(label.color)}">${escapeHtml(label.name)}</span>`,
+      )
+      .join("")}
+  </div>`;
+}
+
 function renderTasks(tasks) {
   const container = document.getElementById("task-list");
   if (!container) {
@@ -50,6 +67,7 @@ function renderTasks(tasks) {
       const name = escapeHtml(task.name);
       const project = escapeHtml(task.project_name || "Unassigned");
       const time = formatSeconds(task.total_seconds || 0);
+      const labels = renderLabelChips(task.labels || []);
       const action = task.is_running
         ? `<form method="post" action="/tasks/${task.id}/stop" data-action="stop" data-task-id="${task.id}">
              <button class="stop icon-button" type="submit" aria-label="Pause">⏸</button>
@@ -60,16 +78,32 @@ function renderTasks(tasks) {
       const remove = `<form method="post" action="/tasks/${task.id}/delete" data-action="delete" data-task-id="${task.id}">
                         <button class="delete icon-button" type="submit" aria-label="Delete">×</button>
                       </form>`;
+      const labelForm = availableLabels.length
+        ? `<form class="label-form" method="post" action="/tasks/${task.id}/labels">
+             <select name="label_id" required>
+               <option value="" disabled selected>Add label</option>
+               ${availableLabels
+                 .map(
+                   (label) =>
+                     `<option value="${label.id}">${escapeHtml(label.name)}</option>`,
+                 )
+                 .join("")}
+             </select>
+             <button type="submit">Add</button>
+           </form>`
+        : "";
       return `<li class="task-item">
                 <div class="task-info">
                   <span class="task-name">${name}</span>
                   <span class="task-project">${project}</span>
+                  ${labels}
                   <span class="task-time" data-task-id="${task.id}">${time}</span>
                 </div>
                 <div class="task-actions">
                   ${action}
                   ${remove}
                 </div>
+                ${labelForm}
               </li>`;
     })
     .join("");
@@ -77,11 +111,11 @@ function renderTasks(tasks) {
   container.innerHTML = `<ul class="task-list">${items}</ul>`;
 }
 
-async function createTask(name, projectId) {
+async function createTask(name, projectId, labelIds) {
   const response = await fetch("/api/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, project_id: projectId }),
+    body: JSON.stringify({ name, project_id: projectId, label_ids: labelIds }),
   });
 
   if (!response.ok) {
@@ -130,6 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("task-form");
   const input = document.getElementById("task-name");
   const projectSelect = document.getElementById("task-project");
+  const labelsSelect = document.getElementById("task-labels");
   const taskList = document.getElementById("task-list");
 
   if (form && input) {
@@ -138,15 +173,21 @@ document.addEventListener("DOMContentLoaded", () => {
       const name = input.value.trim();
       const projectId =
         (projectSelect && projectSelect.value) || form.dataset.projectId;
+      const labelIds = labelsSelect
+        ? Array.from(labelsSelect.selectedOptions).map((option) => option.value)
+        : [];
       if (!name || !projectId) {
         return;
       }
 
       try {
-        const tasks = await createTask(name, projectId);
+        const tasks = await createTask(name, projectId, labelIds);
         renderTasks(tasks);
         input.value = "";
         input.focus();
+        if (labelsSelect) {
+          labelsSelect.selectedIndex = -1;
+        }
       } catch (error) {
         form.submit();
       }

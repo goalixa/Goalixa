@@ -13,6 +13,7 @@
         <h1>Projects</h1>
         <nav class="nav">
           <a href="{{ url_for('index') }}">Tasks</a>
+          <a href="{{ url_for('labels') }}">Labels</a>
         </nav>
       </div>
       <p>Manage your project list</p>
@@ -21,6 +22,11 @@
     <section class="card">
       <form class="task-form" method="post" action="{{ url_for('create_project') }}">
         <input type="text" name="name" placeholder="Project name" required />
+        <select name="label_ids" multiple>
+          {% for label in labels %}
+            <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+          {% endfor %}
+        </select>
         <button type="submit">Add</button>
       </form>
     </section>
@@ -33,6 +39,13 @@
             <li class="task-item">
               <div class="task-info">
                 <a class="task-name" href="{{ url_for('project_detail', project_id=project['id']) }}">{{ project['name'] }}</a>
+                {% if project['labels'] %}
+                  <div class="label-list">
+                    {% for label in project['labels'] %}
+                      <span class="label-chip" style="background-color: {{ label['color'] }}">{{ label['name'] }}</span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
               </div>
               <div class="task-actions">
                 <form method="post" action="{{ url_for('delete_project', project_id=project['id']) }}">

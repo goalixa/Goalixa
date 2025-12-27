@@ -85,6 +85,10 @@ body {
   background: #fff;
 }
 
+.task-form select[multiple] {
+  min-width: 180px;
+}
+
 .task-form button {
   padding: 12px 18px;
   border: none;
@@ -178,6 +182,43 @@ body {
   border: 1px solid #cfcfcf;
   padding: 6px 10px;
   font-size: 0.85rem;
+}
+
+.label-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.label-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: #fff;
+}
+
+.label-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.label-form select {
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+.label-form button {
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
 }
 
 .empty {
