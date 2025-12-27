@@ -12,6 +12,27 @@ def register_routes(app, service):
         service.add_task(request.form.get("name", ""))
         return redirect(url_for("index"))
 
+    @app.route("/api/tasks", methods=["GET"])
+    def list_tasks():
+        tasks = service.list_tasks()
+        return {
+            "tasks": [
+                {
+                    "id": task["id"],
+                    "name": task["name"],
+                    "total_seconds": int(task["total_seconds"] or 0),
+                    "is_running": bool(task["is_running"]),
+                }
+                for task in tasks
+            ]
+        }
+
+    @app.route("/api/tasks", methods=["POST"])
+    def create_task_api():
+        payload = request.get_json(silent=True) or {}
+        service.add_task(payload.get("name", ""))
+        return list_tasks()
+
     @app.route("/tasks/<int:task_id>/start", methods=["POST"])
     def start_task(task_id):
         service.start_task(task_id)

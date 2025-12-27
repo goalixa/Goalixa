@@ -14,40 +14,43 @@
     </header>
 
     <section class="card">
-      <form class="task-form" method="post" action="{{ url_for('create_task') }}">
-        <input type="text" name="name" placeholder="Task name" required />
+      <form class="task-form" id="task-form" method="post" action="{{ url_for('create_task') }}">
+        <input type="text" id="task-name" name="name" placeholder="Task name" required />
         <button type="submit">Add</button>
       </form>
     </section>
 
     <section class="card">
       <h2>Tasks</h2>
-      {% if tasks %}
-        <ul class="task-list">
-          {% for task in tasks %}
-            <li class="task-item">
-              <div class="task-info">
-                <span class="task-name">{{ task['name'] }}</span>
-                <span class="task-time">{{ task['total_seconds'] | format_seconds }}</span>
-              </div>
-              <div class="task-actions">
-                {% if task['is_running'] %}
-                  <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}">
-                    <button class="stop" type="submit">Stop</button>
-                  </form>
-                {% else %}
-                  <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}">
-                    <button class="start" type="submit">Start</button>
-                  </form>
-                {% endif %}
-              </div>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="empty">No tasks yet.</p>
-      {% endif %}
+      <div id="task-list">
+        {% if tasks %}
+          <ul class="task-list">
+            {% for task in tasks %}
+              <li class="task-item">
+                <div class="task-info">
+                  <span class="task-name">{{ task['name'] }}</span>
+                  <span class="task-time">{{ task['total_seconds'] | format_seconds }}</span>
+                </div>
+                <div class="task-actions">
+                  {% if task['is_running'] %}
+                    <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}">
+                      <button class="stop" type="submit">Stop</button>
+                    </form>
+                  {% else %}
+                    <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}">
+                      <button class="start" type="submit">Start</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">No tasks yet.</p>
+        {% endif %}
+      </div>
     </section>
   </main>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
