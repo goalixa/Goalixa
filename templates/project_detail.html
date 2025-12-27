@@ -60,7 +60,7 @@
           {% for task in tasks %}
             <li class="task-item">
               <div class="task-info">
-                <span class="task-name">{{ task['name'] }}</span>
+                <span class="name-badge name-task">{{ task['name'] }}</span>
                 {% if task['labels'] %}
                   <div class="label-list">
                     {% for label in task['labels'] %}

@@ -156,6 +156,32 @@ body {
   font-weight: 600;
 }
 
+.name-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+  text-decoration: none;
+}
+
+.name-task {
+  background: #e9f2ff;
+  color: #1346a8;
+}
+
+.name-project {
+  background: #fff1d9;
+  color: #7a4a00;
+}
+
+.task-name,
+.task-name:visited {
+  color: inherit;
+}
+
 .task-project {
   color: var(--muted);
   font-size: 0.9rem;

@@ -97,7 +97,7 @@ function renderTasks(tasks) {
         : "";
       return `<li class="task-item">
                 <div class="task-info">
-                  <span class="task-name">${name}</span>
+                  <span class="name-badge name-task">${name}</span>
                   <span class="task-project">${project}</span>
                   ${labels}
                   <span class="task-time" data-task-id="${task.id}">${time}</span>

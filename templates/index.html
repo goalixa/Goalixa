@@ -51,7 +51,7 @@
             {% for task in tasks %}
               <li class="task-item">
               <div class="task-info">
-                <span class="task-name">{{ task['name'] }}</span>
+                  <span class="name-badge name-task">{{ task['name'] }}</span>
                 <span class="task-project">{{ task['project_name'] or 'Unassigned' }}</span>
                 {% if task['labels'] %}
                   <div class="label-list">

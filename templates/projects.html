@@ -44,7 +44,7 @@
           {% for project in projects %}
             <li class="task-item">
               <div class="task-info">
-                <a class="task-name" href="{{ url_for('project_detail', project_id=project['id']) }}">{{ project['name'] }}</a>
+                <a class="name-badge name-project" href="{{ url_for('project_detail', project_id=project['id']) }}">{{ project['name'] }}</a>
                 {% if project['labels'] %}
                   <div class="label-list">
                     {% for label in project['labels'] %}
