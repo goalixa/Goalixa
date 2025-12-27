@@ -14,14 +14,39 @@
         <nav class="nav">
           <a href="{{ url_for('projects') }}">Projects</a>
           <a href="{{ url_for('index') }}">All Tasks</a>
+          <a href="{{ url_for('labels') }}">Labels</a>
         </nav>
       </div>
       <p>Tasks for this project</p>
     </header>
 
     <section class="card">
+      {% if project['labels'] %}
+        <div class="label-list">
+          {% for label in project['labels'] %}
+            <span class="label-chip" style="background-color: {{ label['color'] }}">{{ label['name'] }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <form class="label-form" method="post" action="{{ url_for('add_project_label', project_id=project['id']) }}">
+        <select name="label_id" required>
+          <option value="" disabled selected>Add project label</option>
+          {% for label in labels %}
+            <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit">Add</button>
+      </form>
+    </section>
+
+    <section class="card">
       <form class="task-form" id="task-form" method="post" action="{{ url_for('create_task') }}" data-project-id="{{ project['id'] }}">
         <input type="text" id="task-name" name="name" placeholder="Task name" required />
+        <select id="task-labels" name="label_ids" multiple>
+          {% for label in labels %}
+            <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+          {% endfor %}
+        </select>
         <button type="submit">Add</button>
       </form>
     </section>
@@ -34,6 +59,13 @@
             <li class="task-item">
               <div class="task-info">
                 <span class="task-name">{{ task['name'] }}</span>
+                {% if task['labels'] %}
+                  <div class="label-list">
+                    {% for label in task['labels'] %}
+                      <span class="label-chip" style="background-color: {{ label['color'] }}">{{ label['name'] }}</span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
                 <span class="task-time">{{ task['total_seconds'] | format_seconds }}</span>
               </div>
               <div class="task-actions">
@@ -50,6 +82,15 @@
                   <button class="delete icon-button" type="submit" aria-label="Delete">×</button>
                 </form>
               </div>
+              <form class="label-form" method="post" action="{{ url_for('add_task_label', task_id=task['id']) }}">
+                <select name="label_id" required>
+                  <option value="" disabled selected>Add label</option>
+                  {% for label in labels %}
+                    <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit">Add</button>
+              </form>
             </li>
           {% endfor %}
         </ul>
@@ -58,6 +99,9 @@
       {% endif %}
     </section>
   </main>
+  <script>
+    window.availableLabels = {{ labels | tojson }};
+  </script>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
