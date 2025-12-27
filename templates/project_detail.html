@@ -80,19 +80,24 @@
                     <button class="start icon-button" type="submit" aria-label="Resume">▶</button>
                   </form>
                 {% endif %}
-                <form method="post" action="{{ url_for('delete_task', task_id=task['id']) }}" data-action="delete" data-task-id="{{ task['id'] }}">
-                  <button class="delete icon-button" type="submit" aria-label="Delete">×</button>
-                </form>
+                <div class="menu">
+                  <button class="menu-button icon-button" type="button" aria-label="More">⋯</button>
+                  <div class="menu-panel">
+                    <form method="post" action="{{ url_for('delete_task', task_id=task['id']) }}" data-action="delete" data-task-id="{{ task['id'] }}">
+                      <button class="menu-item danger" type="submit">Delete task</button>
+                    </form>
+                    <form class="label-form" method="post" action="{{ url_for('add_task_label', task_id=task['id']) }}">
+                      <select name="label_id" required>
+                        <option value="" disabled selected>Add label</option>
+                        {% for label in labels %}
+                          <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+                        {% endfor %}
+                      </select>
+                      <button type="submit">Add</button>
+                    </form>
+                  </div>
+                </div>
               </div>
-              <form class="label-form" method="post" action="{{ url_for('add_task_label', task_id=task['id']) }}">
-                <select name="label_id" required>
-                  <option value="" disabled selected>Add label</option>
-                  {% for label in labels %}
-                    <option value="{{ label['id'] }}">{{ label['name'] }}</option>
-                  {% endfor %}
-                </select>
-                <button type="submit">Add</button>
-              </form>
             </li>
           {% endfor %}
         </ul>

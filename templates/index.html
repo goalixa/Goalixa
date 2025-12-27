@@ -62,31 +62,33 @@
                 {% endif %}
                 <span class="task-time">{{ task['total_seconds'] | format_seconds }}</span>
               </div>
-                <div class="task-actions">
-                  {% if task['is_running'] %}
-                    <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}" data-action="stop" data-task-id="{{ task['id'] }}">
-                      <button class="stop icon-button" type="submit" aria-label="Pause">⏸</button>
-                    </form>
+              <div class="task-actions">
+                {% if task['is_running'] %}
+                  <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}" data-action="stop" data-task-id="{{ task['id'] }}">
+                    <button class="stop icon-button" type="submit" aria-label="Pause">⏸</button>
+                  </form>
                   {% else %}
                     <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}" data-action="start" data-task-id="{{ task['id'] }}">
                       <button class="start icon-button" type="submit" aria-label="Resume">▶</button>
                     </form>
                 {% endif %}
-                  <form method="post" action="{{ url_for('delete_task', task_id=task['id']) }}" data-action="delete" data-task-id="{{ task['id'] }}">
-                    <button class="delete icon-button" type="submit" aria-label="Delete">×</button>
-                  </form>
-                  <button class="label-toggle icon-button" type="button" data-task-id="{{ task['id'] }}" aria-label="Labels">🏷️</button>
+                <div class="menu">
+                  <button class="menu-button icon-button" type="button" aria-label="More">⋯</button>
+                  <div class="menu-panel">
+                    <form method="post" action="{{ url_for('delete_task', task_id=task['id']) }}" data-action="delete" data-task-id="{{ task['id'] }}">
+                      <button class="menu-item danger" type="submit">Delete task</button>
+                    </form>
+                    <form class="label-form" method="post" action="{{ url_for('add_task_label', task_id=task['id']) }}">
+                      <select name="label_id" required>
+                        <option value="" disabled selected>Add label</option>
+                        {% for label in labels %}
+                          <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+                        {% endfor %}
+                      </select>
+                      <button type="submit">Add</button>
+                    </form>
+                  </div>
                 </div>
-              <div class="label-picker" data-task-id="{{ task['id'] }}">
-                <form class="label-form" method="post" action="{{ url_for('add_task_label', task_id=task['id']) }}">
-                  <select name="label_id" required>
-                    <option value="" disabled selected>Add label</option>
-                    {% for label in labels %}
-                      <option value="{{ label['id'] }}">{{ label['name'] }}</option>
-                    {% endfor %}
-                  </select>
-                  <button type="submit">Add</button>
-                </form>
               </div>
             </li>
           {% endfor %}

@@ -151,6 +151,7 @@ body {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 10px;
+  flex: 1;
 }
 
 .task-name {
@@ -240,6 +241,54 @@ body {
   border: 1px solid #cfcfcf;
   padding: 6px 10px;
   font-size: 0.85rem;
+}
+
+.menu {
+  position: relative;
+}
+
+.menu-panel {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  min-width: 180px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  padding: 10px;
+  display: none;
+  z-index: 10;
+}
+
+.menu-panel.is-open {
+  display: block;
+}
+
+.menu-panel form {
+  margin: 0;
+}
+
+.menu-item {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: none;
+  background: #f6f6f6;
+  text-align: right;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.menu-item.danger {
+  background: #ffe8ec;
+  color: #b3263f;
+}
+
+.menu-panel .label-form {
+  margin-top: 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
 }
 
 .label-list {

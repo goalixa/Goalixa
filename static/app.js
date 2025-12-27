@@ -75,26 +75,29 @@ function renderTasks(tasks) {
         : `<form method="post" action="/tasks/${task.id}/start" data-action="start" data-task-id="${task.id}">
              <button class="start icon-button" type="submit" aria-label="Resume">▶</button>
            </form>`;
-      const remove = `<form method="post" action="/tasks/${task.id}/delete" data-action="delete" data-task-id="${task.id}">
-                        <button class="delete icon-button" type="submit" aria-label="Delete">×</button>
-                      </form>`;
-      const labelToggle = `<button class="label-toggle icon-button" type="button" data-task-id="${task.id}" aria-label="Labels">🏷️</button>`;
       const labelForm = availableLabels.length
-        ? `<div class="label-picker" data-task-id="${task.id}">
-             <form class="label-form" method="post" action="/tasks/${task.id}/labels">
-               <select name="label_id" required>
-                 <option value="" disabled selected>Add label</option>
-                 ${availableLabels
-                   .map(
-                     (label) =>
-                       `<option value="${label.id}">${escapeHtml(label.name)}</option>`,
-                   )
-                   .join("")}
-               </select>
-               <button type="submit">Add</button>
-             </form>
-           </div>`
+        ? `<form class="label-form" method="post" action="/tasks/${task.id}/labels">
+             <select name="label_id" required>
+               <option value="" disabled selected>Add label</option>
+               ${availableLabels
+                 .map(
+                   (label) =>
+                     `<option value="${label.id}">${escapeHtml(label.name)}</option>`,
+                 )
+                 .join("")}
+             </select>
+             <button type="submit">Add</button>
+           </form>`
         : "";
+      const menu = `<div class="menu">
+          <button class="menu-button icon-button" type="button" aria-label="More">⋯</button>
+          <div class="menu-panel">
+            <form method="post" action="/tasks/${task.id}/delete" data-action="delete" data-task-id="${task.id}">
+              <button class="menu-item danger" type="submit">Delete task</button>
+            </form>
+            ${labelForm}
+          </div>
+        </div>`;
       return `<li class="task-item">
                 <div class="task-info">
                   <span class="name-badge name-task">${name}</span>
@@ -104,10 +107,8 @@ function renderTasks(tasks) {
                 </div>
                 <div class="task-actions">
                   ${action}
-                  ${remove}
-                  ${labelToggle}
+                  ${menu}
                 </div>
-                ${labelForm}
               </li>`;
     })
     .join("");
@@ -218,15 +219,25 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!(target instanceof HTMLElement)) {
         return;
       }
-      if (!target.classList.contains("label-toggle")) {
-        return;
-      }
-      const taskId = target.dataset.taskId;
-      const picker = taskList.querySelector(
-        `.label-picker[data-task-id="${taskId}"]`,
-      );
-      if (picker) {
-        picker.classList.toggle("is-open");
+      if (target.classList.contains("menu-button")) {
+        const menu = target.closest(".menu");
+        if (!menu) {
+          return;
+        }
+        const panel = menu.querySelector(".menu-panel");
+        if (!panel) {
+          return;
+        }
+        taskList.querySelectorAll(".menu-panel").forEach((el) => {
+          if (el !== panel) {
+            el.classList.remove("is-open");
+          }
+        });
+        panel.classList.toggle("is-open");
+      } else if (!target.closest(".menu")) {
+        taskList.querySelectorAll(".menu-panel").forEach((el) => {
+          el.classList.remove("is-open");
+        });
       }
     });
 
