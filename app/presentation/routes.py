@@ -4,7 +4,8 @@ from flask import redirect, render_template, request, url_for
 def register_routes(app, service):
     @app.route("/", methods=["GET"])
     def overview():
-        return render_template("overview.html")
+        weekly_summary = service.weekly_summary()
+        return render_template("overview.html", weekly_summary=weekly_summary)
 
     @app.route("/timer", methods=["GET"])
     def timer():
@@ -13,7 +14,10 @@ def register_routes(app, service):
     @app.route("/reports", methods=["GET"])
     def reports():
         tasks = service.list_tasks()
-        return render_template("reports.html", tasks=tasks)
+        weekly_summary = service.weekly_summary()
+        return render_template(
+            "reports.html", tasks=tasks, weekly_summary=weekly_summary
+        )
 
     @app.route("/tasks", methods=["GET"])
     def index():

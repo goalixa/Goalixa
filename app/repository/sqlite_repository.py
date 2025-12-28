@@ -340,3 +340,15 @@ class SQLiteTaskRepository:
         db.execute("DELETE FROM time_entries WHERE task_id = ?", (task_id,))
         db.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
         db.commit()
+
+    def fetch_time_entries_between(self, start_iso, end_iso):
+        db = self._get_db()
+        return db.execute(
+            """
+            SELECT id, task_id, started_at, ended_at
+            FROM time_entries
+            WHERE started_at < ?
+              AND (ended_at IS NULL OR ended_at > ?)
+            """,
+            (end_iso, start_iso),
+        ).fetchall()

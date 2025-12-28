@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class TaskService:
@@ -79,6 +79,56 @@ class TaskService:
 
     def delete_project(self, project_id):
         self.repository.delete_project(project_id)
+
+    def weekly_summary(self):
+        now = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+        start_day = (now - timedelta(days=6)).replace(hour=0)
+        end_day = (now + timedelta(days=1)).replace(hour=0)
+
+        entries = self.repository.fetch_time_entries_between(
+            start_day.isoformat(), end_day.isoformat()
+        )
+
+        buckets = []
+        for day_offset in range(7):
+            day_start = start_day + timedelta(days=day_offset)
+            day_end = day_start + timedelta(days=1)
+            buckets.append(
+                {
+                    "date": day_start.date().isoformat(),
+                    "label": day_start.strftime("%a"),
+                    "start": day_start,
+                    "end": day_end,
+                    "seconds": 0,
+                }
+            )
+
+        for entry in entries:
+            entry_start = datetime.fromisoformat(entry["started_at"])
+            entry_end = (
+                datetime.fromisoformat(entry["ended_at"])
+                if entry["ended_at"]
+                else datetime.utcnow()
+            )
+            for bucket in buckets:
+                overlap_start = max(entry_start, bucket["start"])
+                overlap_end = min(entry_end, bucket["end"])
+                if overlap_end > overlap_start:
+                    bucket["seconds"] += int(
+                        (overlap_end - overlap_start).total_seconds()
+                    )
+
+        max_seconds = max((bucket["seconds"] for bucket in buckets), default=0)
+        for bucket in buckets:
+            bucket["percent"] = (
+                int((bucket["seconds"] / max_seconds) * 100)
+                if max_seconds
+                else 0
+            )
+            del bucket["start"]
+            del bucket["end"]
+
+        return buckets
 
     def list_labels(self):
         labels = self.repository.fetch_labels()
