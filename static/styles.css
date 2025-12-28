@@ -372,11 +372,71 @@ body {
   font-weight: 600;
 }
 
-.bar-chart-vertical {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+.chart-controls {
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
-  align-items: end;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.range-switch {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.range-chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #d7d7d7;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+  background: #fff;
+}
+
+.range-chip.active {
+  background: #1f6feb;
+  color: #fff;
+  border-color: #1f6feb;
+}
+
+.mode-switch {
+  display: flex;
+  gap: 8px;
+}
+
+.mode-button {
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid #d7d7d7;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.mode-button.active {
+  background: #1f6feb;
+  color: #fff;
+  border-color: #1f6feb;
+}
+
+.chart-panel {
+  display: none;
+}
+
+.chart-panel.is-active {
+  display: block;
+}
+
+.bar-chart-vertical {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  overflow-x: auto;
+  padding-bottom: 8px;
 }
 
 .bar-col {
@@ -384,6 +444,8 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  width: 48px;
+  flex: 0 0 48px;
 }
 
 .bar-stack {
@@ -421,6 +483,7 @@ body {
   border-radius: 14px;
   background: #f8fafc;
   border: 1px solid #e3e8f0;
+  overflow-x: auto;
 }
 
 .time-series svg {
