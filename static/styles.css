@@ -469,6 +469,98 @@ body {
   flex: 1;
 }
 
+.reports-filters {
+  background: #f3f4f7;
+  border-bottom: 1px solid #e1e4ea;
+  padding: 10px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #596273;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #d7d7d7;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.chip.active {
+  background: #1f6feb;
+  color: #fff;
+  border-color: #1f6feb;
+}
+
+.chip.ghost {
+  background: transparent;
+  border-style: dashed;
+  color: #5f6b7a;
+}
+
+.calendar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.calendar-pill {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e1e4ea;
+  display: grid;
+  gap: 4px;
+}
+
+.calendar-title {
+  font-weight: 700;
+  color: #2b313b;
+  font-size: 0.85rem;
+}
+
+.calendar-days {
+  font-size: 0.75rem;
+  color: #6b7280;
+  letter-spacing: 0.2px;
+}
+
+.calendar-input {
+  min-width: 240px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #d7d7d7;
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .reports-body {
   max-width: 860px;
   margin: 0 auto;
