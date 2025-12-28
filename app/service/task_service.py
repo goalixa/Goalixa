@@ -80,9 +80,10 @@ class TaskService:
     def delete_project(self, project_id):
         self.repository.delete_project(project_id)
 
-    def weekly_summary(self):
+    def summary_by_days(self, days):
+        days = int(days)
         now = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
-        start_day = (now - timedelta(days=6)).replace(hour=0)
+        start_day = (now - timedelta(days=days - 1)).replace(hour=0)
         end_day = (now + timedelta(days=1)).replace(hour=0)
 
         entries = self.repository.fetch_time_entries_between(
@@ -90,13 +91,13 @@ class TaskService:
         )
 
         buckets = []
-        for day_offset in range(7):
+        for day_offset in range(days):
             day_start = start_day + timedelta(days=day_offset)
             day_end = day_start + timedelta(days=1)
             buckets.append(
                 {
                     "date": day_start.date().isoformat(),
-                    "label": day_start.strftime("%a"),
+                    "label": day_start.strftime("%d %b"),
                     "start": day_start,
                     "end": day_end,
                     "seconds": 0,

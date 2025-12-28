@@ -39,35 +39,54 @@
       </header>
 
       <section class="card">
-        <h2>This week summary</h2>
-        {% if weekly_summary %}
-          <div class="bar-chart-vertical">
-            {% for day in weekly_summary %}
-              <div class="bar-col">
-                <div class="bar-stack">
-                  <div class="bar-vertical" style="height: {{ day['percent'] }}%"></div>
-                </div>
-                <span class="bar-label">{{ day['label'] }}</span>
-                <span class="bar-value">{{ day['seconds'] | format_seconds }}</span>
-              </div>
-            {% endfor %}
+        <h2>Time summary</h2>
+        <div class="chart-controls">
+          <div class="range-switch">
+            <span class="range-chip active">7d</span>
           </div>
-          <div class="time-series">
-            {% set step = 300 / (weekly_summary|length - 1) %}
-            {% set ns = namespace(points=[]) %}
-            {% for day in weekly_summary %}
-              {% set x = (loop.index0 * step) %}
-              {% set y = 110 - day['percent'] %}
-              {% set ns.points = ns.points + [x ~ ',' ~ y] %}
-            {% endfor %}
-            <svg viewBox="0 0 300 120" role="img" aria-label="Weekly time series">
-              <polyline points="{{ ns.points|join(' ') }}" class="series-line"></polyline>
-              {% for day in weekly_summary %}
-                {% set x = (loop.index0 * step) %}
-                {% set y = 110 - day['percent'] %}
-                <circle cx="{{ x }}" cy="{{ y }}" r="3" class="series-dot"></circle>
+          <div class="mode-switch">
+            <button class="mode-button active" type="button" data-mode="bar">Bar</button>
+            <button class="mode-button" type="button" data-mode="line">Line</button>
+          </div>
+        </div>
+        {% if summary %}
+          <div class="chart-panel is-active" data-mode="bar">
+            <div class="bar-chart-vertical">
+              {% for day in summary %}
+                <div class="bar-col">
+                  <div class="bar-stack">
+                    <div class="bar-vertical" style="height: {{ day['percent'] }}%"></div>
+                  </div>
+                  <span class="bar-label">{{ day['label'] }}</span>
+                  <span class="bar-value">{{ day['seconds'] | format_seconds }}</span>
+                </div>
               {% endfor %}
-            </svg>
+            </div>
+          </div>
+          <div class="chart-panel" data-mode="line">
+            <div class="time-series">
+              {% if summary|length > 1 %}
+                {% set step = 40 %}
+                {% set chart_width = 300 %}
+                {% if summary|length > 8 %}
+                  {% set chart_width = step * (summary|length - 1) %}
+                {% endif %}
+                {% set ns = namespace(points=[]) %}
+                {% for day in summary %}
+                  {% set x = (loop.index0 * step) %}
+                  {% set y = 110 - day['percent'] %}
+                  {% set ns.points = ns.points + [x ~ ',' ~ y] %}
+                {% endfor %}
+                <svg viewBox="0 0 {{ chart_width }} 120" role="img" aria-label="Time series">
+                  <polyline points="{{ ns.points|join(' ') }}" class="series-line"></polyline>
+                  {% for day in summary %}
+                    {% set x = (loop.index0 * step) %}
+                    {% set y = 110 - day['percent'] %}
+                    <circle cx="{{ x }}" cy="{{ y }}" r="3" class="series-dot"></circle>
+                  {% endfor %}
+                </svg>
+              {% endif %}
+            </div>
           </div>
         {% else %}
           <p class="empty">No activity yet.</p>
@@ -94,5 +113,18 @@
       </section>
     </main>
   </div>
+  <script>
+    const modeButtons = document.querySelectorAll(".mode-button");
+    const panels = document.querySelectorAll(".chart-panel");
+    modeButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const mode = button.dataset.mode;
+        modeButtons.forEach((btn) => btn.classList.toggle("active", btn === button));
+        panels.forEach((panel) => {
+          panel.classList.toggle("is-active", panel.dataset.mode === mode);
+        });
+      });
+    });
+  </script>
 </body>
 </html>
