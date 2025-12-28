@@ -99,6 +99,11 @@ class SQLiteTaskRepository:
         db = self._get_db()
         tasks = db.execute(
             """
+            WITH params AS (
+                SELECT
+                    CAST(strftime('%s','now') AS INTEGER) AS now_ts,
+                    CAST(strftime('%s','now','-24 hours') AS INTEGER) AS window_start
+            )
             SELECT t.id, t.name, t.project_id, p.name AS project_name,
                    IFNULL(SUM(
                        CASE
@@ -107,8 +112,21 @@ class SQLiteTaskRepository:
                            ELSE (strftime('%s', te.ended_at) - strftime('%s', te.started_at))
                        END
                    ), 0) AS total_seconds,
+                   IFNULL(SUM(
+                       CASE
+                           WHEN te.id IS NULL THEN 0
+                           ELSE MAX(
+                               0,
+                               MIN(
+                                   COALESCE(strftime('%s', te.ended_at), params.now_ts),
+                                   params.now_ts
+                               ) - MAX(strftime('%s', te.started_at), params.window_start)
+                           )
+                       END
+                   ), 0) AS rolling_24h_seconds,
                    MAX(CASE WHEN te.id IS NOT NULL AND te.ended_at IS NULL THEN 1 ELSE 0 END) AS is_running
             FROM tasks t
+            CROSS JOIN params
             LEFT JOIN projects p ON p.id = t.project_id
             LEFT JOIN time_entries te ON te.task_id = t.id
             GROUP BY t.id
@@ -121,6 +139,11 @@ class SQLiteTaskRepository:
         db = self._get_db()
         tasks = db.execute(
             """
+            WITH params AS (
+                SELECT
+                    CAST(strftime('%s','now') AS INTEGER) AS now_ts,
+                    CAST(strftime('%s','now','-24 hours') AS INTEGER) AS window_start
+            )
             SELECT t.id, t.name, t.project_id, p.name AS project_name,
                    IFNULL(SUM(
                        CASE
@@ -129,8 +152,21 @@ class SQLiteTaskRepository:
                            ELSE (strftime('%s', te.ended_at) - strftime('%s', te.started_at))
                        END
                    ), 0) AS total_seconds,
+                   IFNULL(SUM(
+                       CASE
+                           WHEN te.id IS NULL THEN 0
+                           ELSE MAX(
+                               0,
+                               MIN(
+                                   COALESCE(strftime('%s', te.ended_at), params.now_ts),
+                                   params.now_ts
+                               ) - MAX(strftime('%s', te.started_at), params.window_start)
+                           )
+                       END
+                   ), 0) AS rolling_24h_seconds,
                    MAX(CASE WHEN te.id IS NOT NULL AND te.ended_at IS NULL THEN 1 ELSE 0 END) AS is_running
             FROM tasks t
+            CROSS JOIN params
             LEFT JOIN projects p ON p.id = t.project_id
             LEFT JOIN time_entries te ON te.task_id = t.id
             WHERE t.project_id = ?

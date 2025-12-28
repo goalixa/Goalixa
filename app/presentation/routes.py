@@ -37,6 +37,7 @@ def register_routes(app, service):
                     "id": task["id"],
                     "name": task["name"],
                     "total_seconds": int(task["total_seconds"] or 0),
+                    "rolling_24h_seconds": int(task["rolling_24h_seconds"] or 0),
                     "is_running": bool(task["is_running"]),
                     "project_id": task["project_id"],
                     "project_name": task["project_name"],
