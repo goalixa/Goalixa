@@ -423,82 +423,100 @@ body {
   border-color: #1f6feb;
 }
 
-.chart-panel {
-  display: none;
-}
-
-.chart-panel.is-active {
-  display: block;
-}
-
-.bar-chart-vertical {
+.reports-top {
   display: flex;
-  gap: 12px;
-  align-items: flex-end;
-  overflow-x: auto;
-  padding-bottom: 8px;
-}
-
-.bar-col {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  width: 48px;
-  flex: 0 0 48px;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.bar-stack {
-  height: 140px;
-  width: 100%;
-  background: #eef1f6;
-  border-radius: 14px;
-  display: flex;
-  align-items: flex-end;
-  overflow: hidden;
-  padding: 8px;
+.reports-hero {
+  background: linear-gradient(135deg, #1f242c 0%, #2b313b 100%);
+  color: #f6f6f6;
+  padding: 6px 24px;
+  border-radius: 0;
 }
 
-.bar-vertical {
-  width: 100%;
-  border-radius: 10px;
-  background: linear-gradient(180deg, #1f6feb 0%, #f2a900 100%);
-}
-
-.bar-label {
+.reports-title {
   font-weight: 600;
-  color: var(--muted);
+  color: #c7cbd3;
+  margin-right: 8px;
 }
 
-.bar-value {
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  color: var(--muted);
-  font-size: 0.85rem;
+.reports-hero .reports-tabs {
+  margin-top: 0;
 }
 
-.time-series {
-  margin-top: 18px;
-  padding: 12px;
-  border-radius: 14px;
-  background: #f8fafc;
-  border: 1px solid #e3e8f0;
-  overflow-x: auto;
+.reports-hero .reports-tab {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #d9dde5;
 }
 
-.time-series svg {
+.reports-hero .reports-tab.active {
+  background: #f2a900;
+  border-color: #f2a900;
+  color: #2a1b00;
+}
+
+.reports-hero .icon-button.ghost {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f6f6f6;
+}
+
+.reports-page {
+  flex: 1;
+}
+
+.reports-body {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 20px 24px 40px;
+}
+
+.reports-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.icon-button.ghost {
+  background: #f4f5f8;
+  border: 1px solid #e1e4ea;
+  color: #222;
+}
+
+.reports-tabs {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.reports-tab {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #d7d7d7;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.reports-tab.active {
+  background: #1f6feb;
+  color: #fff;
+  border-color: #1f6feb;
+}
+
+.chart-panel {
+  display: block;
+  height: 220px;
+}
+
+.chart-panel canvas {
   width: 100%;
-  height: 120px;
-}
-
-.series-line {
-  fill: none;
-  stroke: #1f6feb;
-  stroke-width: 2.5;
-}
-
-.series-dot {
-  fill: #f2a900;
+  height: 100%;
 }
 
 .color-picker {

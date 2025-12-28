@@ -32,13 +32,23 @@
         </nav>
       </div>
     </aside>
-    <main class="container">
-      <header class="header">
-        <h1>Reports</h1>
-        <p>Total time by task (all-time).</p>
+    <main class="reports-page">
+      <header class="reports-hero">
+        <div class="reports-top">
+          <nav class="reports-tabs">
+            <button class="reports-tab active" type="button">Summary</button>
+            <button class="reports-tab" type="button">Detailed</button>
+            <button class="reports-tab" type="button">Workload</button>
+          </nav>
+          <div class="reports-actions">
+            <button class="icon-button ghost" type="button" aria-label="Settings">⚙️</button>
+            <button class="icon-button ghost" type="button" aria-label="Download">⬇️</button>
+          </div>
+        </div>
       </header>
+      <div class="reports-body">
 
-      <section class="card">
+      <section class="card reports-chart">
         <h2>Time summary</h2>
         <div class="chart-controls">
           <div class="range-switch">
@@ -50,43 +60,8 @@
           </div>
         </div>
         {% if summary %}
-          <div class="chart-panel is-active" data-mode="bar">
-            <div class="bar-chart-vertical">
-              {% for day in summary %}
-                <div class="bar-col">
-                  <div class="bar-stack">
-                    <div class="bar-vertical" style="height: {{ day['percent'] }}%"></div>
-                  </div>
-                  <span class="bar-label">{{ day['label'] }}</span>
-                  <span class="bar-value">{{ day['seconds'] | format_seconds }}</span>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-          <div class="chart-panel" data-mode="line">
-            <div class="time-series">
-              {% if summary|length > 1 %}
-                {% set step = 40 %}
-                {% set chart_width = 300 %}
-                {% if summary|length > 8 %}
-                  {% set chart_width = step * (summary|length - 1) %}
-                {% endif %}
-                {% set ns = namespace(points=[]) %}
-                {% for day in summary %}
-                  {% set x = (loop.index0 * step) %}
-                  {% set y = 110 - day['percent'] %}
-                  {% set ns.points = ns.points + [x ~ ',' ~ y] %}
-                {% endfor %}
-                <svg viewBox="0 0 {{ chart_width }} 120" role="img" aria-label="Time series">
-                  <polyline points="{{ ns.points|join(' ') }}" class="series-line"></polyline>
-                  {% for day in summary %}
-                    {% set x = (loop.index0 * step) %}
-                    {% set y = 110 - day['percent'] %}
-                    <circle cx="{{ x }}" cy="{{ y }}" r="3" class="series-dot"></circle>
-                  {% endfor %}
-                </svg>
-              {% endif %}
-            </div>
+          <div class="chart-panel is-active">
+            <canvas id="reports-chart" height="160"></canvas>
           </div>
         {% else %}
           <p class="empty">No activity yet.</p>
@@ -111,18 +86,76 @@
           <p class="empty">No tasks yet.</p>
         {% endif %}
       </section>
+      </div>
     </main>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script>
-    const modeButtons = document.querySelectorAll(".mode-button");
-    const panels = document.querySelectorAll(".chart-panel");
-    modeButtons.forEach((button) => {
+    const summary = {{ summary | tojson }};
+    const labels = summary.map((item) => item.label);
+    const values = summary.map((item) => item.seconds);
+    const ctx = document.getElementById("reports-chart");
+    let chartType = "bar";
+    let chartInstance = null;
+
+    const buildChart = (type) => {
+      if (!ctx) {
+        return;
+      }
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+      chartInstance = new Chart(ctx, {
+        type,
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Total time",
+              data: values,
+              borderColor: "#1f6feb",
+              backgroundColor: type === "line" ? "rgba(31, 111, 235, 0.25)" : "#1f6feb",
+              borderWidth: 2,
+              tension: 0.35,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const seconds = context.raw || 0;
+                  const hours = Math.floor(seconds / 3600);
+                  const minutes = Math.floor((seconds % 3600) / 60);
+                  return `${hours}h ${minutes}m`;
+                },
+              },
+            },
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: (value) => `${Math.floor(value / 3600)}h`,
+              },
+            },
+          },
+        },
+      });
+    };
+
+    buildChart(chartType);
+
+    document.querySelectorAll(".mode-button").forEach((button) => {
       button.addEventListener("click", () => {
-        const mode = button.dataset.mode;
-        modeButtons.forEach((btn) => btn.classList.toggle("active", btn === button));
-        panels.forEach((panel) => {
-          panel.classList.toggle("is-active", panel.dataset.mode === mode);
-        });
+        chartType = button.dataset.mode;
+        document.querySelectorAll(".mode-button").forEach((btn) =>
+          btn.classList.toggle("active", btn === button),
+        );
+        buildChart(chartType);
       });
     });
   </script>
