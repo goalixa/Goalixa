@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Reports</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/litepicker/litepicker.css') }}" />
 </head>
 <body>
   <div class="layout">
@@ -46,6 +47,34 @@
           </div>
         </div>
       </header>
+      <section class="reports-filters">
+        <div class="filter-group">
+          <span class="filter-label">Calendar</span>
+          <div class="filter-chips">
+            <button class="chip" type="button">Today</button>
+            <button class="chip active" type="button">This week</button>
+            <button class="chip" type="button">This month</button>
+            <button class="chip" type="button">This quarter</button>
+            <button class="chip" type="button">This year</button>
+            <button class="chip" type="button">Last week</button>
+            <button class="chip" type="button">Last month</button>
+            <button class="chip ghost" type="button">All shortcuts</button>
+          </div>
+          <div class="calendar-row">
+            <div class="calendar-pill">
+              <span class="calendar-title">Default</span>
+              <span class="calendar-days">Mon Tue Wed Thu Fri Sat Sun</span>
+              <span class="calendar-days">Mon Tue Wed Thu Fri Sat Sun</span>
+            </div>
+            <input class="calendar-input" id="report-range" type="text" readonly />
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button class="chip" type="button">Projects</button>
+          <button class="chip" type="button">Labels</button>
+          <button class="chip ghost" type="button">Add filter</button>
+        </div>
+      </section>
       <div class="reports-body">
 
       <section class="card reports-chart">
@@ -90,6 +119,7 @@
     </main>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="{{ url_for('static', filename='vendor/litepicker/litepicker.js') }}"></script>
   <script>
     const summary = {{ summary | tojson }};
     const labels = summary.map((item) => item.label);
@@ -158,6 +188,35 @@
         buildChart(chartType);
       });
     });
+
+    const rangeInput = document.getElementById("report-range");
+    if (rangeInput) {
+      const today = new Date();
+      const start = new Date(today);
+      start.setDate(today.getDate() - 6);
+
+      const picker = new Litepicker({
+        element: rangeInput,
+        singleMode: false,
+        startDate: start,
+        endDate: today,
+        format: "YYYY-MM-DD",
+        tooltipText: { one: "day", other: "days" },
+      });
+
+      const updateLabel = (startDate, endDate) => {
+        if (!startDate || !endDate) {
+          return;
+        }
+        rangeInput.value = `${startDate.format("YYYY-MM-DD")} → ${endDate.format("YYYY-MM-DD")}`;
+      };
+
+      updateLabel(picker.getStartDate(), picker.getEndDate());
+
+      picker.on("selected", (startDate, endDate) => {
+        updateLabel(startDate, endDate);
+      });
+    }
   </script>
 </body>
 </html>
