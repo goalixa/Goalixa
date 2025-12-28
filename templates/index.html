@@ -10,12 +10,27 @@
   <div class="layout">
     <aside class="sidebar">
       <div class="sidebar-brand">StudyTimmer</div>
-      <nav class="sidebar-nav">
-        <a class="sidebar-link" href="{{ url_for('overview') }}">📊 Overview</a>
-        <a class="sidebar-link active" href="{{ url_for('index') }}">🧭 Tasks</a>
-        <a class="sidebar-link" href="{{ url_for('projects') }}">📁 Projects</a>
-        <a class="sidebar-link" href="{{ url_for('labels') }}">🏷️ Labels</a>
-      </nav>
+      <div class="sidebar-section">
+        <span class="sidebar-title">Track</span>
+        <nav class="sidebar-nav">
+          <a class="sidebar-link" href="{{ url_for('overview') }}">📊 Overview</a>
+          <a class="sidebar-link" href="{{ url_for('timer') }}">⏱️ Timer</a>
+        </nav>
+      </div>
+      <div class="sidebar-section">
+        <span class="sidebar-title">Analyze</span>
+        <nav class="sidebar-nav">
+          <span class="sidebar-link disabled">📈 Coming soon</span>
+        </nav>
+      </div>
+      <div class="sidebar-section">
+        <span class="sidebar-title">Manage</span>
+        <nav class="sidebar-nav">
+          <a class="sidebar-link" href="{{ url_for('projects') }}">📁 Projects</a>
+          <a class="sidebar-link" href="{{ url_for('labels') }}">🏷️ Tags</a>
+          <a class="sidebar-link active" href="{{ url_for('index') }}">🧭 Tasks</a>
+        </nav>
+      </div>
     </aside>
     <main class="container">
       <header class="header">

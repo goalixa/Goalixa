@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Overview</title>
+  <title>Timer</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
 </head>
 <body>
@@ -13,8 +13,8 @@
       <div class="sidebar-section">
         <span class="sidebar-title">Track</span>
         <nav class="sidebar-nav">
-          <a class="sidebar-link active" href="{{ url_for('overview') }}">📊 Overview</a>
-          <a class="sidebar-link" href="{{ url_for('timer') }}">⏱️ Timer</a>
+          <a class="sidebar-link" href="{{ url_for('overview') }}">📊 Overview</a>
+          <a class="sidebar-link active" href="{{ url_for('timer') }}">⏱️ Timer</a>
         </nav>
       </div>
       <div class="sidebar-section">
@@ -34,23 +34,12 @@
     </aside>
     <main class="container">
       <header class="header">
-        <h1>Overview</h1>
-        <p>High-level insights from your projects and tasks.</p>
+        <h1>Timer</h1>
+        <p>Start a focused session and track your time.</p>
       </header>
 
       <section class="card">
-        <h2>Focus by Project</h2>
-        <div class="chart-placeholder">Chart placeholder</div>
-      </section>
-
-      <section class="card">
-        <h2>Top Labels</h2>
-        <div class="chart-placeholder">Chart placeholder</div>
-      </section>
-
-      <section class="card">
-        <h2>Daily Time Trend</h2>
-        <div class="chart-placeholder">Chart placeholder</div>
+        <div class="chart-placeholder">Timer UI placeholder</div>
       </section>
     </main>
   </div>
