@@ -1,4 +1,6 @@
-from flask import redirect, render_template, request, url_for
+from datetime import datetime
+
+from flask import jsonify, redirect, render_template, request, url_for
 
 
 def register_routes(app, service):
@@ -23,6 +25,25 @@ def register_routes(app, service):
         return render_template(
             "reports.html", tasks=tasks, summary=summary, allowed_ranges=[7]
         )
+
+    @app.route("/api/reports/summary", methods=["GET"])
+    def reports_summary():
+        start = request.args.get("start")
+        end = request.args.get("end")
+        if not start or not end:
+            return jsonify({"summary": []})
+
+        try:
+            start_date = datetime.fromisoformat(start).date()
+            end_date = datetime.fromisoformat(end).date()
+        except ValueError:
+            return jsonify({"summary": []})
+
+        if end_date < start_date:
+            start_date, end_date = end_date, start_date
+
+        summary = service.summary_by_range(start_date, end_date)
+        return jsonify({"summary": summary})
 
     @app.route("/tasks", methods=["GET"])
     def index():

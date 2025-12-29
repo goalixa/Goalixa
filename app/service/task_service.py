@@ -131,6 +131,56 @@ class TaskService:
 
         return buckets
 
+    def summary_by_range(self, start_date, end_date):
+        start_day = datetime.combine(start_date, datetime.min.time())
+        end_day = datetime.combine(end_date + timedelta(days=1), datetime.min.time())
+
+        entries = self.repository.fetch_time_entries_between(
+            start_day.isoformat(), end_day.isoformat()
+        )
+
+        days = (end_date - start_date).days + 1
+        buckets = []
+        for day_offset in range(days):
+            day_start = start_day + timedelta(days=day_offset)
+            day_end = day_start + timedelta(days=1)
+            buckets.append(
+                {
+                    "date": day_start.date().isoformat(),
+                    "label": day_start.strftime("%d %b"),
+                    "start": day_start,
+                    "end": day_end,
+                    "seconds": 0,
+                }
+            )
+
+        for entry in entries:
+            entry_start = datetime.fromisoformat(entry["started_at"])
+            entry_end = (
+                datetime.fromisoformat(entry["ended_at"])
+                if entry["ended_at"]
+                else datetime.utcnow()
+            )
+            for bucket in buckets:
+                overlap_start = max(entry_start, bucket["start"])
+                overlap_end = min(entry_end, bucket["end"])
+                if overlap_end > overlap_start:
+                    bucket["seconds"] += int(
+                        (overlap_end - overlap_start).total_seconds()
+                    )
+
+        max_seconds = max((bucket["seconds"] for bucket in buckets), default=0)
+        for bucket in buckets:
+            bucket["percent"] = (
+                int((bucket["seconds"] / max_seconds) * 100)
+                if max_seconds
+                else 0
+            )
+            del bucket["start"]
+            del bucket["end"]
+
+        return buckets
+
     def list_labels(self):
         labels = self.repository.fetch_labels()
         return [dict(label) for label in labels]

@@ -64,9 +64,6 @@
       <section class="card reports-chart">
         <h2>Time summary</h2>
         <div class="chart-controls">
-          <div class="range-switch">
-            <span class="range-chip active">7d</span>
-          </div>
           <div class="mode-switch">
             <button class="mode-button active" type="button" data-mode="bar">Bar</button>
             <button class="mode-button" type="button" data-mode="line">Line</button>
@@ -105,9 +102,9 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="{{ url_for('static', filename='vendor/litepicker/litepicker.js') }}"></script>
   <script>
-    const summary = {{ summary | tojson }};
-    const labels = summary.map((item) => item.label);
-    const values = summary.map((item) => item.seconds);
+    let summary = {{ summary | tojson }};
+    let labels = summary.map((item) => item.label);
+    let values = summary.map((item) => item.seconds);
     const ctx = document.getElementById("reports-chart");
     let chartType = "bar";
     let chartInstance = null;
@@ -159,6 +156,19 @@
           },
         },
       });
+    };
+
+    const updateChart = (nextSummary) => {
+      summary = nextSummary;
+      labels = summary.map((item) => item.label);
+      values = summary.map((item) => item.seconds);
+      if (!chartInstance) {
+        buildChart(chartType);
+        return;
+      }
+      chartInstance.data.labels = labels;
+      chartInstance.data.datasets[0].data = values;
+      chartInstance.update();
     };
 
     buildChart(chartType);
@@ -255,10 +265,24 @@
         rangeInput.value = `${startDate.format("YYYY-MM-DD")} → ${endDate.format("YYYY-MM-DD")}`;
       };
 
+      const refreshSummary = (startDate, endDate) => {
+        if (!startDate || !endDate) {
+          return;
+        }
+        const startValue = startDate.format("YYYY-MM-DD");
+        const endValue = endDate.format("YYYY-MM-DD");
+        fetch(`/api/reports/summary?start=${startValue}&end=${endValue}`)
+          .then((response) => response.json())
+          .then((payload) => updateChart(payload.summary || []))
+          .catch(() => {});
+      };
+
       updateLabel(picker.getStartDate(), picker.getEndDate());
+      refreshSummary(picker.getStartDate(), picker.getEndDate());
 
       picker.on("selected", (startDate, endDate) => {
         updateLabel(startDate, endDate);
+        refreshSummary(startDate, endDate);
       });
     }
   </script>
