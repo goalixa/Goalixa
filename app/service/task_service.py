@@ -181,6 +181,43 @@ class TaskService:
 
         return buckets
 
+    def project_distribution_by_range(self, start_date, end_date):
+        start_day = datetime.combine(start_date, datetime.min.time())
+        end_day = datetime.combine(end_date + timedelta(days=1), datetime.min.time())
+        entries = self.repository.fetch_time_entries_with_projects_between(
+            start_day.isoformat(), end_day.isoformat()
+        )
+
+        totals = {}
+        for entry in entries:
+            entry_start = datetime.fromisoformat(entry["started_at"])
+            entry_end = (
+                datetime.fromisoformat(entry["ended_at"])
+                if entry["ended_at"]
+                else datetime.utcnow()
+            )
+            overlap_start = max(entry_start, start_day)
+            overlap_end = min(entry_end, end_day)
+            if overlap_end <= overlap_start:
+                continue
+            seconds = int((overlap_end - overlap_start).total_seconds())
+            project_name = entry["project_name"] or "Unassigned"
+            totals[project_name] = totals.get(project_name, 0) + seconds
+
+        total_seconds = sum(totals.values())
+        distribution = []
+        for project_name, seconds in totals.items():
+            percent = (seconds / total_seconds) * 100 if total_seconds else 0
+            distribution.append(
+                {
+                    "project": project_name,
+                    "seconds": seconds,
+                    "percent": percent,
+                }
+            )
+        distribution.sort(key=lambda item: item["seconds"], reverse=True)
+        return distribution, total_seconds
+
     def list_labels(self):
         labels = self.repository.fetch_labels()
         return [dict(label) for label in labels]

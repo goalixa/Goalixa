@@ -88,8 +88,20 @@
           </div>
         </div>
         {% if summary %}
-          <div class="chart-panel is-active">
-            <canvas id="reports-chart" height="160"></canvas>
+          <div class="reports-chart-grid">
+            <div class="chart-panel is-active">
+              <canvas id="reports-chart" height="160"></canvas>
+            </div>
+            <div class="donut-panel">
+              <div class="donut-header">
+                <h3>Project distribution</h3>
+                <span class="donut-total" id="distribution-total">00:00:00</span>
+              </div>
+              <div class="donut-wrap">
+                <canvas id="distribution-chart" height="160"></canvas>
+              </div>
+              <ul class="donut-legend" id="distribution-legend"></ul>
+            </div>
           </div>
         {% else %}
           <p class="empty">No activity yet.</p>
@@ -126,6 +138,7 @@
     const ctx = document.getElementById("reports-chart");
     let chartType = "bar";
     let chartInstance = null;
+    let distributionChart = null;
 
     const buildChart = (type) => {
       if (!ctx) {
@@ -187,6 +200,79 @@
       chartInstance.data.labels = labels;
       chartInstance.data.datasets[0].data = values;
       chartInstance.update();
+    };
+
+    const updateDistribution = (items, totalSeconds) => {
+      const ctx = document.getElementById("distribution-chart");
+      const legend = document.getElementById("distribution-legend");
+      const totalEl = document.getElementById("distribution-total");
+      if (!ctx || !legend || !totalEl) {
+        return;
+      }
+
+      totalEl.textContent = formatSeconds(totalSeconds || 0);
+      const palette = [
+        "#1f6feb",
+        "#f2a900",
+        "#2d7d46",
+        "#e85d75",
+        "#7b61ff",
+        "#00bcd4",
+        "#ff8f00",
+        "#6d4c41",
+      ];
+      const labels = items.map((item) => item.project);
+      const values = items.map((item) => item.seconds);
+      const colors = items.map((_, index) => palette[index % palette.length]);
+
+      if (distributionChart) {
+        distributionChart.destroy();
+      }
+
+      distributionChart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels,
+          datasets: [
+            {
+              data: values,
+              backgroundColor: colors,
+              borderWidth: 0,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const seconds = context.raw || 0;
+                  const percent = totalSeconds
+                    ? ((seconds / totalSeconds) * 100).toFixed(1)
+                    : "0.0";
+                  return `${context.label}: ${percent}%`;
+                },
+              },
+            },
+          },
+          cutout: "70%",
+        },
+      });
+
+      legend.innerHTML = items
+        .map((item, index) => {
+          const percent = item.percent.toFixed(1);
+          const time = formatSeconds(item.seconds);
+          return `<li>
+            <span class="legend-color" style="background:${colors[index]}"></span>
+            <span class="legend-text">${item.project}</span>
+            <span class="legend-meta">${percent}% · ${time}</span>
+          </li>`;
+        })
+        .join("");
     };
 
     const formatSeconds = (totalSeconds) => {
@@ -316,6 +402,7 @@
           .then((payload) => {
             updateChart(payload.summary || []);
             updateSummaryMetrics(payload);
+            updateDistribution(payload.distribution || [], payload.total_seconds || 0);
           })
           .catch(() => {});
       };

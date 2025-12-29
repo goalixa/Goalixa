@@ -43,12 +43,15 @@ def register_routes(app, service):
             start_date, end_date = end_date, start_date
 
         summary = service.summary_by_range(start_date, end_date)
-        total_seconds = sum(item["seconds"] for item in summary)
+        distribution, total_seconds = service.project_distribution_by_range(
+            start_date, end_date
+        )
         days = max((end_date - start_date).days + 1, 1)
         avg_daily_hours = total_seconds / 3600 / days
         return jsonify(
             {
                 "summary": summary,
+                "distribution": distribution,
                 "total_seconds": total_seconds,
                 "avg_daily_hours": avg_daily_hours,
             }

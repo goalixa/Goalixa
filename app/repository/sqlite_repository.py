@@ -352,3 +352,18 @@ class SQLiteTaskRepository:
             """,
             (end_iso, start_iso),
         ).fetchall()
+
+    def fetch_time_entries_with_projects_between(self, start_iso, end_iso):
+        db = self._get_db()
+        return db.execute(
+            """
+            SELECT te.id, te.task_id, te.started_at, te.ended_at,
+                   t.project_id, p.name AS project_name
+            FROM time_entries te
+            JOIN tasks t ON t.id = te.task_id
+            LEFT JOIN projects p ON p.id = t.project_id
+            WHERE te.started_at < ?
+              AND (te.ended_at IS NULL OR te.ended_at > ?)
+            """,
+            (end_iso, start_iso),
+        ).fetchall()
