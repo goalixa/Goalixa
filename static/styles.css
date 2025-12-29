@@ -478,6 +478,37 @@ body {
   gap: 12px;
 }
 
+.reports-summary-bar {
+  margin: 8px 12px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #fef6e6 0%, #f6f0ff 100%);
+  border: 1px solid #eadfcd;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.summary-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 700;
+}
+
+.summary-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
+}
+
 .filter-group {
   display: flex;
   align-items: center;

@@ -31,19 +31,28 @@ def register_routes(app, service):
         start = request.args.get("start")
         end = request.args.get("end")
         if not start or not end:
-            return jsonify({"summary": []})
+            return jsonify({"summary": [], "total_seconds": 0, "avg_daily_hours": 0})
 
         try:
             start_date = datetime.fromisoformat(start).date()
             end_date = datetime.fromisoformat(end).date()
         except ValueError:
-            return jsonify({"summary": []})
+            return jsonify({"summary": [], "total_seconds": 0, "avg_daily_hours": 0})
 
         if end_date < start_date:
             start_date, end_date = end_date, start_date
 
         summary = service.summary_by_range(start_date, end_date)
-        return jsonify({"summary": summary})
+        total_seconds = sum(item["seconds"] for item in summary)
+        days = max((end_date - start_date).days + 1, 1)
+        avg_daily_hours = total_seconds / 3600 / days
+        return jsonify(
+            {
+                "summary": summary,
+                "total_seconds": total_seconds,
+                "avg_daily_hours": avg_daily_hours,
+            }
+        )
 
     @app.route("/tasks", methods=["GET"])
     def index():
