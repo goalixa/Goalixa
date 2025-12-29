@@ -79,34 +79,34 @@
       </section>
       <div class="reports-body">
 
-      <section class="card reports-chart">
-        <h2>Time summary</h2>
-        <div class="chart-controls">
-          <div class="mode-switch">
-            <button class="mode-button active" type="button" data-mode="bar">Bar</button>
-            <button class="mode-button" type="button" data-mode="line">Line</button>
+      <div class="reports-duo">
+        <section class="card reports-chart">
+          <h2>Time summary</h2>
+          <div class="chart-controls">
+            <div class="mode-switch">
+              <button class="mode-button active" type="button" data-mode="bar">Bar</button>
+              <button class="mode-button" type="button" data-mode="line">Line</button>
+            </div>
           </div>
-        </div>
-        {% if summary %}
-          <div class="reports-chart-grid">
+          {% if summary %}
             <div class="chart-panel is-active">
               <canvas id="reports-chart" height="160"></canvas>
             </div>
-            <div class="donut-panel">
-              <div class="donut-header">
-                <h3>Project distribution</h3>
-                <span class="donut-total" id="distribution-total">00:00:00</span>
-              </div>
-              <div class="donut-wrap">
-                <canvas id="distribution-chart" height="160"></canvas>
-              </div>
-              <ul class="donut-legend" id="distribution-legend"></ul>
-            </div>
+          {% else %}
+            <p class="empty">No activity yet.</p>
+          {% endif %}
+        </section>
+        <section class="card donut-panel">
+          <div class="donut-header">
+            <h3>Project distribution</h3>
+            <span class="donut-total" id="distribution-total">00:00:00</span>
           </div>
-        {% else %}
-          <p class="empty">No activity yet.</p>
-        {% endif %}
-      </section>
+          <div class="donut-wrap">
+            <canvas id="distribution-chart" height="160"></canvas>
+          </div>
+          <ul class="donut-legend" id="distribution-legend"></ul>
+        </section>
+      </div>
 
       <section class="card">
         <h2>Task Totals</h2>
@@ -147,20 +147,26 @@
       if (chartInstance) {
         chartInstance.destroy();
       }
+      const dataset = {
+        label: "Total time",
+        data: values,
+        borderColor: "#1f6feb",
+        backgroundColor: type === "line" ? "rgba(31, 111, 235, 0.25)" : "#1f6feb",
+        borderWidth: 2,
+        tension: 0.35,
+      };
+      if (type === "bar") {
+        dataset.barThickness = 10;
+        dataset.maxBarThickness = 12;
+        dataset.categoryPercentage = 0.6;
+        dataset.barPercentage = 0.6;
+      }
+
       chartInstance = new Chart(ctx, {
         type,
         data: {
           labels,
-          datasets: [
-            {
-              label: "Total time",
-              data: values,
-              borderColor: "#1f6feb",
-              backgroundColor: type === "line" ? "rgba(31, 111, 235, 0.25)" : "#1f6feb",
-              borderWidth: 2,
-              tension: 0.35,
-            },
-          ],
+          datasets: [dataset],
         },
         options: {
           responsive: true,
