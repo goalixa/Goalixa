@@ -59,6 +59,24 @@
           <button class="chip ghost" type="button">Add filter</button>
         </div>
       </section>
+      <section class="reports-summary-bar">
+        <div class="summary-item">
+          <span class="summary-label">Total hours</span>
+          <span class="summary-value" id="summary-total">00:00:00</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Billable hours</span>
+          <span class="summary-value">-</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Amount</span>
+          <span class="summary-value">-</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Average daily hours</span>
+          <span class="summary-value" id="summary-average">0.00 Hours</span>
+        </div>
+      </section>
       <div class="reports-body">
 
       <section class="card reports-chart">
@@ -171,6 +189,28 @@
       chartInstance.update();
     };
 
+    const formatSeconds = (totalSeconds) => {
+      const days = Math.floor(totalSeconds / 86400);
+      const remainder = totalSeconds % 86400;
+      const hours = Math.floor(remainder / 3600);
+      const minutes = Math.floor((remainder % 3600) / 60);
+      const seconds = remainder % 60;
+      const time = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      return days ? `${days}d ${time}` : time;
+    };
+
+    const updateSummaryMetrics = (payload) => {
+      const totalEl = document.getElementById("summary-total");
+      const avgEl = document.getElementById("summary-average");
+      if (totalEl) {
+        totalEl.textContent = formatSeconds(payload.total_seconds || 0);
+      }
+      if (avgEl) {
+        const avg = payload.avg_daily_hours || 0;
+        avgEl.textContent = `${avg.toFixed(2)} Hours`;
+      }
+    };
+
     buildChart(chartType);
 
     document.querySelectorAll(".mode-button").forEach((button) => {
@@ -273,7 +313,10 @@
         const endValue = endDate.format("YYYY-MM-DD");
         fetch(`/api/reports/summary?start=${startValue}&end=${endValue}`)
           .then((response) => response.json())
-          .then((payload) => updateChart(payload.summary || []))
+          .then((payload) => {
+            updateChart(payload.summary || []);
+            updateSummaryMetrics(payload);
+          })
           .catch(() => {});
       };
 
