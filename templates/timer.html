@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Timer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/fullcalendar/fullcalendar.min.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/litepicker/litepicker.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
 </head>
 <body>
@@ -35,11 +37,10 @@
         <button class="theme-toggle" type="button" data-theme-toggle>🌓 Theme</button>
       </div>
     </aside>
-    <main class="container">
+    <div class="timer-page">
       <header class="timer-hero">
         <div class="timer-controls">
           <div class="timer-select">
-            <label class="timer-label" for="task-picker">What are you working on?</label>
             <input id="task-picker" type="text" placeholder="What are you working on?" />
             <div class="timer-dropdown">
               <input class="timer-search" type="text" placeholder="Search tasks..." />
@@ -53,21 +54,90 @@
             </div>
           </div>
           <div class="timer-actions">
-            <button class="timer-btn primary" type="button">Start</button>
-            <button class="timer-btn" type="button">Pause</button>
+            <button class="timer-btn primary" type="button" aria-label="Start or Pause">▶️ ⏸️</button>
           </div>
         </div>
       </header>
-      <header class="header">
-        <h1>Timer</h1>
-        <p>Start a focused session and track your time.</p>
-      </header>
-
-      <section class="card">
-        <div class="chart-placeholder">Timer UI placeholder</div>
+      <section class="timer-range-section">
+        <div class="timer-range-card">
+          <div class="timer-range-left">
+            <div class="calendar-row">
+              <input class="calendar-input" id="timer-range" type="text" readonly />
+            </div>
+          </div>
+          <div class="timer-range-summary">
+            <div class="timer-summary-item">
+              <span class="timer-summary-label">TODAY</span>
+              <span class="timer-summary-value">02:15:00</span>
+            </div>
+            <div class="timer-summary-item">
+              <span class="timer-summary-label">WEEK TOTAL</span>
+              <span class="timer-summary-value">18:40:00</span>
+            </div>
+          </div>
+          <div class="timer-range-right">
+            <div class="timer-view-box">
+              <button class="timer-view-btn is-active" type="button">Calendar</button>
+              <button class="timer-view-btn" type="button">View List</button>
+              <button class="timer-view-btn" type="button">Timesheet</button>
+            </div>
+          </div>
+        </div>
       </section>
-    </main>
+      <section class="timer-calendar-section">
+        <div class="card timer-calendar-card">
+          <div id="timer-calendar"></div>
+        </div>
+      </section>
+      <main class="container">
+        <section class="card">
+          <div class="chart-placeholder">Timer UI placeholder</div>
+        </section>
+      </main>
+    </div>
   </div>
+  <script src="{{ url_for('static', filename='vendor/fullcalendar/fullcalendar.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='vendor/litepicker/litepicker.js') }}"></script>
   <script src="{{ url_for('static', filename='theme.js') }}"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const rangeInput = document.getElementById("timer-range");
+      if (rangeInput && typeof Litepicker !== "undefined") {
+        const today = new Date();
+        const start = new Date(today);
+        start.setDate(today.getDate() - 6);
+        const picker = new Litepicker({
+          element: rangeInput,
+          singleMode: false,
+          startDate: start,
+          endDate: today,
+          showTooltip: false,
+          numberOfMonths: 1,
+          numberOfColumns: 1,
+          format: "YYYY-MM-DD",
+        });
+        rangeInput.value = `${picker.getStartDate().format("YYYY-MM-DD")} → ${picker
+          .getEndDate()
+          .format("YYYY-MM-DD")}`;
+      }
+
+      const calendarEl = document.getElementById("timer-calendar");
+      if (!calendarEl || typeof FullCalendar === "undefined") {
+        return;
+      }
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: "dayGridMonth",
+        height: "auto",
+        headerToolbar: {
+          left: "prev,next",
+          center: "title",
+          right: "",
+        },
+        navLinks: true,
+        dayMaxEvents: true,
+      });
+      calendar.render();
+    });
+  </script>
 </body>
 </html>
