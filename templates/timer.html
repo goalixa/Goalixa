@@ -25,7 +25,10 @@
           </div>
         </div>
         <div class="timer-actions">
-          <button class="timer-btn primary" type="button" aria-label="Start or Pause">▶️ ⏸️</button>
+          <button class="btn btn-primary btn-sm timer-btn primary" type="button" aria-label="Start or Pause">
+            <i class="bi bi-play-fill"></i>
+            <i class="bi bi-pause-fill"></i>
+          </button>
         </div>
       </div>
     </header>
@@ -48,9 +51,18 @@
         </div>
         <div class="timer-range-right">
           <div class="timer-view-box">
-            <button class="timer-view-btn is-active" type="button" data-view-button="calendar">Calendar</button>
-            <button class="timer-view-btn" type="button" data-view-button="list">View List</button>
-            <button class="timer-view-btn" type="button" data-view-button="timesheet">Timesheet</button>
+            <button class="btn btn-outline-primary btn-sm timer-view-btn is-active" type="button" data-view-button="calendar">
+              <i class="bi bi-calendar-week"></i>
+              Calendar
+            </button>
+            <button class="btn btn-outline-primary btn-sm timer-view-btn" type="button" data-view-button="list">
+              <i class="bi bi-list-check"></i>
+              View List
+            </button>
+            <button class="btn btn-outline-primary btn-sm timer-view-btn" type="button" data-view-button="timesheet">
+              <i class="bi bi-clock-history"></i>
+              Timesheet
+            </button>
           </div>
         </div>
       </div>
@@ -84,17 +96,21 @@
                     <div class="timer-list-right">
                       <span class="timer-list-time">{{ entry["start_time"] }} - {{ entry["end_time"] }}</span>
                       <span class="timer-list-duration">{{ entry["duration_seconds"] | format_seconds }}</span>
-                      <div class="timer-list-actions">
-                        {% if entry["is_running"] %}
-                          <form method="post" action="{{ url_for('stop_task', task_id=entry['task_id']) }}">
-                            <button class="timer-list-action pause" type="submit">⏸️</button>
-                          </form>
-                        {% else %}
-                          <form method="post" action="{{ url_for('start_task', task_id=entry['task_id']) }}">
-                            <button class="timer-list-action resume" type="submit">▶️</button>
-                          </form>
-                        {% endif %}
-                      </div>
+                        <div class="timer-list-actions">
+                          {% if entry["is_running"] %}
+                            <form method="post" action="{{ url_for('stop_task', task_id=entry['task_id']) }}">
+                              <button class="btn btn-outline-warning btn-sm timer-list-action pause" type="submit">
+                                <i class="bi bi-pause-fill"></i>
+                              </button>
+                            </form>
+                          {% else %}
+                            <form method="post" action="{{ url_for('start_task', task_id=entry['task_id']) }}">
+                              <button class="btn btn-outline-primary btn-sm timer-list-action resume" type="submit">
+                                <i class="bi bi-play-fill"></i>
+                              </button>
+                            </form>
+                          {% endif %}
+                        </div>
                     </div>
                   </div>
                 </div>

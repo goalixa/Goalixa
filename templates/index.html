@@ -18,7 +18,9 @@
             <option value="{{ project['id'] }}" {% if loop.first %}selected{% endif %}>{{ project['name'] }}</option>
           {% endfor %}
         </select>
-        <button class="label-toggle icon-button" id="create-label-toggle" type="button" aria-label="Labels">🏷️</button>
+        <button class="btn btn-light btn-sm label-toggle icon-button" id="create-label-toggle" type="button" aria-label="Labels">
+          <i class="bi bi-tags"></i>
+        </button>
         <div class="label-picker" id="create-label-picker">
           <select id="task-labels" name="label_ids" multiple>
             {% for label in labels %}
@@ -26,7 +28,10 @@
             {% endfor %}
           </select>
         </div>
-        <button type="submit">Add</button>
+        <button class="btn btn-primary btn-sm" type="submit">
+          <i class="bi bi-plus-lg"></i>
+          Add
+        </button>
       </form>
     </section>
 
@@ -52,25 +57,37 @@
               <div class="task-actions">
                 {% if task['is_running'] %}
                   <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}" data-action="stop" data-task-id="{{ task['id'] }}">
-                    <button class="menu-item danger" type="submit">Stop</button>
-                  </form>
-                {% else %}
-                  <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}" data-action="start" data-task-id="{{ task['id'] }}">
-                    <button class="menu-item" type="submit">Start</button>
-                  </form>
-                {% endif %}
-                  <form method="post" action="{{ url_for('delete_task', task_id=task['id']) }}" data-action="delete" data-task-id="{{ task['id'] }}">
-                    <button class="menu-item danger" type="submit">Delete task</button>
-                  </form>
-                  <form class="label-form" method="post" action="{{ url_for('add_task_label', task_id=task['id']) }}">
-                    <select name="label_id" required>
-                      <option value="" disabled selected>Add label</option>
-                      {% for label in labels %}
-                        <option value="{{ label['id'] }}">{{ label['name'] }}</option>
-                      {% endfor %}
-                    </select>
-                    <button class="menu-item" type="submit">Add</button>
-                  </form>
+                  <button class="btn btn-outline-warning btn-sm menu-item danger" type="submit">
+                    <i class="bi bi-pause-fill"></i>
+                    Stop
+                  </button>
+                </form>
+              {% else %}
+                <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}" data-action="start" data-task-id="{{ task['id'] }}">
+                  <button class="btn btn-outline-primary btn-sm menu-item" type="submit">
+                    <i class="bi bi-play-fill"></i>
+                    Start
+                  </button>
+                </form>
+              {% endif %}
+                <form method="post" action="{{ url_for('delete_task', task_id=task['id']) }}" data-action="delete" data-task-id="{{ task['id'] }}">
+                  <button class="btn btn-outline-danger btn-sm menu-item danger" type="submit">
+                    <i class="bi bi-trash"></i>
+                    Delete task
+                  </button>
+                </form>
+                <form class="label-form" method="post" action="{{ url_for('add_task_label', task_id=task['id']) }}">
+                  <select name="label_id" required>
+                    <option value="" disabled selected>Add label</option>
+                    {% for label in labels %}
+                      <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+                    {% endfor %}
+                  </select>
+                  <button class="btn btn-outline-secondary btn-sm menu-item" type="submit">
+                    <i class="bi bi-plus-lg"></i>
+                    Add
+                  </button>
+                </form>
               </div>
             </li>
             {% endfor %}
