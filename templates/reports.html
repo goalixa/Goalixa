@@ -16,6 +16,7 @@
         <nav class="sidebar-nav">
           <a class="sidebar-link" href="{{ url_for('overview') }}">📊 Overview</a>
           <a class="sidebar-link" href="{{ url_for('timer') }}">⏱️ Timer</a>
+          <a class="sidebar-link" href="{{ url_for('calendar') }}">🗓️ Calendar</a>
         </nav>
       </div>
       <div class="sidebar-section">
@@ -115,24 +116,54 @@
         </div>
       </div>
 
-      <div class="reports-body">
+      <div class="reports-body reports-body-wide">
 
-      <section class="card">
-        <h2>Task Totals</h2>
-        {% if tasks %}
-          <ul class="task-list">
-            {% for task in tasks %}
-              <li class="task-item">
-                <div class="task-info">
-                  <span class="name-badge name-task">{{ task['name'] }}</span>
-                  <span class="task-project">{{ task['project_name'] or 'Unassigned' }}</span>
-                  <span class="task-time">{{ task['total_seconds'] | format_seconds }}</span>
+      <section class="card projects-total-card">
+        <h2>Projects Total</h2>
+        {% if project_totals %}
+          <div class="projects-total-list">
+            {% for project in project_totals %}
+              <div class="projects-total-item" data-project-item>
+                <button class="projects-total-header" type="button" data-project-toggle>
+                  <span class="projects-total-name">
+                    <span class="project-dot" style="--project-color: hsl({{ (loop.index0 * 47) % 360 }}, 78%, 45%);"></span>
+                    {{ project["name"] }}
+                  </span>
+                  <span class="projects-total-time">{{ project["total_seconds"] | format_seconds }}</span>
+                </button>
+                <div class="projects-total-details">
+                  {% for task in project["tasks"] %}
+                    <div class="projects-task-row">
+                      <div class="projects-task-info">
+                        <span class="projects-task-name">{{ task["name"] }}</span>
+                        {% if task["labels"] %}
+                          <span class="projects-task-labels">
+                            {{ task["labels"] | map(attribute="name") | join(", ") }}
+                          </span>
+                        {% endif %}
+                      </div>
+                      <div class="projects-task-meta">
+                        <span class="projects-task-time">{{ task["total_seconds"] | format_seconds }}</span>
+                        <div class="projects-task-actions">
+                          {% if task["is_running"] %}
+                            <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}">
+                              <button class="projects-task-action pause" type="submit">⏸️</button>
+                            </form>
+                          {% else %}
+                            <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}">
+                              <button class="projects-task-action resume" type="submit">▶️</button>
+                            </form>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
                 </div>
-              </li>
+              </div>
             {% endfor %}
-          </ul>
+          </div>
         {% else %}
-          <p class="empty">No tasks yet.</p>
+          <p class="empty">No projects yet.</p>
         {% endif %}
       </section>
       </div>
@@ -142,6 +173,15 @@
   <script src="{{ url_for('static', filename='vendor/litepicker/litepicker.js') }}"></script>
   <script src="{{ url_for('static', filename='theme.js') }}"></script>
   <script>
+    document.querySelectorAll("[data-project-toggle]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const item = button.closest("[data-project-item]");
+        if (item) {
+          item.classList.toggle("is-open");
+        }
+      });
+    });
+
     let summary = {{ summary | tojson }};
     let labels = summary.map((item) => item.label);
     let values = summary.map((item) => item.seconds);

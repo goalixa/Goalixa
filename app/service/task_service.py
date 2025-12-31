@@ -278,7 +278,12 @@ class TaskService:
             start_day.isoformat(), end_day.isoformat()
         )
         task_ids = {entry["task_id"] for entry in entries}
-        labels_map = self.repository.fetch_task_labels_map(list(task_ids))
+        task_id_list = list(task_ids)
+        labels_map = self.repository.fetch_task_labels_map(task_id_list)
+        running_map = {
+            task_id: self.repository.is_task_running(task_id)
+            for task_id in task_id_list
+        }
 
         days = (end_date - start_date).days + 1
         buckets = []
@@ -322,12 +327,14 @@ class TaskService:
                 bucket["total_seconds"] += duration
                 bucket["entries"].append(
                     {
+                        "task_id": entry["task_id"],
                         "task_name": entry["task_name"] or "Unnamed Task",
                         "project_name": entry["project_name"] or "Unassigned",
                         "labels": entry_labels,
                         "duration_seconds": duration,
                         "start_time": self._format_time(overlap_start),
                         "end_time": self._format_time(overlap_end),
+                        "is_running": bool(running_map.get(entry["task_id"], False)),
                         "sort_ts": overlap_start.timestamp(),
                     }
                 )
@@ -344,6 +351,48 @@ class TaskService:
             result.append(bucket)
 
         return result
+
+    def list_time_entries_for_calendar(self, start_dt, end_dt):
+        entries = self.repository.fetch_time_entries_with_task_details_between(
+            start_dt.isoformat(), end_dt.isoformat()
+        )
+        now = datetime.utcnow()
+        palette = [
+            ("#fef3c7", "#f59e0b", "#7c2d12"),
+            ("#dbeafe", "#2563eb", "#1e3a8a"),
+            ("#dcfce7", "#16a34a", "#14532d"),
+            ("#fae8ff", "#9333ea", "#4a044e"),
+            ("#ffe4e6", "#e11d48", "#881337"),
+            ("#e0f2fe", "#0284c7", "#0c4a6e"),
+        ]
+        events = []
+        for entry in entries:
+            entry_start = datetime.fromisoformat(entry["started_at"])
+            entry_end = (
+                datetime.fromisoformat(entry["ended_at"])
+                if entry["ended_at"]
+                else now
+            )
+            overlap_start = max(entry_start, start_dt)
+            overlap_end = min(entry_end, end_dt)
+            if overlap_end <= overlap_start:
+                continue
+            task_name = entry["task_name"] or "Unnamed Task"
+            project_name = entry["project_name"] or "Unassigned"
+            title = f"{task_name} · {project_name}" if project_name else task_name
+            colors = palette[entry["task_id"] % len(palette)]
+            events.append(
+                {
+                    "title": title,
+                    "start": overlap_start.isoformat(),
+                    "end": overlap_end.isoformat(),
+                    "taskId": entry["task_id"],
+                    "backgroundColor": colors[0],
+                    "borderColor": colors[1],
+                    "textColor": colors[2],
+                }
+            )
+        return events
 
     @staticmethod
     def _format_time(value):

@@ -1,9 +1,21 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from flask import jsonify, redirect, render_template, request, url_for
 
 
 def register_routes(app, service):
+    def parse_iso(value):
+        if not value:
+            return None
+        normalized = value.replace("Z", "+00:00")
+        try:
+            parsed = datetime.fromisoformat(normalized)
+        except ValueError:
+            return None
+        if parsed.tzinfo is not None:
+            return parsed.astimezone(timezone.utc).replace(tzinfo=None)
+        return parsed
+
     @app.route("/", methods=["GET"])
     def overview():
         summary = service.summary_by_days(7)
@@ -40,12 +52,34 @@ def register_routes(app, service):
             timer_range_end=end_date.isoformat(),
         )
 
+    @app.route("/calendar", methods=["GET"])
+    def calendar():
+        return render_template("calendar.html")
+
     @app.route("/reports", methods=["GET"])
     def reports():
         tasks = service.list_tasks()
         summary = service.summary_by_days(7)
+        projects = {}
+        for task in tasks:
+            project_name = task.get("project_name") or "Unassigned"
+            entry = projects.setdefault(
+                project_name,
+                {"name": project_name, "total_seconds": 0, "tasks": []},
+            )
+            entry["total_seconds"] += int(task.get("total_seconds") or 0)
+            entry["tasks"].append(task)
+        project_totals = sorted(
+            projects.values(),
+            key=lambda item: item["total_seconds"],
+            reverse=True,
+        )
         return render_template(
-            "reports.html", tasks=tasks, summary=summary, allowed_ranges=[7]
+            "reports.html",
+            tasks=tasks,
+            summary=summary,
+            project_totals=project_totals,
+            allowed_ranges=[7],
         )
 
     @app.route("/api/reports/summary", methods=["GET"])
@@ -81,6 +115,19 @@ def register_routes(app, service):
                 "avg_daily_hours": avg_daily_hours,
             }
         )
+
+    @app.route("/api/timer/entries", methods=["GET"])
+    def timer_entries():
+        start_raw = request.args.get("start")
+        end_raw = request.args.get("end")
+        start_dt = parse_iso(start_raw)
+        end_dt = parse_iso(end_raw)
+        if not start_dt or not end_dt:
+            return jsonify({"events": []})
+        if end_dt < start_dt:
+            start_dt, end_dt = end_dt, start_dt
+        events = service.list_time_entries_for_calendar(start_dt, end_dt)
+        return jsonify({"events": events})
 
     @app.route("/tasks", methods=["GET"])
     def index():
