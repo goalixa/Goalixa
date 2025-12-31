@@ -1,0 +1,29 @@
+{% extends "security/base.html" %}
+{% from "security/_form_helpers.html" import render_field %}
+
+{% block content %}
+  <h1 class="auth-title">Welcome back</h1>
+  <p class="auth-subtitle">Sign in to continue.</p>
+
+  {% if error %}
+    <div class="auth-message">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="{{ url_for_security('login') }}">
+    {{ login_user_form.hidden_tag() }}
+    {{ render_field(login_user_form.email, "you@example.com") }}
+    {{ render_field(login_user_form.password, "Password") }}
+    {% if login_user_form.remember %}
+      <label class="auth-field">
+        {{ login_user_form.remember() }}
+        <span>Remember me</span>
+      </label>
+    {% endif %}
+    <div class="auth-actions">
+      <button class="auth-primary" type="submit">Sign in</button>
+      {% if security.registerable %}
+        <a class="auth-link" href="{{ url_for_security('register') }}">Create account</a>
+      {% endif %}
+    </div>
+  </form>
+{% endblock %}

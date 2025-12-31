@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from flask import jsonify, redirect, render_template, request, url_for
+from flask_security import auth_required
 
 
 def register_routes(app, service):
@@ -17,6 +18,7 @@ def register_routes(app, service):
         return parsed
 
     @app.route("/", methods=["GET"])
+    @auth_required()
     def overview():
         summary = service.summary_by_days(7)
         return render_template(
@@ -27,6 +29,7 @@ def register_routes(app, service):
         )
 
     @app.route("/timer", methods=["GET"])
+    @auth_required()
     def timer():
         start = request.args.get("start")
         end = request.args.get("end")
@@ -53,10 +56,12 @@ def register_routes(app, service):
         )
 
     @app.route("/calendar", methods=["GET"])
+    @auth_required()
     def calendar():
         return render_template("calendar.html")
 
     @app.route("/reports", methods=["GET"])
+    @auth_required()
     def reports():
         tasks = service.list_tasks()
         summary = service.summary_by_days(7)
@@ -83,6 +88,7 @@ def register_routes(app, service):
         )
 
     @app.route("/api/reports/summary", methods=["GET"])
+    @auth_required()
     def reports_summary():
         start = request.args.get("start")
         end = request.args.get("end")
@@ -117,6 +123,7 @@ def register_routes(app, service):
         )
 
     @app.route("/api/timer/entries", methods=["GET"])
+    @auth_required()
     def timer_entries():
         start_raw = request.args.get("start")
         end_raw = request.args.get("end")
@@ -130,6 +137,7 @@ def register_routes(app, service):
         return jsonify({"events": events})
 
     @app.route("/tasks", methods=["GET"])
+    @auth_required()
     def index():
         tasks = service.list_tasks()
         projects = service.list_projects()
@@ -139,6 +147,7 @@ def register_routes(app, service):
         )
 
     @app.route("/tasks", methods=["POST"])
+    @auth_required()
     def create_task():
         service.add_task(
             request.form.get("name", ""),
@@ -148,6 +157,7 @@ def register_routes(app, service):
         return redirect(url_for("index"))
 
     @app.route("/api/tasks", methods=["GET"])
+    @auth_required()
     def list_tasks():
         tasks = service.list_tasks()
         return {
@@ -167,6 +177,7 @@ def register_routes(app, service):
         }
 
     @app.route("/api/tasks", methods=["POST"])
+    @auth_required()
     def create_task_api():
         payload = request.get_json(silent=True) or {}
         service.add_task(
@@ -177,36 +188,43 @@ def register_routes(app, service):
         return list_tasks()
 
     @app.route("/api/tasks/<int:task_id>/start", methods=["POST"])
+    @auth_required()
     def start_task_api(task_id):
         service.start_task(task_id)
         return list_tasks()
 
     @app.route("/api/tasks/<int:task_id>/stop", methods=["POST"])
+    @auth_required()
     def stop_task_api(task_id):
         service.stop_task(task_id)
         return list_tasks()
 
     @app.route("/api/tasks/<int:task_id>/delete", methods=["POST"])
+    @auth_required()
     def delete_task_api(task_id):
         service.delete_task(task_id)
         return list_tasks()
 
     @app.route("/tasks/<int:task_id>/start", methods=["POST"])
+    @auth_required()
     def start_task(task_id):
         service.start_task(task_id)
         return redirect(url_for("index"))
 
     @app.route("/tasks/<int:task_id>/stop", methods=["POST"])
+    @auth_required()
     def stop_task(task_id):
         service.stop_task(task_id)
         return redirect(url_for("index"))
 
     @app.route("/tasks/<int:task_id>/delete", methods=["POST"])
+    @auth_required()
     def delete_task(task_id):
         service.delete_task(task_id)
         return redirect(url_for("index"))
 
     @app.route("/tasks/<int:task_id>/labels", methods=["POST"])
+    @auth_required()
     def add_task_label(task_id):
         label_id = request.form.get("label_id")
         if label_id:
@@ -214,11 +232,13 @@ def register_routes(app, service):
         return redirect(request.referrer or url_for("index"))
 
     @app.route("/init", methods=["POST"])
+    @auth_required()
     def init():
         service.init_db()
         return redirect(url_for("index"))
 
     @app.route("/projects", methods=["GET"])
+    @auth_required()
     def projects():
         projects_list = service.list_projects()
         labels = service.list_labels()
@@ -227,6 +247,7 @@ def register_routes(app, service):
         )
 
     @app.route("/projects/<int:project_id>", methods=["GET"])
+    @auth_required()
     def project_detail(project_id):
         project = service.get_project(project_id)
         if project is None:
@@ -241,6 +262,7 @@ def register_routes(app, service):
         )
 
     @app.route("/projects", methods=["POST"])
+    @auth_required()
     def create_project():
         service.add_project(
             request.form.get("name", ""),
@@ -249,11 +271,13 @@ def register_routes(app, service):
         return redirect(url_for("projects"))
 
     @app.route("/projects/<int:project_id>/delete", methods=["POST"])
+    @auth_required()
     def delete_project(project_id):
         service.delete_project(project_id)
         return redirect(url_for("projects"))
 
     @app.route("/projects/<int:project_id>/labels", methods=["POST"])
+    @auth_required()
     def add_project_label(project_id):
         label_id = request.form.get("label_id")
         if label_id:
@@ -261,21 +285,25 @@ def register_routes(app, service):
         return redirect(url_for("project_detail", project_id=project_id))
 
     @app.route("/labels", methods=["GET"])
+    @auth_required()
     def labels():
         labels_list = service.list_labels()
         return render_template("labels.html", labels=labels_list)
 
     @app.route("/labels", methods=["POST"])
+    @auth_required()
     def create_label():
         service.add_label(request.form.get("name", ""), request.form.get("color", ""))
         return redirect(url_for("labels"))
 
     @app.route("/labels/<int:label_id>/delete", methods=["POST"])
+    @auth_required()
     def delete_label(label_id):
         service.delete_label(label_id)
         return redirect(url_for("labels"))
 
     @app.route("/api/projects", methods=["GET"])
+    @auth_required()
     def list_projects():
         projects_list = service.list_projects()
         return {
@@ -290,12 +318,14 @@ def register_routes(app, service):
         }
 
     @app.route("/api/projects", methods=["POST"])
+    @auth_required()
     def create_project_api():
         payload = request.get_json(silent=True) or {}
         service.add_project(payload.get("name", ""), payload.get("label_ids", []))
         return list_projects()
 
     @app.route("/api/projects/<int:project_id>/delete", methods=["POST"])
+    @auth_required()
     def delete_project_api(project_id):
         service.delete_project(project_id)
         return list_projects()

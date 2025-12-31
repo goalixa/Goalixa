@@ -1,0 +1,9 @@
+{% macro render_field(field, placeholder="") %}
+  <div class="auth-field">
+    {{ field.label }}
+    {{ field(class="auth-input", placeholder=placeholder) }}
+    {% if field.errors %}
+      <div class="auth-error">{{ field.errors[0] }}</div>
+    {% endif %}
+  </div>
+{% endmacro %}
