@@ -34,7 +34,10 @@
             <span class="color-dot" style="background-color: #a855f7"></span>
           </label>
         </div>
-        <button type="submit">Add</button>
+        <button class="btn btn-primary btn-sm" type="submit">
+          <i class="bi bi-plus-lg"></i>
+          Add
+        </button>
       </form>
     </section>
 
@@ -49,7 +52,10 @@
               </div>
               <div class="task-actions">
                 <form method="post" action="{{ url_for('delete_label', label_id=label['id']) }}">
-                  <button class="delete" type="submit">Delete</button>
+                  <button class="btn btn-outline-danger btn-sm delete" type="submit">
+                    <i class="bi bi-trash"></i>
+                    Delete
+                  </button>
                 </form>
               </div>
             </li>

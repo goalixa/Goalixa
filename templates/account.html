@@ -7,9 +7,15 @@
     <section class="card">
       <h2>Account</h2>
       <p>Signed in as <strong>{{ user.email }}</strong></p>
-      <div class="timer-actions" style="margin-top: 16px;">
-        <a class="timer-btn" href="{{ url_for_security('change_password') }}">Change password</a>
-        <a class="timer-btn primary" href="{{ url_for_security('logout') }}">Log out</a>
+      <div class="d-flex gap-2 mt-3 flex-wrap">
+        <a class="btn btn-outline-primary btn-sm" href="{{ url_for_security('change_password') }}">
+          <i class="bi bi-shield-lock"></i>
+          Change password
+        </a>
+        <a class="btn btn-primary btn-sm" href="{{ url_for_security('logout') }}">
+          <i class="bi bi-box-arrow-right"></i>
+          Log out
+        </a>
       </div>
     </section>
   </main>

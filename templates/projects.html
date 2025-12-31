@@ -12,7 +12,9 @@
     <section class="card">
       <form class="task-form" method="post" action="{{ url_for('create_project') }}">
         <input type="text" name="name" placeholder="Project name" required />
-        <button class="label-toggle icon-button" type="button" data-target="#project-label-picker" aria-label="Labels">🏷️</button>
+        <button class="btn btn-light btn-sm label-toggle icon-button" type="button" data-target="#project-label-picker" aria-label="Labels">
+          <i class="bi bi-tags"></i>
+        </button>
         <div class="label-picker" id="project-label-picker">
           <select name="label_ids" multiple>
             {% for label in labels %}
@@ -20,7 +22,10 @@
             {% endfor %}
           </select>
         </div>
-        <button type="submit">Add</button>
+        <button class="btn btn-primary btn-sm" type="submit">
+          <i class="bi bi-plus-lg"></i>
+          Add
+        </button>
       </form>
     </section>
 
@@ -42,7 +47,10 @@
               </div>
               <div class="task-actions">
                 <form method="post" action="{{ url_for('delete_project', project_id=project['id']) }}">
-                  <button class="delete" type="submit">Delete</button>
+                  <button class="btn btn-outline-danger btn-sm delete" type="submit">
+                    <i class="bi bi-trash"></i>
+                    Delete
+                  </button>
                 </form>
               </div>
             </li>

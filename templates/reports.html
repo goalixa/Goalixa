@@ -11,13 +11,17 @@
       <header class="reports-hero">
         <div class="reports-top">
           <nav class="reports-tabs">
-            <button class="reports-tab active" type="button">Summary</button>
-            <button class="reports-tab" type="button">Detailed</button>
-            <button class="reports-tab" type="button">Workload</button>
+            <button class="btn btn-outline-primary btn-sm reports-tab active" type="button">Summary</button>
+            <button class="btn btn-outline-primary btn-sm reports-tab" type="button">Detailed</button>
+            <button class="btn btn-outline-primary btn-sm reports-tab" type="button">Workload</button>
           </nav>
           <div class="reports-actions">
-            <button class="icon-button ghost" type="button" aria-label="Settings">⚙️</button>
-            <button class="icon-button ghost" type="button" aria-label="Download">⬇️</button>
+            <button class="btn btn-light btn-sm icon-button ghost" type="button" aria-label="Settings">
+              <i class="bi bi-gear"></i>
+            </button>
+            <button class="btn btn-light btn-sm icon-button ghost" type="button" aria-label="Download">
+              <i class="bi bi-download"></i>
+            </button>
           </div>
         </div>
       </header>
@@ -28,9 +32,12 @@
           </div>
         </div>
         <div class="filter-actions">
-          <button class="chip" type="button">Projects</button>
-          <button class="chip" type="button">Labels</button>
-          <button class="chip ghost" type="button">Add filter</button>
+          <button class="btn btn-outline-secondary btn-sm chip" type="button">Projects</button>
+          <button class="btn btn-outline-secondary btn-sm chip" type="button">Labels</button>
+          <button class="btn btn-outline-secondary btn-sm chip ghost" type="button">
+            <i class="bi bi-plus-lg"></i>
+            Add filter
+          </button>
         </div>
       </section>
       <section class="reports-summary-bar">
@@ -57,8 +64,8 @@
             <h2>Time summary</h2>
             <div class="chart-controls">
               <div class="mode-switch">
-                <button class="mode-button active" type="button" data-mode="bar">Bar</button>
-                <button class="mode-button" type="button" data-mode="line">Line</button>
+                <button class="btn btn-outline-primary btn-sm mode-button active" type="button" data-mode="bar">Bar</button>
+                <button class="btn btn-outline-primary btn-sm mode-button" type="button" data-mode="line">Line</button>
               </div>
             </div>
             {% if summary %}
@@ -94,7 +101,7 @@
           <div class="projects-total-list">
             {% for project in project_totals %}
               <div class="projects-total-item" data-project-item>
-                <button class="projects-total-header" type="button" data-project-toggle>
+                <button class="btn btn-light projects-total-header" type="button" data-project-toggle>
                   <span class="projects-total-name">
                     <span class="project-dot" style="--project-color: hsl({{ (loop.index0 * 47) % 360 }}, 78%, 45%);"></span>
                     {{ project["name"] }}
@@ -117,11 +124,15 @@
                         <div class="projects-task-actions">
                           {% if task["is_running"] %}
                             <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}">
-                              <button class="projects-task-action pause" type="submit">⏸️</button>
+                              <button class="btn btn-outline-warning btn-sm projects-task-action pause" type="submit">
+                                <i class="bi bi-pause-fill"></i>
+                              </button>
                             </form>
                           {% else %}
                             <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}">
-                              <button class="projects-task-action resume" type="submit">▶️</button>
+                              <button class="btn btn-outline-primary btn-sm projects-task-action resume" type="submit">
+                                <i class="bi bi-play-fill"></i>
+                              </button>
                             </form>
                           {% endif %}
                         </div>
