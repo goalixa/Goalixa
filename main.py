@@ -23,11 +23,15 @@ def create_app():
     app.config["SECURITY_CHANGEABLE"] = True
     app.config["SECURITY_TRACKABLE"] = True
     app.config["SECURITY_CONFIRMABLE"] = False
+    app.config["SECURITY_PASSWORD_HASH"] = "pbkdf2_sha512"
+    app.config["SECURITY_PASSWORD_SCHEMES"] = ["pbkdf2_sha512"]
     app.config["SECURITY_EMAIL_SENDER"] = os.getenv("SECURITY_EMAIL_SENDER", "no-reply@example.com")
     app.config["SECURITY_LOGIN_USER_TEMPLATE"] = "security/login_user.html"
     app.config["SECURITY_REGISTER_USER_TEMPLATE"] = "security/register_user.html"
     app.config["SECURITY_FORGOT_PASSWORD_TEMPLATE"] = "security/forgot_password.html"
     app.config["SECURITY_RESET_PASSWORD_TEMPLATE"] = "security/reset_password.html"
+    app.config["SECURITY_PROFILE_USER_TEMPLATE"] = "security/profile.html"
+    app.config["SECURITY_CHANGE_PASSWORD_TEMPLATE"] = "security/change_password.html"
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
