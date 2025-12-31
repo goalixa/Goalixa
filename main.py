@@ -23,6 +23,7 @@ def create_app():
     app.config["SECURITY_CHANGEABLE"] = True
     app.config["SECURITY_TRACKABLE"] = True
     app.config["SECURITY_CONFIRMABLE"] = False
+    app.config["SECURITY_PROFILEABLE"] = True
     app.config["SECURITY_PASSWORD_HASH"] = "pbkdf2_sha512"
     app.config["SECURITY_PASSWORD_SCHEMES"] = ["pbkdf2_sha512"]
     app.config["SECURITY_EMAIL_SENDER"] = os.getenv("SECURITY_EMAIL_SENDER", "no-reply@example.com")

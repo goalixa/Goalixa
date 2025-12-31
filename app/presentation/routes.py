@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from flask import jsonify, redirect, render_template, request, url_for
-from flask_security import auth_required
+from flask_security import auth_required, current_user
 
 
 def register_routes(app, service):
@@ -59,6 +59,11 @@ def register_routes(app, service):
     @auth_required()
     def calendar():
         return render_template("calendar.html")
+
+    @app.route("/account", methods=["GET"])
+    @auth_required()
+    def account():
+        return render_template("account.html", user=current_user)
 
     @app.route("/reports", methods=["GET"])
     @auth_required()
