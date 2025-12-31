@@ -17,6 +17,7 @@
         <nav class="sidebar-nav">
           <a class="sidebar-link" href="{{ url_for('overview') }}">📊 Overview</a>
           <a class="sidebar-link active" href="{{ url_for('timer') }}">⏱️ Timer</a>
+          <a class="sidebar-link" href="{{ url_for('calendar') }}">🗓️ Calendar</a>
         </nav>
       </div>
       <div class="sidebar-section">
@@ -99,15 +100,32 @@
                   <span class="timer-list-total">{{ group["total_seconds"] | format_seconds }}</span>
                 </div>
                 {% for entry in group["entries"] %}
-                  <div class="timer-list-item">
-                    <div class="timer-list-title">{{ entry["task_name"] }}</div>
-                    <div class="timer-list-project">{{ entry["project_name"] }}</div>
-                    {% if entry["labels"] %}
-                      <div class="timer-list-label">{{ entry["labels"] | join(", ") }}</div>
-                    {% endif %}
-                    <div class="timer-list-meta">
-                      <span class="timer-list-duration">{{ entry["duration_seconds"] | format_seconds }}</span>
-                      <span class="timer-list-time">{{ entry["start_time"] }} - {{ entry["end_time"] }}</span>
+                  <div class="timer-list-item" data-task-id="{{ entry['task_id'] }}">
+                    <div class="timer-list-row">
+                      <div class="timer-list-left">
+                        {% if entry["labels"] %}
+                          <span class="timer-list-label">{{ entry["labels"] | join(", ") }}</span>
+                        {% endif %}
+                      </div>
+                      <div class="timer-list-center">
+                        <span class="timer-list-title">{{ entry["task_name"] }}</span>
+                        <span class="timer-list-project">{{ entry["project_name"] }}</span>
+                      </div>
+                      <div class="timer-list-right">
+                        <span class="timer-list-time">{{ entry["start_time"] }} - {{ entry["end_time"] }}</span>
+                        <span class="timer-list-duration">{{ entry["duration_seconds"] | format_seconds }}</span>
+                        <div class="timer-list-actions">
+                          {% if entry["is_running"] %}
+                            <form method="post" action="{{ url_for('stop_task', task_id=entry['task_id']) }}">
+                              <button class="timer-list-action pause" type="submit">⏸️</button>
+                            </form>
+                          {% else %}
+                            <form method="post" action="{{ url_for('start_task', task_id=entry['task_id']) }}">
+                              <button class="timer-list-action resume" type="submit">▶️</button>
+                            </form>
+                          {% endif %}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 {% endfor %}
@@ -182,7 +200,42 @@
                 right: "",
               },
               navLinks: true,
-              dayMaxEvents: true,
+              dayMaxEvents: 4,
+              dayMaxEventRows: 4,
+              eventDisplay: "block",
+              dateClick: (info) => {
+                calendar.changeView("dayGridDay", info.dateStr);
+              },
+              eventClick: (info) => {
+                const taskId = info.event.extendedProps?.taskId;
+                const listButton = document.querySelector('[data-view-button="list"]');
+                if (listButton) {
+                  listButton.click();
+                }
+                if (!taskId) {
+                  return;
+                }
+                const target = document.querySelector(`[data-task-id="${taskId}"]`);
+                if (target) {
+                  target.classList.add("is-highlight");
+                  target.scrollIntoView({ behavior: "smooth", block: "center" });
+                  setTimeout(() => target.classList.remove("is-highlight"), 2000);
+                }
+                info.jsEvent.preventDefault();
+              },
+              events: (info, success, failure) => {
+                const params = new URLSearchParams({
+                  start: info.startStr,
+                  end: info.endStr,
+                });
+                fetch(`/api/timer/entries?${params.toString()}`)
+                  .then((response) => response.json())
+                  .then((payload) => success(payload.events || []))
+                  .catch((error) => {
+                    console.error(error);
+                    failure(error);
+                  });
+              },
             })
           : null;
       if (calendar) {
