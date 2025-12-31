@@ -1,157 +1,127 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Timer</title>
+{% extends "layout.html" %}
+{% set title = "Timer" %}
+{% set active_page = "timer" %}
+
+{% block head_extra %}
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/fullcalendar/fullcalendar.min.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/litepicker/litepicker.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
-</head>
-<body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="sidebar-brand">StudyTimmer</div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Track</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('overview') }}">📊 Overview</a>
-          <a class="sidebar-link active" href="{{ url_for('timer') }}">⏱️ Timer</a>
-          <a class="sidebar-link" href="{{ url_for('calendar') }}">🗓️ Calendar</a>
-        </nav>
+{% endblock %}
+
+{% block content %}
+  <div class="timer-page">
+    <header class="timer-hero">
+      <div class="timer-controls">
+        <div class="timer-select">
+          <input id="task-picker" type="text" placeholder="What are you working on?" />
+          <div class="timer-dropdown">
+            <input class="timer-search" type="text" placeholder="Search tasks..." />
+            <div class="timer-list">
+              <button type="button">Recent: Design VPC Architecture</button>
+              <button type="button">Recent: Build ETL Jobs</button>
+              <button type="button">Recent: Refactor Navigation</button>
+              <button type="button">Inventory Legacy Services</button>
+              <button type="button">Accessibility QA</button>
+            </div>
+          </div>
+        </div>
+        <div class="timer-actions">
+          <button class="timer-btn primary" type="button" aria-label="Start or Pause">▶️ ⏸️</button>
+        </div>
       </div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Analyze</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('reports') }}">📈 Reports</a>
-        </nav>
+    </header>
+    <section class="timer-range-section">
+      <div class="timer-range-card">
+        <div class="timer-range-left">
+          <div class="calendar-row">
+            <input class="calendar-input" id="timer-range" type="text" readonly />
+          </div>
+        </div>
+        <div class="timer-range-summary">
+          <div class="timer-summary-item">
+            <span class="timer-summary-label">TODAY</span>
+            <span class="timer-summary-value">02:15:00</span>
+          </div>
+          <div class="timer-summary-item">
+            <span class="timer-summary-label">WEEK TOTAL</span>
+            <span class="timer-summary-value">18:40:00</span>
+          </div>
+        </div>
+        <div class="timer-range-right">
+          <div class="timer-view-box">
+            <button class="timer-view-btn is-active" type="button" data-view-button="calendar">Calendar</button>
+            <button class="timer-view-btn" type="button" data-view-button="list">View List</button>
+            <button class="timer-view-btn" type="button" data-view-button="timesheet">Timesheet</button>
+          </div>
+        </div>
       </div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Manage</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('projects') }}">📁 Projects</a>
-          <a class="sidebar-link" href="{{ url_for('labels') }}">🏷️ Tags</a>
-          <a class="sidebar-link" href="{{ url_for('index') }}">🧭 Tasks</a>
-          <a class="sidebar-link" href="{{ url_for('account') }}">👤 Account</a>
-        </nav>
+    </section>
+    <section class="timer-calendar-section timer-view-panel is-active" data-view-panel="calendar">
+      <div class="card timer-calendar-card">
+        <div id="timer-calendar"></div>
       </div>
-      <div class="sidebar-footer">
-        <button class="theme-toggle" type="button" data-theme-toggle>🌓 Theme</button>
-      </div>
-    </aside>
-    <div class="timer-page">
-      <header class="timer-hero">
-        <div class="timer-controls">
-          <div class="timer-select">
-            <input id="task-picker" type="text" placeholder="What are you working on?" />
-            <div class="timer-dropdown">
-              <input class="timer-search" type="text" placeholder="Search tasks..." />
-              <div class="timer-list">
-                <button type="button">Recent: Design VPC Architecture</button>
-                <button type="button">Recent: Build ETL Jobs</button>
-                <button type="button">Recent: Refactor Navigation</button>
-                <button type="button">Inventory Legacy Services</button>
-                <button type="button">Accessibility QA</button>
+    </section>
+    <section class="timer-calendar-section timer-view-panel" data-view-panel="list">
+      <div class="card timer-list-card">
+        {% if timer_list_groups %}
+          {% for group in timer_list_groups %}
+            <div class="timer-list-group">
+              <div class="timer-list-header">
+                <span class="timer-list-day">{{ group["label"] }}</span>
+                <span class="timer-list-total">{{ group["total_seconds"] | format_seconds }}</span>
               </div>
-            </div>
-          </div>
-          <div class="timer-actions">
-            <button class="timer-btn primary" type="button" aria-label="Start or Pause">▶️ ⏸️</button>
-          </div>
-        </div>
-      </header>
-      <section class="timer-range-section">
-        <div class="timer-range-card">
-          <div class="timer-range-left">
-            <div class="calendar-row">
-              <input class="calendar-input" id="timer-range" type="text" readonly />
-            </div>
-          </div>
-          <div class="timer-range-summary">
-            <div class="timer-summary-item">
-              <span class="timer-summary-label">TODAY</span>
-              <span class="timer-summary-value">02:15:00</span>
-            </div>
-            <div class="timer-summary-item">
-              <span class="timer-summary-label">WEEK TOTAL</span>
-              <span class="timer-summary-value">18:40:00</span>
-            </div>
-          </div>
-          <div class="timer-range-right">
-            <div class="timer-view-box">
-              <button class="timer-view-btn is-active" type="button" data-view-button="calendar">Calendar</button>
-              <button class="timer-view-btn" type="button" data-view-button="list">View List</button>
-              <button class="timer-view-btn" type="button" data-view-button="timesheet">Timesheet</button>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section class="timer-calendar-section timer-view-panel is-active" data-view-panel="calendar">
-        <div class="card timer-calendar-card">
-          <div id="timer-calendar"></div>
-        </div>
-      </section>
-      <section class="timer-calendar-section timer-view-panel" data-view-panel="list">
-        <div class="card timer-list-card">
-          {% if timer_list_groups %}
-            {% for group in timer_list_groups %}
-              <div class="timer-list-group">
-                <div class="timer-list-header">
-                  <span class="timer-list-day">{{ group["label"] }}</span>
-                  <span class="timer-list-total">{{ group["total_seconds"] | format_seconds }}</span>
-                </div>
-                {% for entry in group["entries"] %}
-                  <div class="timer-list-item" data-task-id="{{ entry['task_id'] }}">
-                    <div class="timer-list-row">
-                      <div class="timer-list-left">
-                        {% if entry["labels"] %}
-                          <span class="timer-list-label">{{ entry["labels"] | join(", ") }}</span>
+              {% for entry in group["entries"] %}
+                <div class="timer-list-item" data-task-id="{{ entry['task_id'] }}">
+                  <div class="timer-list-row">
+                    <div class="timer-list-left">
+                      {% if entry["labels"] %}
+                        <span class="timer-list-label">{{ entry["labels"] | join(", ") }}</span>
+                      {% endif %}
+                    </div>
+                    <div class="timer-list-center">
+                      <span class="timer-list-title">{{ entry["task_name"] }}</span>
+                      <span class="timer-list-project">{{ entry["project_name"] }}</span>
+                    </div>
+                    <div class="timer-list-right">
+                      <span class="timer-list-time">{{ entry["start_time"] }} - {{ entry["end_time"] }}</span>
+                      <span class="timer-list-duration">{{ entry["duration_seconds"] | format_seconds }}</span>
+                      <div class="timer-list-actions">
+                        {% if entry["is_running"] %}
+                          <form method="post" action="{{ url_for('stop_task', task_id=entry['task_id']) }}">
+                            <button class="timer-list-action pause" type="submit">⏸️</button>
+                          </form>
+                        {% else %}
+                          <form method="post" action="{{ url_for('start_task', task_id=entry['task_id']) }}">
+                            <button class="timer-list-action resume" type="submit">▶️</button>
+                          </form>
                         {% endif %}
-                      </div>
-                      <div class="timer-list-center">
-                        <span class="timer-list-title">{{ entry["task_name"] }}</span>
-                        <span class="timer-list-project">{{ entry["project_name"] }}</span>
-                      </div>
-                      <div class="timer-list-right">
-                        <span class="timer-list-time">{{ entry["start_time"] }} - {{ entry["end_time"] }}</span>
-                        <span class="timer-list-duration">{{ entry["duration_seconds"] | format_seconds }}</span>
-                        <div class="timer-list-actions">
-                          {% if entry["is_running"] %}
-                            <form method="post" action="{{ url_for('stop_task', task_id=entry['task_id']) }}">
-                              <button class="timer-list-action pause" type="submit">⏸️</button>
-                            </form>
-                          {% else %}
-                            <form method="post" action="{{ url_for('start_task', task_id=entry['task_id']) }}">
-                              <button class="timer-list-action resume" type="submit">▶️</button>
-                            </form>
-                          {% endif %}
-                        </div>
                       </div>
                     </div>
                   </div>
-                {% endfor %}
-              </div>
-            {% endfor %}
-          {% else %}
-            <div class="timer-empty-state">No entries yet.</div>
-          {% endif %}
-        </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="timer-empty-state">No entries yet.</div>
+        {% endif %}
+      </div>
+    </section>
+    <section class="timer-calendar-section timer-view-panel" data-view-panel="timesheet">
+      <div class="card timer-list-card">
+        <div class="timer-empty-state">No timesheet data yet.</div>
+      </div>
+    </section>
+    <main class="container">
+      <section class="card">
+        <div class="chart-placeholder">Timer UI placeholder</div>
       </section>
-      <section class="timer-calendar-section timer-view-panel" data-view-panel="timesheet">
-        <div class="card timer-list-card">
-          <div class="timer-empty-state">No timesheet data yet.</div>
-        </div>
-      </section>
-      <main class="container">
-        <section class="card">
-          <div class="chart-placeholder">Timer UI placeholder</div>
-        </section>
-      </main>
-    </div>
+    </main>
   </div>
+{% endblock %}
+
+{% block scripts %}
   <script src="{{ url_for('static', filename='vendor/fullcalendar/fullcalendar.min.js') }}"></script>
   <script src="{{ url_for('static', filename='vendor/litepicker/litepicker.js') }}"></script>
-  <script src="{{ url_for('static', filename='theme.js') }}"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const rangeInput = document.getElementById("timer-range");
@@ -257,5 +227,4 @@
       });
     });
   </script>
-</body>
-</html>
+{% endblock %}

@@ -1,53 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Account</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
-</head>
-<body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="sidebar-brand">StudyTimmer</div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Track</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('overview') }}">📊 Overview</a>
-          <a class="sidebar-link" href="{{ url_for('timer') }}">⏱️ Timer</a>
-          <a class="sidebar-link" href="{{ url_for('calendar') }}">🗓️ Calendar</a>
-        </nav>
+{% extends "layout.html" %}
+{% set title = "Account" %}
+{% set active_page = "account" %}
+
+{% block content %}
+  <main class="container py-4">
+    <section class="card">
+      <h2>Account</h2>
+      <p>Signed in as <strong>{{ user.email }}</strong></p>
+      <div class="timer-actions" style="margin-top: 16px;">
+        <a class="timer-btn" href="{{ url_for_security('change_password') }}">Change password</a>
+        <a class="timer-btn primary" href="{{ url_for_security('logout') }}">Log out</a>
       </div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Analyze</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('reports') }}">📈 Reports</a>
-        </nav>
-      </div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Manage</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('projects') }}">📁 Projects</a>
-          <a class="sidebar-link" href="{{ url_for('labels') }}">🏷️ Tags</a>
-          <a class="sidebar-link" href="{{ url_for('index') }}">🧭 Tasks</a>
-          <a class="sidebar-link active" href="{{ url_for('account') }}">👤 Account</a>
-        </nav>
-      </div>
-      <div class="sidebar-footer">
-        <button class="theme-toggle" type="button" data-theme-toggle>🌓 Theme</button>
-      </div>
-    </aside>
-    <main class="container">
-      <section class="card">
-        <h2>Account</h2>
-        <p>Signed in as <strong>{{ user.email }}</strong></p>
-        <div class="timer-actions" style="margin-top: 16px;">
-          <a class="timer-btn" href="{{ url_for_security('change_password') }}">Change password</a>
-          <a class="timer-btn primary" href="{{ url_for_security('logout') }}">Log out</a>
-        </div>
-      </section>
-    </main>
-  </div>
-  <script src="{{ url_for('static', filename='theme.js') }}"></script>
-</body>
-</html>
+    </section>
+  </main>
+{% endblock %}

@@ -1,43 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Reports</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+{% extends "layout.html" %}
+{% set title = "Reports" %}
+{% set active_page = "reports" %}
+
+{% block head_extra %}
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/litepicker/litepicker.css') }}" />
-</head>
-<body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="sidebar-brand">StudyTimmer</div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Track</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('overview') }}">📊 Overview</a>
-          <a class="sidebar-link" href="{{ url_for('timer') }}">⏱️ Timer</a>
-          <a class="sidebar-link" href="{{ url_for('calendar') }}">🗓️ Calendar</a>
-        </nav>
-      </div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Analyze</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link active" href="{{ url_for('reports') }}">📈 Reports</a>
-        </nav>
-      </div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Manage</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('projects') }}">📁 Projects</a>
-          <a class="sidebar-link" href="{{ url_for('labels') }}">🏷️ Tags</a>
-          <a class="sidebar-link" href="{{ url_for('index') }}">🧭 Tasks</a>
-          <a class="sidebar-link" href="{{ url_for('account') }}">👤 Account</a>
-        </nav>
-      </div>
-      <div class="sidebar-footer">
-        <button class="theme-toggle" type="button" data-theme-toggle>🌓 Theme</button>
-      </div>
-    </aside>
+{% endblock %}
+
+{% block content %}
     <main class="reports-page">
       <header class="reports-hero">
         <div class="reports-top">
@@ -169,10 +138,11 @@
       </section>
       </div>
     </main>
-  </div>
+{% endblock %}
+
+{% block scripts %}
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="{{ url_for('static', filename='vendor/litepicker/litepicker.js') }}"></script>
-  <script src="{{ url_for('static', filename='theme.js') }}"></script>
   <script>
     document.querySelectorAll("[data-project-toggle]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -492,5 +462,4 @@
       }
     }
   </script>
-</body>
-</html>
+{% endblock %}

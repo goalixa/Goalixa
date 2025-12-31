@@ -1,76 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Overview</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
-</head>
-<body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="sidebar-brand">StudyTimmer</div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Track</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link active" href="{{ url_for('overview') }}">📊 Overview</a>
-          <a class="sidebar-link" href="{{ url_for('timer') }}">⏱️ Timer</a>
-          <a class="sidebar-link" href="{{ url_for('calendar') }}">🗓️ Calendar</a>
-        </nav>
-      </div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Analyze</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('reports') }}">📈 Reports</a>
-        </nav>
-      </div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Manage</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('projects') }}">📁 Projects</a>
-          <a class="sidebar-link" href="{{ url_for('labels') }}">🏷️ Tags</a>
-          <a class="sidebar-link" href="{{ url_for('index') }}">🧭 Tasks</a>
-          <a class="sidebar-link" href="{{ url_for('account') }}">👤 Account</a>
-        </nav>
-      </div>
-      <div class="sidebar-footer">
-        <button class="theme-toggle" type="button" data-theme-toggle>🌓 Theme</button>
-      </div>
-    </aside>
-    <main class="container">
-      <header class="header">
-        <h1>Overview</h1>
-        <p>High-level insights from your projects and tasks.</p>
-      </header>
+{% extends "layout.html" %}
+{% set title = "Overview" %}
+{% set active_page = "overview" %}
 
-      <section class="card">
-        <h2>Time summary</h2>
-        <div class="chart-controls">
-          <div class="range-switch">
-            <span class="range-chip active">7d</span>
-          </div>
-          <div class="mode-switch">
-            <button class="mode-button active" type="button" data-mode="bar">Bar</button>
-            <button class="mode-button" type="button" data-mode="line">Line</button>
-          </div>
+{% block content %}
+  <div class="container py-4">
+    <header class="header">
+      <h1>Overview</h1>
+      <p>High-level insights from your projects and tasks.</p>
+    </header>
+
+    <section class="card">
+      <h2>Time summary</h2>
+      <div class="chart-controls">
+        <div class="range-switch">
+          <span class="range-chip active">7d</span>
         </div>
-        {% if summary %}
-          <div class="chart-panel is-active">
-            <canvas id="overview-chart" height="160"></canvas>
-          </div>
-        {% else %}
-          <p class="empty">No activity yet.</p>
-        {% endif %}
-      </section>
+        <div class="mode-switch">
+          <button class="mode-button active" type="button" data-mode="bar">Bar</button>
+          <button class="mode-button" type="button" data-mode="line">Line</button>
+        </div>
+      </div>
+      {% if summary %}
+        <div class="chart-panel is-active">
+          <canvas id="overview-chart" height="160"></canvas>
+        </div>
+      {% else %}
+        <p class="empty">No activity yet.</p>
+      {% endif %}
+    </section>
 
-      <section class="card">
-        <h2>Focus by Project</h2>
-        <div class="chart-placeholder">Chart placeholder</div>
-      </section>
-    </main>
+    <section class="card">
+      <h2>Focus by Project</h2>
+      <div class="chart-placeholder">Chart placeholder</div>
+    </section>
   </div>
+{% endblock %}
+
+{% block scripts %}
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="{{ url_for('static', filename='theme.js') }}"></script>
   <script>
     const summary = {{ summary | tojson }};
     const labels = summary.map((item) => item.label);
@@ -140,5 +107,4 @@
       });
     });
   </script>
-</body>
-</html>
+{% endblock %}

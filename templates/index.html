@@ -1,47 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>StudyTimmer</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
-</head>
-<body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="sidebar-brand">StudyTimmer</div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Track</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('overview') }}">📊 Overview</a>
-          <a class="sidebar-link" href="{{ url_for('timer') }}">⏱️ Timer</a>
-          <a class="sidebar-link" href="{{ url_for('calendar') }}">🗓️ Calendar</a>
-        </nav>
-      </div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Analyze</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('reports') }}">📈 Reports</a>
-        </nav>
-      </div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Manage</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('projects') }}">📁 Projects</a>
-          <a class="sidebar-link" href="{{ url_for('labels') }}">🏷️ Tags</a>
-          <a class="sidebar-link active" href="{{ url_for('index') }}">🧭 Tasks</a>
-          <a class="sidebar-link" href="{{ url_for('account') }}">👤 Account</a>
-        </nav>
-      </div>
-      <div class="sidebar-footer">
-        <button class="theme-toggle" type="button" data-theme-toggle>🌓 Theme</button>
-      </div>
-    </aside>
-    <main class="container">
-      <header class="header">
-        <h1>Tasks</h1>
-        <p>Track tasks and time spent</p>
-      </header>
+{% extends "layout.html" %}
+{% set title = "Tasks" %}
+{% set active_page = "tasks" %}
+
+{% block content %}
+  <main class="container py-4">
+    <header class="header">
+      <h1>Tasks</h1>
+      <p>Track tasks and time spent</p>
+    </header>
 
     <section class="card">
       <form class="task-form" id="task-form" method="post" action="{{ url_for('create_task') }}">
@@ -86,45 +52,37 @@
               <div class="task-actions">
                 {% if task['is_running'] %}
                   <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}" data-action="stop" data-task-id="{{ task['id'] }}">
-                    <button class="stop icon-button" type="submit" aria-label="Pause">⏸</button>
+                    <button class="menu-item danger" type="submit">Stop</button>
                   </form>
-                  {% else %}
-                    <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}" data-action="start" data-task-id="{{ task['id'] }}">
-                      <button class="start icon-button" type="submit" aria-label="Resume">▶</button>
-                    </form>
+                {% else %}
+                  <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}" data-action="start" data-task-id="{{ task['id'] }}">
+                    <button class="menu-item" type="submit">Start</button>
+                  </form>
                 {% endif %}
-                <div class="menu">
-                  <button class="menu-button icon-button" type="button" aria-label="More">⋯</button>
-                  <div class="menu-panel">
-                    <form method="post" action="{{ url_for('delete_task', task_id=task['id']) }}" data-action="delete" data-task-id="{{ task['id'] }}">
-                      <button class="menu-item danger" type="submit">Delete task</button>
-                    </form>
-                    <form class="label-form" method="post" action="{{ url_for('add_task_label', task_id=task['id']) }}">
-                      <select name="label_id" required>
-                        <option value="" disabled selected>Add label</option>
-                        {% for label in labels %}
-                          <option value="{{ label['id'] }}">{{ label['name'] }}</option>
-                        {% endfor %}
-                      </select>
-                      <button type="submit">Add</button>
-                    </form>
-                  </div>
-                </div>
+                  <form method="post" action="{{ url_for('delete_task', task_id=task['id']) }}" data-action="delete" data-task-id="{{ task['id'] }}">
+                    <button class="menu-item danger" type="submit">Delete task</button>
+                  </form>
+                  <form class="label-form" method="post" action="{{ url_for('add_task_label', task_id=task['id']) }}">
+                    <select name="label_id" required>
+                      <option value="" disabled selected>Add label</option>
+                      {% for label in labels %}
+                        <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+                      {% endfor %}
+                    </select>
+                    <button class="menu-item" type="submit">Add</button>
+                  </form>
               </div>
             </li>
-          {% endfor %}
-        </ul>
+            {% endfor %}
+          </ul>
         {% else %}
           <p class="empty">No tasks yet.</p>
         {% endif %}
       </div>
     </section>
-    </main>
-  </div>
-  <script>
-    window.availableLabels = {{ labels | tojson }};
-  </script>
-  <script src="{{ url_for('static', filename='theme.js') }}"></script>
+  </main>
+{% endblock %}
+
+{% block scripts %}
   <script src="{{ url_for('static', filename='app.js') }}"></script>
-</body>
-</html>
+{% endblock %}

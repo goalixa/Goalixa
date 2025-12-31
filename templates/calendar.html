@@ -1,53 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Calendar</title>
+{% extends "layout.html" %}
+{% set title = "Calendar" %}
+{% set active_page = "calendar" %}
+
+{% block head_extra %}
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/fullcalendar/fullcalendar.min.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
-</head>
-<body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="sidebar-brand">StudyTimmer</div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Track</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('overview') }}">📊 Overview</a>
-          <a class="sidebar-link" href="{{ url_for('timer') }}">⏱️ Timer</a>
-          <a class="sidebar-link active" href="{{ url_for('calendar') }}">🗓️ Calendar</a>
-        </nav>
+{% endblock %}
+
+{% block content %}
+  <main class="calendar-page">
+    <section class="container py-4">
+      <div class="card calendar-card">
+        <div id="calendar-page"></div>
       </div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Analyze</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('reports') }}">📈 Reports</a>
-        </nav>
-      </div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Manage</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('projects') }}">📁 Projects</a>
-          <a class="sidebar-link" href="{{ url_for('labels') }}">🏷️ Tags</a>
-          <a class="sidebar-link" href="{{ url_for('index') }}">🧭 Tasks</a>
-          <a class="sidebar-link" href="{{ url_for('account') }}">👤 Account</a>
-        </nav>
-      </div>
-      <div class="sidebar-footer">
-        <button class="theme-toggle" type="button" data-theme-toggle>🌓 Theme</button>
-      </div>
-    </aside>
-    <main class="calendar-page">
-      <section class="container calendar-container">
-        <div class="card calendar-card">
-          <div id="calendar-page"></div>
-        </div>
-      </section>
-    </main>
-  </div>
+    </section>
+  </main>
+{% endblock %}
+
+{% block scripts %}
   <script src="{{ url_for('static', filename='vendor/fullcalendar/fullcalendar.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='theme.js') }}"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const calendarEl = document.getElementById("calendar-page");
@@ -85,5 +55,4 @@
       calendar.render();
     });
   </script>
-</body>
-</html>
+{% endblock %}

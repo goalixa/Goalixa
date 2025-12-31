@@ -130,9 +130,9 @@ body {
 }
 
 .container {
-  max-width: 860px;
-  margin: 40px auto;
-  padding: 0 24px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
   flex: 1;
 }
 

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title or "Focus" }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+  <div class="container-fluid">
+    <div class="row min-vh-100">
+      <aside class="sidebar col-12 col-lg-2 px-3 py-4">
+        <div class="sidebar-brand">StudyTimmer</div>
+        <div class="sidebar-section">
+          <span class="sidebar-title">Track</span>
+          <nav class="sidebar-nav">
+            <a class="sidebar-link {% if active_page == 'overview' %}active{% endif %}" href="{{ url_for('overview') }}">📊 Overview</a>
+            <a class="sidebar-link {% if active_page == 'timer' %}active{% endif %}" href="{{ url_for('timer') }}">⏱️ Timer</a>
+            <a class="sidebar-link {% if active_page == 'calendar' %}active{% endif %}" href="{{ url_for('calendar') }}">🗓️ Calendar</a>
+          </nav>
+        </div>
+        <div class="sidebar-section">
+          <span class="sidebar-title">Analyze</span>
+          <nav class="sidebar-nav">
+            <a class="sidebar-link {% if active_page == 'reports' %}active{% endif %}" href="{{ url_for('reports') }}">📈 Reports</a>
+          </nav>
+        </div>
+        <div class="sidebar-section">
+          <span class="sidebar-title">Manage</span>
+          <nav class="sidebar-nav">
+            <a class="sidebar-link {% if active_page == 'projects' %}active{% endif %}" href="{{ url_for('projects') }}">📁 Projects</a>
+            <a class="sidebar-link {% if active_page == 'labels' %}active{% endif %}" href="{{ url_for('labels') }}">🏷️ Tags</a>
+            <a class="sidebar-link {% if active_page == 'tasks' %}active{% endif %}" href="{{ url_for('index') }}">🧭 Tasks</a>
+            <a class="sidebar-link {% if active_page == 'account' %}active{% endif %}" href="{{ url_for('account') }}">👤 Account</a>
+          </nav>
+        </div>
+        <div class="sidebar-footer">
+          <button class="theme-toggle" type="button" data-theme-toggle>🌓 Theme</button>
+        </div>
+      </aside>
+      <main class="col-12 col-lg-10 px-0">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='theme.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

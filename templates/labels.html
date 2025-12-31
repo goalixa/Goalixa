@@ -1,47 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Labels</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
-</head>
-<body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="sidebar-brand">StudyTimmer</div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Track</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('overview') }}">📊 Overview</a>
-          <a class="sidebar-link" href="{{ url_for('timer') }}">⏱️ Timer</a>
-          <a class="sidebar-link" href="{{ url_for('calendar') }}">🗓️ Calendar</a>
-        </nav>
-      </div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Analyze</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('reports') }}">📈 Reports</a>
-        </nav>
-      </div>
-      <div class="sidebar-section">
-        <span class="sidebar-title">Manage</span>
-        <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('projects') }}">📁 Projects</a>
-          <a class="sidebar-link active" href="{{ url_for('labels') }}">🏷️ Tags</a>
-          <a class="sidebar-link" href="{{ url_for('index') }}">🧭 Tasks</a>
-          <a class="sidebar-link" href="{{ url_for('account') }}">👤 Account</a>
-        </nav>
-      </div>
-      <div class="sidebar-footer">
-        <button class="theme-toggle" type="button" data-theme-toggle>🌓 Theme</button>
-      </div>
-    </aside>
-    <main class="container">
-      <header class="header">
-        <h1>Labels</h1>
-        <p>Create and manage labels</p>
-      </header>
+{% extends "layout.html" %}
+{% set title = "Labels" %}
+{% set active_page = "labels" %}
+
+{% block content %}
+  <main class="container py-4">
+    <header class="header">
+      <h1>Labels</h1>
+      <p>Create and manage labels</p>
+    </header>
 
     <section class="card">
       <form class="task-form" method="post" action="{{ url_for('create_label') }}">
@@ -60,8 +26,12 @@
             <span class="color-dot" style="background-color: #f2a900"></span>
           </label>
           <label class="color-option">
-            <input type="radio" name="color" value="#2d7d46" />
-            <span class="color-dot" style="background-color: #2d7d46"></span>
+            <input type="radio" name="color" value="#22c55e" />
+            <span class="color-dot" style="background-color: #22c55e"></span>
+          </label>
+          <label class="color-option">
+            <input type="radio" name="color" value="#a855f7" />
+            <span class="color-dot" style="background-color: #a855f7"></span>
           </label>
         </div>
         <button type="submit">Add</button>
@@ -75,7 +45,7 @@
           {% for label in labels %}
             <li class="task-item">
               <div class="task-info">
-                <span class="label-chip" style="background-color: {{ label['color'] }}">{{ label['name'] }}</span>
+                <span class="name-badge" style="background: {{ label['color'] }}">{{ label['name'] }}</span>
               </div>
               <div class="task-actions">
                 <form method="post" action="{{ url_for('delete_label', label_id=label['id']) }}">
@@ -89,8 +59,5 @@
         <p class="empty">No labels yet.</p>
       {% endif %}
     </section>
-    </main>
-  </div>
-  <script src="{{ url_for('static', filename='theme.js') }}"></script>
-</body>
-</html>
+  </main>
+{% endblock %}
