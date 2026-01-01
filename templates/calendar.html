@@ -8,8 +8,8 @@
 
 {% block content %}
   <main class="calendar-page">
-    <section class="container py-4">
-      <div class="card calendar-card">
+    <section class="calendar-full">
+      <div class="timer-calendar-card calendar-full-card">
         <div id="calendar-page"></div>
       </div>
     </section>
@@ -28,10 +28,11 @@
         initialView: "dayGridMonth",
         height: "auto",
         headerToolbar: {
-          left: "prev,next today",
+          left: "prev,next",
           center: "title",
-          right: "dayGridMonth,dayGridWeek,dayGridDay",
+          right: "",
         },
+        navLinks: true,
         dayMaxEvents: 4,
         dayMaxEventRows: 4,
         eventDisplay: "block",
