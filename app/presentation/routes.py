@@ -21,9 +21,18 @@ def register_routes(app, service):
     @auth_required()
     def overview():
         summary = service.summary_by_days(7)
+        goals = service.list_goals()
+        goals_in_progress = [
+            goal for goal in goals if goal.get("status") in {"active", "at_risk"}
+        ]
+        total_goal_seconds = sum(goal.get("total_seconds", 0) for goal in goals)
         return render_template(
             "overview.html",
             summary=summary,
+            goals=goals,
+            goals_in_progress=goals_in_progress,
+            active_goals_count=len(goals_in_progress),
+            total_goal_seconds=total_goal_seconds,
             selected_range=7,
             allowed_ranges=[7],
         )
@@ -63,7 +72,58 @@ def register_routes(app, service):
     @app.route("/goals", methods=["GET"])
     @auth_required()
     def goals():
-        return render_template("goals.html")
+        goals_list = service.list_goals()
+        projects = service.list_projects()
+        tasks = service.list_tasks()
+        active_goals = [goal for goal in goals_list if goal.get("status") in {"active", "at_risk"}]
+        total_goal_seconds = sum(goal.get("total_seconds", 0) for goal in goals_list)
+        targets_set = len([goal for goal in goals_list if goal.get("target_date")])
+        return render_template(
+            "goals.html",
+            goals=goals_list,
+            projects=projects,
+            tasks=tasks,
+            active_goals_count=len(active_goals),
+            total_goal_seconds=total_goal_seconds,
+            targets_set=targets_set,
+        )
+
+    @app.route("/goals", methods=["POST"])
+    @auth_required()
+    def create_goal():
+        service.add_goal(
+            request.form.get("name", ""),
+            request.form.get("description", ""),
+            request.form.get("status", "active"),
+            request.form.get("priority", "medium"),
+            request.form.get("target_date", ""),
+            request.form.get("target_hours", 0),
+            request.form.getlist("project_ids"),
+            request.form.getlist("task_ids"),
+        )
+        return redirect(url_for("goals"))
+
+    @app.route("/goals/<int:goal_id>/edit", methods=["POST"])
+    @auth_required()
+    def edit_goal(goal_id):
+        service.update_goal(
+            goal_id,
+            request.form.get("name", ""),
+            request.form.get("description", ""),
+            request.form.get("status", "active"),
+            request.form.get("priority", "medium"),
+            request.form.get("target_date", ""),
+            request.form.get("target_hours", 0),
+            request.form.getlist("project_ids"),
+            request.form.getlist("task_ids"),
+        )
+        return redirect(url_for("goals"))
+
+    @app.route("/goals/<int:goal_id>/delete", methods=["POST"])
+    @auth_required()
+    def delete_goal(goal_id):
+        service.delete_goal(goal_id)
+        return redirect(url_for("goals"))
 
     @app.route("/account", methods=["GET"])
     @auth_required()

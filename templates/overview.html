@@ -33,163 +33,104 @@
       <div class="goals-header">
         <div>
           <p class="goals-label">Goals</p>
-          <h2 class="goals-title">Track what you want to finish</h2>
+          <h2 class="goals-title">Outcome-driven overview</h2>
         </div>
         <div class="goals-actions">
-          <button class="btn btn-outline-secondary btn-sm" type="button">
-            <i class="bi bi-funnel"></i>
-            Filter
-          </button>
-          <button class="btn btn-primary btn-sm" type="button">
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('goals') }}">
+            <i class="bi bi-grid-1x2"></i>
+            View all
+          </a>
+          <a class="btn btn-primary btn-sm" href="{{ url_for('goals') }}">
             <i class="bi bi-plus-lg"></i>
             New Goal
-          </button>
+          </a>
         </div>
       </div>
-      <div class="goals-filters">
-        <button class="btn btn-light btn-sm is-active" type="button">All</button>
-        <button class="btn btn-light btn-sm" type="button">Active</button>
-        <button class="btn btn-light btn-sm" type="button">Completed</button>
-        <button class="btn btn-light btn-sm" type="button">Archived</button>
+      <div class="goals-summary">
+        <div class="goal-stat-card">
+          <span class="goal-stat-label">Active goals</span>
+          <span class="goal-stat-value">{{ active_goals_count or 0 }}</span>
+          <span class="goal-stat-meta">Total goals: {{ goals | length }}</span>
+        </div>
+        <div class="goal-stat-card">
+          <span class="goal-stat-label">Focus this week</span>
+          <span class="goal-stat-value">{{ total_goal_seconds | format_seconds }}</span>
+          <span class="goal-stat-meta">Across all goals</span>
+        </div>
+        <div class="goal-stat-card">
+          <span class="goal-stat-label">Upcoming deadlines</span>
+          <span class="goal-stat-value">
+            {{ goals | selectattr("target_date") | list | length }}
+          </span>
+          <span class="goal-stat-meta">Targets set</span>
+        </div>
       </div>
-      <div class="goals-search">
-        <input type="text" placeholder="Search goals, projects, or tasks..." />
+      <div class="goals-toolbar">
+        <div class="goals-filters">
+          <button class="btn btn-light btn-sm is-active" type="button">All</button>
+          <button class="btn btn-light btn-sm" type="button">In progress</button>
+          <button class="btn btn-light btn-sm" type="button">At risk</button>
+          <button class="btn btn-light btn-sm" type="button">Completed</button>
+        </div>
+        <div class="goals-search">
+          <input type="text" placeholder="Search goals, projects, or tasks..." />
+        </div>
       </div>
       <div class="goals-grid">
-        <article class="goal-card">
-          <div class="goal-top">
-            <span class="goal-status active">In progress</span>
-            <span class="goal-deadline">Target: 2025-02-20</span>
-          </div>
-          <h3 class="goal-name">Finish AWS Cloud Technical Essential</h3>
-          <p class="goal-desc">Complete the course and pass the final exam.</p>
-          <div class="goal-progress">
-            <div class="goal-progress-bar">
-              <span style="width: 62%"></span>
-            </div>
-            <span class="goal-progress-text">62% complete</span>
-          </div>
-          <div class="goal-meta">
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Projects</span>
-              <span class="goal-meta-value">3</span>
-            </div>
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Tasks</span>
-              <span class="goal-meta-value">12</span>
-            </div>
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Time logged</span>
-              <span class="goal-meta-value">18:40:00</span>
-            </div>
-          </div>
-          <div class="goal-links">
-            <div class="goal-project">
-              <span class="goal-project-name">Lab5 · AWS Cloud Technical Essential</span>
-              <span class="goal-project-tasks">4 tasks</span>
-            </div>
-            <div class="goal-project">
-              <span class="goal-project-name">Working on Lab4</span>
-              <span class="goal-project-tasks">3 tasks</span>
-            </div>
-          </div>
-          <div class="goal-footer">
-            <button class="btn btn-outline-secondary btn-sm" type="button">
-              View Projects
-            </button>
-            <button class="btn btn-outline-primary btn-sm" type="button">
-              Add Task
-            </button>
-          </div>
-        </article>
-        <article class="goal-card">
-          <div class="goal-top">
-            <span class="goal-status active">On track</span>
-            <span class="goal-deadline">Target: 2025-03-10</span>
-          </div>
-          <h3 class="goal-name">Improve English fluency</h3>
-          <p class="goal-desc">Daily vocabulary, review units, and practice tests.</p>
-          <div class="goal-progress">
-            <div class="goal-progress-bar">
-              <span style="width: 41%"></span>
-            </div>
-            <span class="goal-progress-text">41% complete</span>
-          </div>
-          <div class="goal-meta">
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Projects</span>
-              <span class="goal-meta-value">2</span>
-            </div>
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Tasks</span>
-              <span class="goal-meta-value">9</span>
-            </div>
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Time logged</span>
-              <span class="goal-meta-value">12:10:00</span>
-            </div>
-          </div>
-          <div class="goal-links">
-            <div class="goal-project">
-              <span class="goal-project-name">Review unit 6 Vocab and synonyms</span>
-              <span class="goal-project-tasks">5 tasks</span>
-            </div>
-            <div class="goal-project">
-              <span class="goal-project-name">English Learning</span>
-              <span class="goal-project-tasks">4 tasks</span>
-            </div>
-          </div>
-          <div class="goal-footer">
-            <button class="btn btn-outline-secondary btn-sm" type="button">
-              View Projects
-            </button>
-            <button class="btn btn-outline-primary btn-sm" type="button">
-              Add Task
-            </button>
-          </div>
-        </article>
-        <article class="goal-card">
-          <div class="goal-top">
-            <span class="goal-status paused">Needs focus</span>
-            <span class="goal-deadline">Target: 2025-04-01</span>
-          </div>
-          <h3 class="goal-name">Build GitHub portfolio</h3>
-          <p class="goal-desc">Ship 2 polished repos and update docs.</p>
-          <div class="goal-progress">
-            <div class="goal-progress-bar">
-              <span style="width: 18%"></span>
-            </div>
-            <span class="goal-progress-text">18% complete</span>
-          </div>
-          <div class="goal-meta">
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Projects</span>
-              <span class="goal-meta-value">1</span>
-            </div>
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Tasks</span>
-              <span class="goal-meta-value">6</span>
-            </div>
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Time logged</span>
-              <span class="goal-meta-value">02:45:00</span>
-            </div>
-          </div>
-          <div class="goal-links">
-            <div class="goal-project">
-              <span class="goal-project-name">Github Projects</span>
-              <span class="goal-project-tasks">6 tasks</span>
-            </div>
-          </div>
-          <div class="goal-footer">
-            <button class="btn btn-outline-secondary btn-sm" type="button">
-              View Projects
-            </button>
-            <button class="btn btn-outline-primary btn-sm" type="button">
-              Add Task
-            </button>
-          </div>
-        </article>
+        {% if goals_in_progress %}
+          {% for goal in goals_in_progress[:3] %}
+            <article class="goal-card">
+              <div class="goal-top">
+                <span class="goal-status {{ 'paused' if goal['status'] == 'at_risk' else 'completed' if goal['status'] in ['completed', 'archived'] else 'active' }}">
+                  {{ goal['status'] | replace('_', ' ') }}
+                </span>
+                <span class="goal-deadline">
+                  {% if goal['target_date'] %}Target: {{ goal['target_date'] }}{% else %}No target{% endif %}
+                </span>
+              </div>
+              <h3 class="goal-name">{{ goal['name'] }}</h3>
+              {% if goal['description'] %}
+                <p class="goal-desc">{{ goal['description'] }}</p>
+              {% endif %}
+              <div class="goal-progress">
+                <div class="goal-progress-bar">
+                  <span style="width: {{ goal['progress'] }}%"></span>
+                </div>
+                <span class="goal-progress-text">{{ goal['progress'] }}% complete</span>
+              </div>
+              <div class="goal-meta">
+                <div class="goal-meta-block">
+                  <span class="goal-meta-label">Projects</span>
+                  <span class="goal-meta-value">{{ goal['projects_count'] }}</span>
+                </div>
+                <div class="goal-meta-block">
+                  <span class="goal-meta-label">Tasks</span>
+                  <span class="goal-meta-value">{{ goal['tasks_count'] }}</span>
+                </div>
+                <div class="goal-meta-block">
+                  <span class="goal-meta-label">Time logged</span>
+                  <span class="goal-meta-value">{{ goal['total_seconds'] | format_seconds }}</span>
+                </div>
+              </div>
+              {% if goal['projects'] %}
+                <div class="goal-links">
+                  {% for project in goal['projects'][:2] %}
+                    <div class="goal-project">
+                      <span class="goal-project-name">{{ project['name'] }}</span>
+                      <span class="goal-project-tasks">Project</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              <div class="goal-footer">
+                <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('goals') }}">View plan</a>
+                <a class="btn btn-outline-primary btn-sm" href="{{ url_for('goals') }}">Add task</a>
+              </div>
+            </article>
+          {% endfor %}
+        {% else %}
+          <p class="empty">No active goals yet.</p>
+        {% endif %}
       </div>
     </section>
 

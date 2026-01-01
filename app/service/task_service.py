@@ -433,6 +433,135 @@ class TaskService:
     def add_label_to_project(self, project_id, label_id):
         self.repository.add_label_to_project(project_id, label_id)
 
+    def list_goals(self):
+        goals = self.repository.fetch_goals()
+        if not goals:
+            return []
+        goal_ids = [goal["id"] for goal in goals]
+        goal_projects_map = self.repository.fetch_goal_projects(goal_ids)
+        goal_tasks_map = self.repository.fetch_goal_tasks(goal_ids)
+
+        project_ids = sorted(
+            {pid for ids in goal_projects_map.values() for pid in ids}
+        )
+        projects = self.repository.fetch_projects_by_ids(project_ids)
+        projects_by_id = {project["id"]: dict(project) for project in projects}
+
+        task_ids = sorted({tid for ids in goal_tasks_map.values() for tid in ids})
+        if project_ids:
+            project_tasks = self.repository.fetch_tasks_by_project_ids(project_ids)
+            for task in project_tasks:
+                task_ids.append(task["id"])
+        task_ids = sorted(set(task_ids))
+
+        task_totals = self.repository.fetch_task_total_seconds(task_ids)
+
+        goal_list = []
+        for goal in goals:
+            goal_id = goal["id"]
+            direct_task_ids = goal_tasks_map.get(goal_id, [])
+            linked_project_ids = goal_projects_map.get(goal_id, [])
+            linked_task_ids = set(direct_task_ids)
+            if linked_project_ids:
+                for task in self.repository.fetch_tasks_by_project_ids(linked_project_ids):
+                    linked_task_ids.add(task["id"])
+
+            linked_task_ids = sorted(linked_task_ids)
+            total_seconds = sum(task_totals.get(task_id, 0) for task_id in linked_task_ids)
+            target_seconds = int(goal["target_seconds"] or 0)
+            progress = int((total_seconds / target_seconds) * 100) if target_seconds else 0
+            progress = min(progress, 100)
+
+            goal_list.append(
+                {
+                    **dict(goal),
+                    "project_ids": linked_project_ids,
+                    "task_ids": direct_task_ids,
+                    "projects": [projects_by_id[pid] for pid in linked_project_ids if pid in projects_by_id],
+                    "total_seconds": total_seconds,
+                    "progress": progress,
+                    "tasks_count": len(linked_task_ids),
+                    "projects_count": len(linked_project_ids),
+                }
+            )
+        return goal_list
+
+    def get_goal(self, goal_id):
+        goal = self.repository.fetch_goal(goal_id)
+        if goal is None:
+            return None
+        goals = self.list_goals()
+        for item in goals:
+            if item["id"] == goal_id:
+                return item
+        return dict(goal)
+
+    def add_goal(
+        self,
+        name,
+        description,
+        status,
+        priority,
+        target_date,
+        target_hours,
+        project_ids=None,
+        task_ids=None,
+    ):
+        name = (name or "").strip()
+        description = (description or "").strip()
+        status = (status or "active").strip()
+        priority = (priority or "medium").strip()
+        target_date = (target_date or "").strip() or None
+        target_seconds = int(float(target_hours or 0) * 3600)
+        if not name:
+            return
+        goal_id = self.repository.create_goal(
+            name,
+            description,
+            status,
+            priority,
+            target_date,
+            target_seconds,
+            datetime.utcnow().isoformat(),
+        )
+        self.repository.set_goal_projects(goal_id, [int(pid) for pid in project_ids or []])
+        self.repository.set_goal_tasks(goal_id, [int(tid) for tid in task_ids or []])
+
+    def update_goal(
+        self,
+        goal_id,
+        name,
+        description,
+        status,
+        priority,
+        target_date,
+        target_hours,
+        project_ids=None,
+        task_ids=None,
+    ):
+        name = (name or "").strip()
+        description = (description or "").strip()
+        status = (status or "active").strip()
+        priority = (priority or "medium").strip()
+        target_date = (target_date or "").strip() or None
+        target_seconds = int(float(target_hours or 0) * 3600)
+        if not name:
+            return
+        self.repository.update_goal(
+            int(goal_id),
+            name,
+            description,
+            status,
+            priority,
+            target_date,
+            target_seconds,
+        )
+        self.repository.set_goal_projects(int(goal_id), [int(pid) for pid in project_ids or []])
+        self.repository.set_goal_tasks(int(goal_id), [int(tid) for tid in task_ids or []])
+
+    def delete_goal(self, goal_id):
+        self.repository.delete_goal(goal_id)
+
     def start_task(self, task_id):
         if not self.repository.is_task_running(task_id):
             self.repository.start_task(task_id, datetime.utcnow().isoformat())

@@ -3,22 +3,119 @@
 {% set active_page = "goals" %}
 
 {% block content %}
-  <div class="container py-4">
+  <div class="container py-4 goals-page">
     <header class="header">
       <h1>Goals</h1>
-      <p>Define outcomes and connect projects and tasks.</p>
+      <p>Define outcomes, link projects, and track progress.</p>
     </header>
+
+    <section class="goals-hero">
+      <div class="goals-hero-left">
+        <div class="goal-stat-card">
+          <span class="goal-stat-label">Active goals</span>
+          <span class="goal-stat-value">{{ active_goals_count or 0 }}</span>
+          <span class="goal-stat-meta">Total goals: {{ goals | length }}</span>
+        </div>
+        <div class="goal-stat-card">
+          <span class="goal-stat-label">Focus this week</span>
+          <span class="goal-stat-value">{{ total_goal_seconds | format_seconds }}</span>
+          <span class="goal-stat-meta">Across all goals</span>
+        </div>
+        <div class="goal-stat-card">
+          <span class="goal-stat-label">Upcoming deadlines</span>
+          <span class="goal-stat-value">{{ targets_set or 0 }}</span>
+          <span class="goal-stat-meta">Targets set</span>
+        </div>
+      </div>
+      <div class="goal-create-card">
+        <div class="goal-create-header">
+          <div>
+            <p class="goals-label">Create goal</p>
+            <h2 class="goals-title">Turn outcomes into a plan</h2>
+          </div>
+          <button class="btn btn-outline-secondary btn-sm" type="button">
+            <i class="bi bi-sliders"></i>
+            Templates
+          </button>
+        </div>
+        <form class="goal-form" method="post" action="{{ url_for('create_goal') }}">
+          <div class="goal-form-row">
+            <label>
+              Goal name
+              <input type="text" name="name" placeholder="Finish AWS Cloud Technical Essential" required />
+            </label>
+            <label>
+              Target date
+              <input type="date" name="target_date" />
+            </label>
+          </div>
+          <div class="goal-form-row">
+            <label>
+              Priority
+              <select name="priority">
+                <option value="high">High</option>
+                <option value="medium" selected>Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </label>
+            <label>
+              Status
+              <select name="status">
+                <option value="active" selected>Active</option>
+                <option value="at_risk">At risk</option>
+                <option value="completed">Completed</option>
+                <option value="archived">Archived</option>
+              </select>
+            </label>
+          </div>
+          <div class="goal-form-row">
+            <label>
+              Target hours
+              <input type="number" name="target_hours" min="0" step="0.5" placeholder="40" />
+            </label>
+            <label>
+              Link projects
+              <select name="project_ids" multiple>
+                {% for project in projects %}
+                  <option value="{{ project['id'] }}">{{ project['name'] }}</option>
+                {% endfor %}
+              </select>
+            </label>
+          </div>
+          <label>
+            Link tasks
+            <select name="task_ids" multiple>
+              {% for task in tasks %}
+                <option value="{{ task['id'] }}">{{ task['name'] }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>
+            Description
+            <textarea rows="2" name="description" placeholder="What does success look like?"></textarea>
+          </label>
+          <div class="goal-form-actions">
+            <button class="btn btn-outline-secondary btn-sm" type="reset">Clear</button>
+            <button class="btn btn-primary btn-sm" type="submit">Create goal</button>
+          </div>
+        </form>
+      </div>
+    </section>
 
     <section class="card goals-card">
       <div class="goals-header">
         <div>
-          <p class="goals-label">Goals</p>
-          <h2 class="goals-title">Your outcomes at a glance</h2>
+          <p class="goals-label">Pipeline</p>
+          <h2 class="goals-title">Goals in progress</h2>
         </div>
         <div class="goals-actions">
           <button class="btn btn-outline-secondary btn-sm" type="button">
-            <i class="bi bi-sliders"></i>
-            Settings
+            <i class="bi bi-funnel"></i>
+            Filter
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" type="button">
+            <i class="bi bi-sort-down"></i>
+            Sort
           </button>
           <button class="btn btn-primary btn-sm" type="button">
             <i class="bi bi-plus-lg"></i>
@@ -27,146 +124,141 @@
         </div>
       </div>
 
-      <div class="goals-filters">
-        <button class="btn btn-light btn-sm is-active" type="button">All</button>
-        <button class="btn btn-light btn-sm" type="button">Active</button>
-        <button class="btn btn-light btn-sm" type="button">Completed</button>
-        <button class="btn btn-light btn-sm" type="button">Archived</button>
-      </div>
-
-      <div class="goals-search">
-        <input type="text" placeholder="Search goals, projects, or tasks..." />
+      <div class="goals-toolbar">
+        <div class="goals-filters">
+          <button class="btn btn-light btn-sm is-active" type="button">All</button>
+          <button class="btn btn-light btn-sm" type="button">On track</button>
+          <button class="btn btn-light btn-sm" type="button">At risk</button>
+          <button class="btn btn-light btn-sm" type="button">Completed</button>
+        </div>
+        <div class="goals-search">
+          <input type="text" placeholder="Search goals, projects, or tasks..." />
+        </div>
       </div>
 
       <div class="goals-grid">
-        <article class="goal-card">
-          <div class="goal-top">
-            <span class="goal-status active">In progress</span>
-            <span class="goal-deadline">Target: 2025-02-20</span>
-          </div>
-          <h3 class="goal-name">Finish AWS Cloud Technical Essential</h3>
-          <p class="goal-desc">Complete the course and pass the final exam.</p>
-          <div class="goal-progress">
-            <div class="goal-progress-bar">
-              <span style="width: 62%"></span>
-            </div>
-            <span class="goal-progress-text">62% complete</span>
-          </div>
-          <div class="goal-meta">
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Projects</span>
-              <span class="goal-meta-value">3</span>
-            </div>
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Tasks</span>
-              <span class="goal-meta-value">12</span>
-            </div>
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Time logged</span>
-              <span class="goal-meta-value">18:40:00</span>
-            </div>
-          </div>
-          <div class="goal-links">
-            <div class="goal-project">
-              <span class="goal-project-name">Lab5 · AWS Cloud Technical Essential</span>
-              <span class="goal-project-tasks">4 tasks</span>
-            </div>
-            <div class="goal-project">
-              <span class="goal-project-name">Working on Lab4</span>
-              <span class="goal-project-tasks">3 tasks</span>
-            </div>
-            <div class="goal-project">
-              <span class="goal-project-name">Exam prep</span>
-              <span class="goal-project-tasks">2 tasks</span>
-            </div>
-          </div>
-          <div class="goal-footer">
-            <button class="btn btn-outline-secondary btn-sm" type="button">View Projects</button>
-            <button class="btn btn-outline-primary btn-sm" type="button">Add Task</button>
-          </div>
-        </article>
-
-        <article class="goal-card">
-          <div class="goal-top">
-            <span class="goal-status active">On track</span>
-            <span class="goal-deadline">Target: 2025-03-10</span>
-          </div>
-          <h3 class="goal-name">Improve English fluency</h3>
-          <p class="goal-desc">Daily vocabulary, review units, and practice tests.</p>
-          <div class="goal-progress">
-            <div class="goal-progress-bar">
-              <span style="width: 41%"></span>
-            </div>
-            <span class="goal-progress-text">41% complete</span>
-          </div>
-          <div class="goal-meta">
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Projects</span>
-              <span class="goal-meta-value">2</span>
-            </div>
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Tasks</span>
-              <span class="goal-meta-value">9</span>
-            </div>
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Time logged</span>
-              <span class="goal-meta-value">12:10:00</span>
-            </div>
-          </div>
-          <div class="goal-links">
-            <div class="goal-project">
-              <span class="goal-project-name">Review unit 6 Vocab and synonyms</span>
-              <span class="goal-project-tasks">5 tasks</span>
-            </div>
-            <div class="goal-project">
-              <span class="goal-project-name">English Learning</span>
-              <span class="goal-project-tasks">4 tasks</span>
-            </div>
-          </div>
-          <div class="goal-footer">
-            <button class="btn btn-outline-secondary btn-sm" type="button">View Projects</button>
-            <button class="btn btn-outline-primary btn-sm" type="button">Add Task</button>
-          </div>
-        </article>
-
-        <article class="goal-card">
-          <div class="goal-top">
-            <span class="goal-status paused">Needs focus</span>
-            <span class="goal-deadline">Target: 2025-04-01</span>
-          </div>
-          <h3 class="goal-name">Build GitHub portfolio</h3>
-          <p class="goal-desc">Ship 2 polished repos and update docs.</p>
-          <div class="goal-progress">
-            <div class="goal-progress-bar">
-              <span style="width: 18%"></span>
-            </div>
-            <span class="goal-progress-text">18% complete</span>
-          </div>
-          <div class="goal-meta">
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Projects</span>
-              <span class="goal-meta-value">1</span>
-            </div>
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Tasks</span>
-              <span class="goal-meta-value">6</span>
-            </div>
-            <div class="goal-meta-block">
-              <span class="goal-meta-label">Time logged</span>
-              <span class="goal-meta-value">02:45:00</span>
-            </div>
-          </div>
-          <div class="goal-links">
-            <div class="goal-project">
-              <span class="goal-project-name">Github Projects</span>
-              <span class="goal-project-tasks">6 tasks</span>
-            </div>
-          </div>
-          <div class="goal-footer">
-            <button class="btn btn-outline-secondary btn-sm" type="button">View Projects</button>
-            <button class="btn btn-outline-primary btn-sm" type="button">Add Task</button>
-          </div>
-        </article>
+        {% if goals %}
+          {% for goal in goals %}
+            <article class="goal-card">
+              <div class="goal-top">
+                <span class="goal-status {{ 'paused' if goal['status'] == 'at_risk' else 'completed' if goal['status'] in ['completed', 'archived'] else 'active' }}">
+                  {{ goal['status'] | replace('_', ' ') }}
+                </span>
+                <span class="goal-deadline">
+                  {% if goal['target_date'] %}Target: {{ goal['target_date'] }}{% else %}No target{% endif %}
+                </span>
+              </div>
+              <div class="goal-card-header">
+                <h3 class="goal-name">{{ goal['name'] }}</h3>
+                <button class="edit-toggle icon-button" type="button" aria-label="Edit goal" data-edit-target="edit-goal-{{ goal['id'] }}">
+                  <i class="bi bi-pencil"></i>
+                </button>
+              </div>
+              {% if goal['description'] %}
+                <p class="goal-desc">{{ goal['description'] }}</p>
+              {% endif %}
+              <div class="goal-progress">
+                <div class="goal-progress-bar">
+                  <span style="width: {{ goal['progress'] }}%"></span>
+                </div>
+                <span class="goal-progress-text">{{ goal['progress'] }}% complete</span>
+              </div>
+              <div class="goal-meta">
+                <div class="goal-meta-block">
+                  <span class="goal-meta-label">Projects</span>
+                  <span class="goal-meta-value">{{ goal['projects_count'] }}</span>
+                </div>
+                <div class="goal-meta-block">
+                  <span class="goal-meta-label">Tasks</span>
+                  <span class="goal-meta-value">{{ goal['tasks_count'] }}</span>
+                </div>
+                <div class="goal-meta-block">
+                  <span class="goal-meta-label">Time logged</span>
+                  <span class="goal-meta-value">{{ goal['total_seconds'] | format_seconds }}</span>
+                </div>
+              </div>
+              {% if goal['projects'] %}
+                <div class="goal-links">
+                  {% for project in goal['projects'] %}
+                    <div class="goal-project">
+                      <span class="goal-project-name">{{ project['name'] }}</span>
+                      <span class="goal-project-tasks">Project</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              <form id="edit-goal-{{ goal['id'] }}" class="edit-form goal-edit-form" method="post" action="{{ url_for('edit_goal', goal_id=goal['id']) }}">
+                <div class="goal-form-row">
+                  <label>
+                    Name
+                    <input type="text" name="name" value="{{ goal['name'] }}" required />
+                  </label>
+                  <label>
+                    Target date
+                    <input type="date" name="target_date" value="{{ goal['target_date'] or '' }}" />
+                  </label>
+                </div>
+                <div class="goal-form-row">
+                  <label>
+                    Status
+                    <select name="status">
+                      <option value="active" {% if goal['status'] == 'active' %}selected{% endif %}>Active</option>
+                      <option value="at_risk" {% if goal['status'] == 'at_risk' %}selected{% endif %}>At risk</option>
+                      <option value="completed" {% if goal['status'] == 'completed' %}selected{% endif %}>Completed</option>
+                      <option value="archived" {% if goal['status'] == 'archived' %}selected{% endif %}>Archived</option>
+                    </select>
+                  </label>
+                  <label>
+                    Priority
+                    <select name="priority">
+                      <option value="high" {% if goal['priority'] == 'high' %}selected{% endif %}>High</option>
+                      <option value="medium" {% if goal['priority'] == 'medium' %}selected{% endif %}>Medium</option>
+                      <option value="low" {% if goal['priority'] == 'low' %}selected{% endif %}>Low</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="goal-form-row">
+                  <label>
+                    Target hours
+                    <input type="number" name="target_hours" min="0" step="0.5" value="{{ (goal['target_seconds'] / 3600) if goal['target_seconds'] else '' }}" />
+                  </label>
+                  <label>
+                    Link projects
+                    <select name="project_ids" multiple>
+                      {% for project in projects %}
+                        <option value="{{ project['id'] }}" {% if project['id'] in goal['project_ids'] %}selected{% endif %}>
+                          {{ project['name'] }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </label>
+                </div>
+                <label>
+                  Link tasks
+                  <select name="task_ids" multiple>
+                    {% for task in tasks %}
+                      <option value="{{ task['id'] }}" {% if task['id'] in goal['task_ids'] %}selected{% endif %}>
+                        {{ task['name'] }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </label>
+                <label>
+                  Description
+                  <textarea rows="2" name="description">{{ goal['description'] or '' }}</textarea>
+                </label>
+                <div class="goal-form-actions">
+                  <button class="btn btn-outline-secondary btn-sm" type="submit">Save changes</button>
+                </div>
+              </form>
+              <form class="goal-delete-form" method="post" action="{{ url_for('delete_goal', goal_id=goal['id']) }}">
+                <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+              </form>
+            </article>
+          {% endfor %}
+        {% else %}
+          <p class="empty">No goals yet.</p>
+        {% endif %}
       </div>
     </section>
 
@@ -200,4 +292,55 @@
       </div>
     </section>
   </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+        const editButton = target.closest("[data-edit-target]");
+        if (editButton) {
+          event.preventDefault();
+          const targetId = editButton.dataset.editTarget;
+          const form = document.getElementById(targetId);
+          if (!form) {
+            return;
+          }
+          const isOpen = form.classList.contains("is-open");
+          document.querySelectorAll(".edit-form.is-open").forEach((openForm) => {
+            if (openForm !== form) {
+              openForm.classList.remove("is-open");
+            }
+          });
+          form.classList.toggle("is-open", !isOpen);
+          if (!isOpen) {
+            const input = form.querySelector('input[type="text"]');
+            if (input) {
+              input.focus();
+              input.select();
+            }
+          }
+          return;
+        }
+        if (!target.closest(".edit-form")) {
+          document.querySelectorAll(".edit-form.is-open").forEach((openForm) => {
+            openForm.classList.remove("is-open");
+          });
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") {
+          return;
+        }
+        document.querySelectorAll(".edit-form.is-open").forEach((openForm) => {
+          openForm.classList.remove("is-open");
+        });
+      });
+    });
+  </script>
 {% endblock %}

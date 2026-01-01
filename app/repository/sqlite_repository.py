@@ -66,6 +66,33 @@ class SQLiteTaskRepository:
                 ended_at TEXT,
                 FOREIGN KEY (task_id) REFERENCES tasks (id)
             );
+
+            CREATE TABLE IF NOT EXISTS goals (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                description TEXT,
+                status TEXT NOT NULL,
+                priority TEXT NOT NULL,
+                target_date TEXT,
+                target_seconds INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS goal_projects (
+                goal_id INTEGER NOT NULL,
+                project_id INTEGER NOT NULL,
+                PRIMARY KEY (goal_id, project_id),
+                FOREIGN KEY (goal_id) REFERENCES goals (id) ON DELETE CASCADE,
+                FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS goal_tasks (
+                goal_id INTEGER NOT NULL,
+                task_id INTEGER NOT NULL,
+                PRIMARY KEY (goal_id, task_id),
+                FOREIGN KEY (goal_id) REFERENCES goals (id) ON DELETE CASCADE,
+                FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE
+            );
             """
         )
         columns = db.execute("PRAGMA table_info(tasks)").fetchall()
@@ -207,6 +234,16 @@ class SQLiteTaskRepository:
             "SELECT id, name, created_at FROM projects ORDER BY created_at DESC"
         ).fetchall()
 
+    def fetch_projects_by_ids(self, project_ids):
+        if not project_ids:
+            return []
+        db = self._get_db()
+        placeholders = ",".join(["?"] * len(project_ids))
+        return db.execute(
+            f"SELECT id, name, created_at FROM projects WHERE id IN ({placeholders})",
+            tuple(project_ids),
+        ).fetchall()
+
     def create_project(self, name, created_at):
         db = self._get_db()
         db.execute(
@@ -248,6 +285,44 @@ class SQLiteTaskRepository:
             "SELECT id, name, color, created_at FROM labels ORDER BY created_at DESC"
         ).fetchall()
 
+    def fetch_tasks_by_project_ids(self, project_ids):
+        if not project_ids:
+            return []
+        db = self._get_db()
+        placeholders = ",".join(["?"] * len(project_ids))
+        return db.execute(
+            f"""
+            SELECT id, name, created_at, project_id
+            FROM tasks
+            WHERE project_id IN ({placeholders})
+            """,
+            tuple(project_ids),
+        ).fetchall()
+
+    def fetch_task_total_seconds(self, task_ids):
+        if not task_ids:
+            return {}
+        db = self._get_db()
+        placeholders = ",".join(["?"] * len(task_ids))
+        rows = db.execute(
+            f"""
+            SELECT t.id AS task_id,
+                   IFNULL(SUM(
+                       CASE
+                           WHEN te.id IS NULL THEN 0
+                           WHEN te.ended_at IS NULL THEN (strftime('%s','now') - strftime('%s', te.started_at))
+                           ELSE (strftime('%s', te.ended_at) - strftime('%s', te.started_at))
+                       END
+                   ), 0) AS total_seconds
+            FROM tasks t
+            LEFT JOIN time_entries te ON te.task_id = t.id
+            WHERE t.id IN ({placeholders})
+            GROUP BY t.id
+            """,
+            tuple(task_ids),
+        ).fetchall()
+        return {row["task_id"]: int(row["total_seconds"] or 0) for row in rows}
+
     def create_label(self, name, color, created_at):
         db = self._get_db()
         db.execute(
@@ -285,6 +360,114 @@ class SQLiteTaskRepository:
             "INSERT OR IGNORE INTO project_labels (project_id, label_id) VALUES (?, ?)",
             (project_id, label_id),
         )
+        db.commit()
+
+    def fetch_goals(self):
+        db = self._get_db()
+        return db.execute(
+            """
+            SELECT id, name, description, status, priority, target_date, target_seconds, created_at
+            FROM goals
+            ORDER BY created_at DESC
+            """
+        ).fetchall()
+
+    def fetch_goal(self, goal_id):
+        db = self._get_db()
+        return db.execute(
+            """
+            SELECT id, name, description, status, priority, target_date, target_seconds, created_at
+            FROM goals
+            WHERE id = ?
+            """,
+            (goal_id,),
+        ).fetchone()
+
+    def create_goal(self, name, description, status, priority, target_date, target_seconds, created_at):
+        db = self._get_db()
+        db.execute(
+            """
+            INSERT INTO goals (name, description, status, priority, target_date, target_seconds, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (name, description, status, priority, target_date, target_seconds, created_at),
+        )
+        db.commit()
+        return db.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+    def update_goal(self, goal_id, name, description, status, priority, target_date, target_seconds):
+        db = self._get_db()
+        db.execute(
+            """
+            UPDATE goals
+            SET name = ?, description = ?, status = ?, priority = ?, target_date = ?, target_seconds = ?
+            WHERE id = ?
+            """,
+            (name, description, status, priority, target_date, target_seconds, goal_id),
+        )
+        db.commit()
+
+    def delete_goal(self, goal_id):
+        db = self._get_db()
+        db.execute("DELETE FROM goal_tasks WHERE goal_id = ?", (goal_id,))
+        db.execute("DELETE FROM goal_projects WHERE goal_id = ?", (goal_id,))
+        db.execute("DELETE FROM goals WHERE id = ?", (goal_id,))
+        db.commit()
+
+    def fetch_goal_projects(self, goal_ids):
+        if not goal_ids:
+            return {}
+        db = self._get_db()
+        placeholders = ",".join(["?"] * len(goal_ids))
+        rows = db.execute(
+            f"""
+            SELECT goal_id, project_id
+            FROM goal_projects
+            WHERE goal_id IN ({placeholders})
+            """,
+            tuple(goal_ids),
+        ).fetchall()
+        mapping = {}
+        for row in rows:
+            mapping.setdefault(row["goal_id"], []).append(row["project_id"])
+        return mapping
+
+    def fetch_goal_tasks(self, goal_ids):
+        if not goal_ids:
+            return {}
+        db = self._get_db()
+        placeholders = ",".join(["?"] * len(goal_ids))
+        rows = db.execute(
+            f"""
+            SELECT goal_id, task_id
+            FROM goal_tasks
+            WHERE goal_id IN ({placeholders})
+            """,
+            tuple(goal_ids),
+        ).fetchall()
+        mapping = {}
+        for row in rows:
+            mapping.setdefault(row["goal_id"], []).append(row["task_id"])
+        return mapping
+
+    def set_goal_projects(self, goal_id, project_ids):
+        db = self._get_db()
+        db.execute("DELETE FROM goal_projects WHERE goal_id = ?", (goal_id,))
+        for project_id in project_ids:
+            db.execute(
+                "INSERT OR IGNORE INTO goal_projects (goal_id, project_id) VALUES (?, ?)",
+                (goal_id, project_id),
+            )
+        db.commit()
+
+    def set_goal_tasks(self, goal_id, task_ids):
+        db = self._get_db()
+        db.execute("DELETE FROM goal_tasks WHERE goal_id = ?", (goal_id,))
+        for task_id in task_ids:
+            db.execute(
+                "INSERT OR IGNORE INTO goal_tasks (goal_id, task_id) VALUES (?, ?)",
+                (goal_id, task_id),
+            )
         db.commit()
 
     def fetch_task_labels_map(self, task_ids):
