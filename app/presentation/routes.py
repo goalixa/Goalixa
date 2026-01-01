@@ -228,6 +228,12 @@ def register_routes(app, service):
         service.delete_task(task_id)
         return redirect(url_for("index"))
 
+    @app.route("/tasks/<int:task_id>/edit", methods=["POST"])
+    @auth_required()
+    def edit_task(task_id):
+        service.update_task(task_id, request.form.get("name", ""))
+        return redirect(request.referrer or url_for("index"))
+
     @app.route("/tasks/<int:task_id>/labels", methods=["POST"])
     @auth_required()
     def add_task_label(task_id):
@@ -281,6 +287,12 @@ def register_routes(app, service):
         service.delete_project(project_id)
         return redirect(url_for("projects"))
 
+    @app.route("/projects/<int:project_id>/edit", methods=["POST"])
+    @auth_required()
+    def edit_project(project_id):
+        service.update_project(project_id, request.form.get("name", ""))
+        return redirect(request.referrer or url_for("projects"))
+
     @app.route("/projects/<int:project_id>/labels", methods=["POST"])
     @auth_required()
     def add_project_label(project_id):
@@ -305,6 +317,16 @@ def register_routes(app, service):
     @auth_required()
     def delete_label(label_id):
         service.delete_label(label_id)
+        return redirect(url_for("labels"))
+
+    @app.route("/labels/<int:label_id>/edit", methods=["POST"])
+    @auth_required()
+    def edit_label(label_id):
+        service.update_label(
+            label_id,
+            request.form.get("name", ""),
+            request.form.get("color", ""),
+        )
         return redirect(url_for("labels"))
 
     @app.route("/api/projects", methods=["GET"])

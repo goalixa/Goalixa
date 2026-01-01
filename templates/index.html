@@ -52,6 +52,13 @@
                     {% endfor %}
                   </div>
                 {% endif %}
+                <form class="task-form" method="post" action="{{ url_for('edit_task', task_id=task['id']) }}">
+                  <input type="text" name="name" value="{{ task['name'] }}" required />
+                  <button class="btn btn-outline-secondary btn-sm" type="submit">
+                    <i class="bi bi-pencil"></i>
+                    Update
+                  </button>
+                </form>
                 <span class="task-time">{{ task['rolling_24h_seconds'] | format_seconds }}</span>
               </div>
               <div class="task-actions">

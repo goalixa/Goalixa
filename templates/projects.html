@@ -44,6 +44,13 @@
                     {% endfor %}
                   </div>
                 {% endif %}
+                <form class="task-form" method="post" action="{{ url_for('edit_project', project_id=project['id']) }}">
+                  <input type="text" name="name" value="{{ project['name'] }}" required />
+                  <button class="btn btn-outline-secondary btn-sm" type="submit">
+                    <i class="bi bi-pencil"></i>
+                    Update
+                  </button>
+                </form>
               </div>
               <div class="task-actions">
                 <form method="post" action="{{ url_for('delete_project', project_id=project['id']) }}">

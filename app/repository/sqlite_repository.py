@@ -193,6 +193,14 @@ class SQLiteTaskRepository:
         db.commit()
         return db.execute("SELECT last_insert_rowid()").fetchone()[0]
 
+    def update_task(self, task_id, name):
+        db = self._get_db()
+        db.execute(
+            "UPDATE tasks SET name = ? WHERE id = ?",
+            (name, task_id),
+        )
+        db.commit()
+
     def fetch_projects(self):
         db = self._get_db()
         return db.execute(
@@ -207,6 +215,14 @@ class SQLiteTaskRepository:
         )
         db.commit()
         return db.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+    def update_project(self, project_id, name):
+        db = self._get_db()
+        db.execute(
+            "UPDATE projects SET name = ? WHERE id = ?",
+            (name, project_id),
+        )
+        db.commit()
 
     def delete_project(self, project_id):
         db = self._get_db()
@@ -237,6 +253,14 @@ class SQLiteTaskRepository:
         db.execute(
             "INSERT INTO labels (name, color, created_at) VALUES (?, ?, ?)",
             (name, color, created_at),
+        )
+        db.commit()
+
+    def update_label(self, label_id, name, color):
+        db = self._get_db()
+        db.execute(
+            "UPDATE labels SET name = ?, color = ? WHERE id = ?",
+            (name, color, label_id),
         )
         db.commit()
 

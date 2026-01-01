@@ -46,6 +46,11 @@ class TaskService:
             for label_id in label_ids or []:
                 self.repository.add_label_to_task(task_id, int(label_id))
 
+    def update_task(self, task_id, name):
+        name = (name or "").strip()
+        if name:
+            self.repository.update_task(int(task_id), name)
+
     def list_projects(self):
         projects = self.repository.fetch_projects()
         project_ids = [project["id"] for project in projects]
@@ -76,6 +81,11 @@ class TaskService:
             )
             for label_id in label_ids or []:
                 self.repository.add_label_to_project(project_id, int(label_id))
+
+    def update_project(self, project_id, name):
+        name = (name or "").strip()
+        if name:
+            self.repository.update_project(int(project_id), name)
 
     def delete_project(self, project_id):
         self.repository.delete_project(project_id)
@@ -407,6 +417,12 @@ class TaskService:
         color = (color or "").strip()
         if name and color:
             self.repository.create_label(name, color, datetime.utcnow().isoformat())
+
+    def update_label(self, label_id, name, color):
+        name = (name or "").strip()
+        color = (color or "").strip()
+        if name and color:
+            self.repository.update_label(int(label_id), name, color)
 
     def delete_label(self, label_id):
         self.repository.delete_label(label_id)

@@ -69,6 +69,13 @@ function renderTasks(tasks) {
       const project = escapeHtml(task.project_name || "Unassigned");
       const time = formatSeconds(task.rolling_24h_seconds || 0);
       const labels = renderLabelChips(task.labels || []);
+      const editForm = `<form class="task-form" method="post" action="/tasks/${task.id}/edit">
+          <input type="text" name="name" value="${name}" required />
+          <button class="btn btn-outline-secondary btn-sm" type="submit">
+            <i class="bi bi-pencil"></i>
+            Update
+          </button>
+        </form>`;
       const action = task.is_running
         ? `<form method="post" action="/tasks/${task.id}/stop" data-action="stop" data-task-id="${task.id}">
              <button class="stop icon-button" type="submit" aria-label="Pause">⏸</button>
@@ -104,6 +111,7 @@ function renderTasks(tasks) {
                   <span class="name-badge name-task">${name}</span>
                   <span class="task-project">${project}</span>
                   ${labels}
+                  ${editForm}
                   <span class="task-time" data-task-id="${task.id}">${time}</span>
                 </div>
                 <div class="task-actions">
