@@ -300,6 +300,7 @@
 
       const storageKey = "pomodoroState";
       let intervalId = null;
+      let audioContext = null;
 
       const defaultState = {
         mode: "work",
@@ -389,6 +390,65 @@
         };
       };
 
+      const ensureAudioContext = () => {
+        if (!audioContext) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            audioContext = new AudioCtx();
+          }
+        }
+        return audioContext;
+      };
+
+      const playChime = () => {
+        const ctx = ensureAudioContext();
+        if (!ctx) {
+          return;
+        }
+        const now = ctx.currentTime;
+        const tones = [523.25, 659.25, 783.99];
+        tones.forEach((freq, index) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, now + index * 0.18);
+          gain.gain.linearRampToValueAtTime(0.2, now + index * 0.18 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.18 + 0.16);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + index * 0.18);
+          osc.stop(now + index * 0.18 + 0.2);
+        });
+      };
+
+      const requestNotifications = () => {
+        if (!("Notification" in window)) {
+          return;
+        }
+        if (Notification.permission === "default") {
+          Notification.requestPermission().catch(() => {});
+        }
+      };
+
+      const sendNotification = (title, body) => {
+        if (!("Notification" in window)) {
+          return;
+        }
+        if (Notification.permission === "granted") {
+          new Notification(title, { body });
+        }
+      };
+
+      const notifyPomodoro = (completedMode, nextMode) => {
+        if (completedMode === "work") {
+          sendNotification("Focus complete", "Time for a break.");
+        } else {
+          sendNotification("Break complete", "Time to focus.");
+        }
+        playChime();
+      };
+
       const applyElapsed = (state, elapsedSeconds) => {
         const startingRemaining = state.remaining;
         let remaining = state.remaining;
@@ -402,6 +462,7 @@
             secondsLeft = 0;
           } else {
             secondsLeft -= remaining;
+            notifyPomodoro(mode, mode === "work" ? "break" : "work");
             if (mode === "work") {
               completedWork += 1;
             }
@@ -467,6 +528,7 @@
             if (state.mode === "work") {
               stopTaskTimer(state);
             }
+            notifyPomodoro(state.mode, getNextMode(state));
             state.remaining = 0;
             state.isRunning = false;
             if (state.mode === "work") {
@@ -503,6 +565,7 @@
             alert("Select a task for this Pomodoro.");
             return;
           }
+          requestNotifications();
           state.isRunning = true;
           state.lastTick = Date.now();
           if (state.mode === "work") {
