@@ -970,6 +970,20 @@ body {
   padding: 16px;
 }
 
+.calendar-full {
+  padding: 24px;
+  height: calc(100vh - 48px);
+}
+
+.calendar-full-card {
+  height: 100%;
+  padding: 16px;
+}
+
+.calendar-full-card #calendar-page {
+  height: 100%;
+}
+
 .timer-hero {
   margin: 0;
   width: 100%;
