@@ -372,6 +372,88 @@ body {
   text-align: left;
 }
 
+.habits-header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.habit-create-panel {
+  width: min(520px, 90vw);
+  border-radius: 16px;
+  border: 1px solid rgba(31, 111, 235, 0.25);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
+  padding: 16px;
+}
+
+.habit-create-panel .goal-form-row {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.habit-create-panel label {
+  color: var(--muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
+.habit-create-panel input,
+.habit-create-panel select,
+.habit-create-panel textarea {
+  margin-top: 6px;
+  border-radius: 14px;
+  border: 1px solid rgba(31, 111, 235, 0.2);
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  background: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.habit-create-panel input:focus,
+.habit-create-panel select:focus,
+.habit-create-panel textarea:focus {
+  outline: none;
+  border-color: rgba(31, 111, 235, 0.55);
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.12);
+}
+
+.habit-create-panel select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #1f6feb 50%),
+    linear-gradient(135deg, #1f6feb 50%, transparent 50%),
+    linear-gradient(to right, rgba(31, 111, 235, 0.15), rgba(31, 111, 235, 0.05));
+  background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px),
+    calc(100% - 34px) 50%;
+  background-size: 6px 6px, 6px 6px, 20px 24px;
+  background-repeat: no-repeat;
+  padding-right: 40px;
+}
+
+.habit-form-actions .btn {
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-weight: 600;
+}
+
+.habit-form-actions .btn-primary {
+  box-shadow: 0 10px 20px rgba(31, 111, 235, 0.25);
+}
+
+.habit-form-actions .btn-outline-secondary {
+  border-color: rgba(31, 111, 235, 0.3);
+  color: #1f6feb;
+}
+
+.habit-create-panel.is-hidden {
+  display: none;
+}
+
+.habit-form-actions {
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .habits-page {
   display: grid;
   gap: 24px;
@@ -576,6 +658,15 @@ body {
   .habits-card-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .habits-header-actions {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .habit-create-panel {
+    width: 100%;
   }
 
   .habit-row {

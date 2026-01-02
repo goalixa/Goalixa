@@ -9,10 +9,58 @@
         <h1>Habits</h1>
         <p>Track daily routines and close the day with a clear checklist.</p>
       </div>
-      <button class="btn btn-primary btn-sm" type="button" data-habit-toggle>
-        <i class="bi bi-plus-lg"></i>
-        Create habit
-      </button>
+      <div class="habits-header-actions">
+        <button class="btn btn-primary btn-sm" type="button" data-habit-toggle aria-expanded="false">
+          <i class="bi bi-plus-lg"></i>
+          Create habit
+        </button>
+        <div class="habit-create-panel is-hidden" id="habit-create">
+          <form class="habit-form" id="habit-form" method="post" action="{{ url_for('create_habit') }}">
+            <div class="goal-form-row">
+              <label>
+                Habit name
+                <input type="text" name="name" placeholder="Review day plan" required />
+              </label>
+              <label>
+                Frequency
+                <select name="frequency">
+                  <option value="Daily">Daily</option>
+                  <option value="Weekdays">Weekdays</option>
+                  <option value="Weekends">Weekends</option>
+                  <option value="Custom">Custom</option>
+                </select>
+              </label>
+            </div>
+            <div class="goal-form-row">
+              <label>
+                Best time
+                <select name="time_of_day">
+                  <option value="">Anytime</option>
+                  <option value="Morning">Morning</option>
+                  <option value="Afternoon">Afternoon</option>
+                  <option value="Evening">Evening</option>
+                </select>
+              </label>
+              <label>
+                Reminder
+                <select name="reminder">
+                  <option value="">None</option>
+                  <option value="21:00">21:00</option>
+                  <option value="22:30">22:30</option>
+                </select>
+              </label>
+            </div>
+            <label>
+              Notes
+              <textarea rows="2" name="notes" placeholder="Why is this habit important?"></textarea>
+            </label>
+            <div class="goal-form-actions habit-form-actions">
+              <button class="btn btn-outline-secondary btn-sm" type="reset">Reset</button>
+              <button class="btn btn-primary btn-sm" type="submit">Create habit</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </header>
 
     <section class="habits-hero">
@@ -128,52 +176,6 @@
       </div>
     </section>
 
-    <section class="card habit-create-card is-hidden" id="habit-create">
-      <form class="habit-form" id="habit-form" method="post" action="{{ url_for('create_habit') }}">
-        <div class="goal-form-row">
-          <label>
-            Habit name
-            <input type="text" name="name" placeholder="Review day plan" required />
-          </label>
-          <label>
-            Frequency
-            <select name="frequency">
-              <option value="Daily">Daily</option>
-              <option value="Weekdays">Weekdays</option>
-              <option value="Weekends">Weekends</option>
-              <option value="Custom">Custom</option>
-            </select>
-          </label>
-        </div>
-        <div class="goal-form-row">
-          <label>
-            Best time
-            <select name="time_of_day">
-              <option value="">Anytime</option>
-              <option value="Morning">Morning</option>
-              <option value="Afternoon">Afternoon</option>
-              <option value="Evening">Evening</option>
-            </select>
-          </label>
-          <label>
-            Reminder
-            <select name="reminder">
-              <option value="">None</option>
-              <option value="21:00">21:00</option>
-              <option value="22:30">22:30</option>
-            </select>
-          </label>
-        </div>
-        <label>
-          Notes
-          <textarea rows="2" name="notes" placeholder="Why is this habit important?"></textarea>
-        </label>
-        <div class="goal-form-actions">
-          <button class="btn btn-outline-secondary btn-sm" type="reset">Reset</button>
-          <button class="btn btn-primary btn-sm" type="submit">Create habit</button>
-        </div>
-      </form>
-    </section>
   </div>
 {% endblock %}
 
@@ -185,12 +187,20 @@
       if (toggleButton && createPanel) {
         toggleButton.addEventListener("click", () => {
           const isHidden = createPanel.classList.toggle("is-hidden");
+          toggleButton.setAttribute("aria-expanded", String(!isHidden));
           if (!isHidden) {
             const input = createPanel.querySelector('input[name="name"]');
             if (input) {
               input.focus();
             }
           }
+        });
+      }
+      const form = document.getElementById("habit-form");
+      if (form && createPanel && toggleButton) {
+        form.addEventListener("submit", () => {
+          createPanel.classList.add("is-hidden");
+          toggleButton.setAttribute("aria-expanded", "false");
         });
       }
 
