@@ -75,20 +75,26 @@
             </label>
             <label>
               Link projects
-              <select name="project_ids" multiple>
-                {% for project in projects %}
-                  <option value="{{ project['id'] }}">{{ project['name'] }}</option>
-                {% endfor %}
-              </select>
+              <div class="goal-select">
+                <select name="project_ids">
+                  <option value="">Select a project</option>
+                  {% for project in projects %}
+                    <option value="{{ project['id'] }}">{{ project['name'] }}</option>
+                  {% endfor %}
+                </select>
+              </div>
             </label>
           </div>
           <label>
             Link tasks
-            <select name="task_ids" multiple>
-              {% for task in tasks %}
-                <option value="{{ task['id'] }}">{{ task['name'] }}</option>
-              {% endfor %}
-            </select>
+            <div class="goal-select">
+              <select name="task_ids">
+                <option value="">Select a task</option>
+                {% for task in tasks %}
+                  <option value="{{ task['id'] }}">{{ task['name'] }}</option>
+                {% endfor %}
+              </select>
+            </div>
           </label>
           <label>
             Description
@@ -242,24 +248,30 @@
                   </label>
                   <label>
                     Link projects
-                    <select name="project_ids" multiple>
-                      {% for project in projects %}
-                        <option value="{{ project['id'] }}" {% if project['id'] in goal['project_ids'] %}selected{% endif %}>
-                          {{ project['name'] }}
-                        </option>
-                      {% endfor %}
-                    </select>
+                    <div class="goal-select">
+                      <select name="project_ids">
+                        <option value="">Select a project</option>
+                        {% for project in projects %}
+                          <option value="{{ project['id'] }}" {% if project['id'] in goal['project_ids'] %}selected{% endif %}>
+                            {{ project['name'] }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                    </div>
                   </label>
                 </div>
                 <label>
                   Link tasks
-                  <select name="task_ids" multiple>
-                    {% for task in tasks %}
-                      <option value="{{ task['id'] }}" {% if task['id'] in goal['task_ids'] %}selected{% endif %}>
-                        {{ task['name'] }}
-                      </option>
-                    {% endfor %}
-                  </select>
+                  <div class="goal-select">
+                    <select name="task_ids">
+                      <option value="">Select a task</option>
+                      {% for task in tasks %}
+                        <option value="{{ task['id'] }}" {% if task['id'] in goal['task_ids'] %}selected{% endif %}>
+                          {{ task['name'] }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </div>
                 </label>
                 <label>
                   Description

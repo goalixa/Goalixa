@@ -1655,9 +1655,29 @@ body {
   font-size: 0.95rem;
 }
 
-.goal-form select[multiple],
-.goal-edit-form select[multiple] {
-  min-height: 120px;
+.goal-select {
+  display: grid;
+  gap: 6px;
+}
+
+.goal-select select {
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+}
+
+.goal-select select:focus {
+  outline: none;
+  border-color: rgba(31, 111, 235, 0.6);
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.15);
+}
+
+.goal-select-hint {
+  font-size: 0.8rem;
+  color: var(--muted);
 }
 
 .goal-form-row {
