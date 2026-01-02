@@ -124,6 +124,11 @@ class SQLiteTaskRepository:
                 UNIQUE (habit_id, log_date),
                 FOREIGN KEY (habit_id) REFERENCES habits (id) ON DELETE CASCADE
             );
+
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
             """
         )
         columns = db.execute("PRAGMA table_info(tasks)").fetchall()
@@ -159,21 +164,28 @@ class SQLiteTaskRepository:
         db.commit()
         db.commit()
 
-    def fetch_tasks(self):
+    def fetch_tasks(self, now_ts=None, rolling_start=None, day_start=None):
         db = self._get_db()
+        now_ts = int(now_ts or datetime.utcnow().timestamp())
+        rolling_start = int(rolling_start or (now_ts - 24 * 60 * 60))
+        day_start = int(
+            day_start
+            or datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+        )
         tasks = db.execute(
             """
             WITH params AS (
                 SELECT
-                    CAST(strftime('%s','now') AS INTEGER) AS now_ts,
-                    CAST(strftime('%s','now','-24 hours') AS INTEGER) AS window_start
+                    ? AS now_ts,
+                    ? AS rolling_start,
+                    ? AS day_start
             )
             SELECT t.id, t.name, t.project_id, p.name AS project_name,
                    IFNULL(SUM(
                        CASE
                            WHEN te.id IS NULL THEN 0
-                           WHEN te.ended_at IS NULL THEN (strftime('%s','now') - strftime('%s', te.started_at))
-                           ELSE (strftime('%s', te.ended_at) - strftime('%s', te.started_at))
+                           WHEN te.ended_at IS NULL THEN (params.now_ts - strftime('%s', te.started_at, 'utc'))
+                           ELSE (strftime('%s', te.ended_at, 'utc') - strftime('%s', te.started_at, 'utc'))
                        END
                    ), 0) AS total_seconds,
                    IFNULL(SUM(
@@ -182,12 +194,24 @@ class SQLiteTaskRepository:
                            ELSE MAX(
                                0,
                                MIN(
-                                   COALESCE(CAST(strftime('%s', te.ended_at) AS INTEGER), params.now_ts),
+                                   COALESCE(CAST(strftime('%s', te.ended_at, 'utc') AS INTEGER), params.now_ts),
                                    params.now_ts
-                               ) - MAX(CAST(strftime('%s', te.started_at) AS INTEGER), params.window_start)
+                               ) - MAX(CAST(strftime('%s', te.started_at, 'utc') AS INTEGER), params.rolling_start)
                            )
                        END
                    ), 0) AS rolling_24h_seconds,
+                   IFNULL(SUM(
+                       CASE
+                           WHEN te.id IS NULL THEN 0
+                           ELSE MAX(
+                               0,
+                               MIN(
+                                   COALESCE(CAST(strftime('%s', te.ended_at, 'utc') AS INTEGER), params.now_ts),
+                                   params.now_ts
+                               ) - MAX(CAST(strftime('%s', te.started_at, 'utc') AS INTEGER), params.day_start)
+                           )
+                       END
+                   ), 0) AS today_seconds,
                    MAX(CASE WHEN te.id IS NOT NULL AND te.ended_at IS NULL THEN 1 ELSE 0 END) AS is_running
             FROM tasks t
             CROSS JOIN params
@@ -195,25 +219,33 @@ class SQLiteTaskRepository:
             LEFT JOIN time_entries te ON te.task_id = t.id
             GROUP BY t.id
             ORDER BY t.created_at DESC
-            """
+            """,
+            (now_ts, rolling_start, day_start),
         ).fetchall()
         return tasks
 
-    def fetch_tasks_by_project(self, project_id):
+    def fetch_tasks_by_project(self, project_id, now_ts=None, rolling_start=None, day_start=None):
         db = self._get_db()
+        now_ts = int(now_ts or datetime.utcnow().timestamp())
+        rolling_start = int(rolling_start or (now_ts - 24 * 60 * 60))
+        day_start = int(
+            day_start
+            or datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+        )
         tasks = db.execute(
             """
             WITH params AS (
                 SELECT
-                    CAST(strftime('%s','now') AS INTEGER) AS now_ts,
-                    CAST(strftime('%s','now','-24 hours') AS INTEGER) AS window_start
+                    ? AS now_ts,
+                    ? AS rolling_start,
+                    ? AS day_start
             )
             SELECT t.id, t.name, t.project_id, p.name AS project_name,
                    IFNULL(SUM(
                        CASE
                            WHEN te.id IS NULL THEN 0
-                           WHEN te.ended_at IS NULL THEN (strftime('%s','now') - strftime('%s', te.started_at))
-                           ELSE (strftime('%s', te.ended_at) - strftime('%s', te.started_at))
+                           WHEN te.ended_at IS NULL THEN (params.now_ts - strftime('%s', te.started_at, 'utc'))
+                           ELSE (strftime('%s', te.ended_at, 'utc') - strftime('%s', te.started_at, 'utc'))
                        END
                    ), 0) AS total_seconds,
                    IFNULL(SUM(
@@ -222,12 +254,24 @@ class SQLiteTaskRepository:
                            ELSE MAX(
                                0,
                                MIN(
-                                   COALESCE(CAST(strftime('%s', te.ended_at) AS INTEGER), params.now_ts),
+                                   COALESCE(CAST(strftime('%s', te.ended_at, 'utc') AS INTEGER), params.now_ts),
                                    params.now_ts
-                               ) - MAX(CAST(strftime('%s', te.started_at) AS INTEGER), params.window_start)
+                               ) - MAX(CAST(strftime('%s', te.started_at, 'utc') AS INTEGER), params.rolling_start)
                            )
                        END
                    ), 0) AS rolling_24h_seconds,
+                   IFNULL(SUM(
+                       CASE
+                           WHEN te.id IS NULL THEN 0
+                           ELSE MAX(
+                               0,
+                               MIN(
+                                   COALESCE(CAST(strftime('%s', te.ended_at, 'utc') AS INTEGER), params.now_ts),
+                                   params.now_ts
+                               ) - MAX(CAST(strftime('%s', te.started_at, 'utc') AS INTEGER), params.day_start)
+                           )
+                       END
+                   ), 0) AS today_seconds,
                    MAX(CASE WHEN te.id IS NOT NULL AND te.ended_at IS NULL THEN 1 ELSE 0 END) AS is_running
             FROM tasks t
             CROSS JOIN params
@@ -237,7 +281,7 @@ class SQLiteTaskRepository:
             GROUP BY t.id
             ORDER BY t.created_at DESC
             """,
-            (project_id,),
+            (now_ts, rolling_start, day_start, project_id),
         ).fetchall()
         return tasks
 
@@ -359,6 +403,26 @@ class SQLiteTaskRepository:
             tuple(task_ids),
         ).fetchall()
         return {row["task_id"]: int(row["total_seconds"] or 0) for row in rows}
+
+    def get_setting(self, key):
+        db = self._get_db()
+        row = db.execute(
+            "SELECT value FROM app_settings WHERE key = ?",
+            (key,),
+        ).fetchone()
+        return row["value"] if row else None
+
+    def set_setting(self, key, value):
+        db = self._get_db()
+        db.execute(
+            """
+            INSERT INTO app_settings (key, value)
+            VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+            """,
+            (key, value),
+        )
+        db.commit()
 
     def create_label(self, name, color, created_at):
         db = self._get_db()
@@ -741,6 +805,28 @@ class SQLiteTaskRepository:
             WHERE task_id = ? AND ended_at IS NULL
             """,
             (ended_at, task_id),
+        )
+        db.commit()
+
+    def fetch_running_time_entries(self):
+        db = self._get_db()
+        return db.execute(
+            """
+            SELECT id, task_id, started_at
+            FROM time_entries
+            WHERE ended_at IS NULL
+            """
+        ).fetchall()
+
+    def stop_time_entry(self, entry_id, ended_at):
+        db = self._get_db()
+        db.execute(
+            """
+            UPDATE time_entries
+            SET ended_at = ?
+            WHERE id = ?
+            """,
+            (ended_at, entry_id),
         )
         db.commit()
 

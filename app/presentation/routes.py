@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from flask import jsonify, redirect, render_template, request, url_for
 from flask_security import auth_required, current_user
@@ -13,9 +14,15 @@ def register_routes(app, service):
             parsed = datetime.fromisoformat(normalized)
         except ValueError:
             return None
-        if parsed.tzinfo is not None:
-            return parsed.astimezone(timezone.utc).replace(tzinfo=None)
-        return parsed
+        tz_name = service.get_timezone_name()
+        tz = timezone.utc
+        try:
+            tz = ZoneInfo(tz_name)
+        except Exception:
+            tz = timezone.utc
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=tz)
+        return parsed.astimezone(timezone.utc).replace(tzinfo=None)
 
     @app.route("/", methods=["GET"])
     @auth_required()
@@ -47,10 +54,10 @@ def register_routes(app, service):
                 start_date = datetime.fromisoformat(start).date()
                 end_date = datetime.fromisoformat(end).date()
             except ValueError:
-                end_date = datetime.utcnow().date()
+                end_date = service.current_local_date()
                 start_date = end_date - timedelta(days=6)
         else:
-            end_date = datetime.utcnow().date()
+            end_date = service.current_local_date()
             start_date = end_date - timedelta(days=6)
 
         if end_date < start_date:
@@ -72,7 +79,7 @@ def register_routes(app, service):
     @app.route("/habits", methods=["GET"])
     @auth_required()
     def habits():
-        today = datetime.utcnow().date().isoformat()
+        today = service.current_local_date().isoformat()
         habits_list = service.list_habits(today)
         summary = service.habits_summary(habits_list)
         goals_list = service.list_goals()
@@ -106,7 +113,7 @@ def register_routes(app, service):
     @app.route("/habits/<int:habit_id>/toggle", methods=["POST"])
     @auth_required()
     def toggle_habit(habit_id):
-        log_date = request.form.get("date") or datetime.utcnow().date().isoformat()
+        log_date = request.form.get("date") or service.current_local_date().isoformat()
         done = request.form.get("done") in {"1", "on", "true"}
         service.set_habit_done(habit_id, log_date, done)
         return redirect(url_for("habits"))
@@ -204,7 +211,29 @@ def register_routes(app, service):
     @app.route("/account", methods=["GET"])
     @auth_required()
     def account():
-        return render_template("account.html", user=current_user)
+        timezone_options = [
+            "UTC",
+            "Asia/Tehran",
+            "Europe/London",
+            "Europe/Berlin",
+            "America/New_York",
+            "America/Chicago",
+            "America/Los_Angeles",
+            "Asia/Dubai",
+            "Asia/Tokyo",
+        ]
+        return render_template(
+            "account.html",
+            user=current_user,
+            timezone_name=service.get_timezone_name(),
+            timezone_options=timezone_options,
+        )
+
+    @app.route("/settings/timezone", methods=["POST"])
+    @auth_required()
+    def update_timezone():
+        service.set_timezone_name(request.form.get("timezone", "UTC"))
+        return redirect(url_for("account"))
 
     @app.route("/reports", methods=["GET"])
     @auth_required()
@@ -313,6 +342,7 @@ def register_routes(app, service):
                     "name": task["name"],
                     "total_seconds": int(task["total_seconds"] or 0),
                     "rolling_24h_seconds": int(task["rolling_24h_seconds"] or 0),
+                    "today_seconds": int(task.get("today_seconds") or 0),
                     "is_running": bool(task["is_running"]),
                     "project_id": task["project_id"],
                     "project_name": task["project_name"],

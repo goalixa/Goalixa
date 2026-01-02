@@ -18,5 +18,23 @@
         </a>
       </div>
     </section>
+
+    <section class="card">
+      <h2>App settings</h2>
+      <form method="post" action="{{ url_for('update_timezone') }}">
+        <label class="d-block mb-2">
+          Timezone
+          <select class="form-select mt-2" name="timezone">
+            {% for tz in timezone_options %}
+              <option value="{{ tz }}" {% if tz == timezone_name %}selected{% endif %}>{{ tz }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <button class="btn btn-outline-primary btn-sm" type="submit">
+          <i class="bi bi-check2-circle"></i>
+          Save settings
+        </button>
+      </form>
+    </section>
   </main>
 {% endblock %}

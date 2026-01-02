@@ -77,7 +77,7 @@
                     Save
                   </button>
                 </form>
-                <span class="task-time">{{ task['rolling_24h_seconds'] | format_seconds }}</span>
+                <span class="task-time">{{ task['today_seconds'] | format_seconds }}</span>
               </div>
               <div class="task-actions">
                 {% if task['is_running'] %}

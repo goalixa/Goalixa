@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 
 class TaskService:
@@ -34,6 +35,48 @@ class TaskService:
             counts[value] = counts.get(value, 0) + 1
         return max(counts.items(), key=lambda item: item[1])[0]
 
+    def _get_timezone(self):
+        tz_name = self.repository.get_setting("timezone") or "UTC"
+        try:
+            tz = ZoneInfo(tz_name)
+        except Exception:
+            tz = ZoneInfo("UTC")
+            tz_name = "UTC"
+        return tz_name, tz
+
+    def get_timezone_name(self):
+        return self._get_timezone()[0]
+
+    def set_timezone_name(self, tz_name):
+        tz_name = (tz_name or "").strip() or "UTC"
+        try:
+            ZoneInfo(tz_name)
+        except Exception:
+            tz_name = "UTC"
+        self.repository.set_setting("timezone", tz_name)
+
+    def current_local_date(self):
+        _, tz = self._get_timezone()
+        return datetime.now(tz).date()
+
+    def _local_day_bounds(self, day):
+        _, tz = self._get_timezone()
+        start_local = datetime.combine(day, datetime.min.time(), tzinfo=tz)
+        end_local = start_local + timedelta(days=1)
+        start_utc = start_local.astimezone(timezone.utc).replace(tzinfo=None)
+        end_utc = end_local.astimezone(timezone.utc).replace(tzinfo=None)
+        return start_utc, end_utc
+
+    def _rollover_running_entries(self):
+        today = self.current_local_date()
+        today_start, _ = self._local_day_bounds(today)
+        running_entries = self.repository.fetch_running_time_entries()
+        for entry in running_entries:
+            started_at = datetime.fromisoformat(entry["started_at"])
+            if started_at < today_start:
+                self.repository.stop_time_entry(entry["id"], today_start.isoformat())
+                self.repository.start_task(entry["task_id"], today_start.isoformat())
+
     def init_db(self):
         self.repository.init_db()
         default_project_id = self.repository.ensure_default_project(
@@ -43,7 +86,14 @@ class TaskService:
             self.repository.backfill_tasks_project(default_project_id)
 
     def list_tasks(self):
-        tasks = self.repository.fetch_tasks()
+        self._rollover_running_entries()
+        now_utc = datetime.utcnow()
+        today = self.current_local_date()
+        day_start, _ = self._local_day_bounds(today)
+        now_ts = int(now_utc.timestamp())
+        day_start_ts = int(day_start.timestamp())
+        rolling_start_ts = now_ts - 24 * 60 * 60
+        tasks = self.repository.fetch_tasks(now_ts, rolling_start_ts, day_start_ts)
         task_ids = [task["id"] for task in tasks]
         labels_map = self.repository.fetch_task_labels_map(task_ids)
         return [
@@ -55,7 +105,18 @@ class TaskService:
         ]
 
     def list_tasks_by_project(self, project_id):
-        tasks = self.repository.fetch_tasks_by_project(project_id)
+        now_utc = datetime.utcnow()
+        today = self.current_local_date()
+        day_start, _ = self._local_day_bounds(today)
+        now_ts = int(now_utc.timestamp())
+        day_start_ts = int(day_start.timestamp())
+        rolling_start_ts = now_ts - 24 * 60 * 60
+        tasks = self.repository.fetch_tasks_by_project(
+            project_id,
+            now_ts,
+            rolling_start_ts,
+            day_start_ts,
+        )
         task_ids = [task["id"] for task in tasks]
         labels_map = self.repository.fetch_task_labels_map(task_ids)
         return [
@@ -121,22 +182,22 @@ class TaskService:
 
     def summary_by_days(self, days):
         days = int(days)
-        now = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
-        start_day = (now - timedelta(days=days - 1)).replace(hour=0)
-        end_day = (now + timedelta(days=1)).replace(hour=0)
-
+        today = self.current_local_date()
+        start_date = today - timedelta(days=days - 1)
+        start_day, _ = self._local_day_bounds(start_date)
+        _, end_day = self._local_day_bounds(today)
         entries = self.repository.fetch_time_entries_between(
             start_day.isoformat(), end_day.isoformat()
         )
 
         buckets = []
         for day_offset in range(days):
-            day_start = start_day + timedelta(days=day_offset)
-            day_end = day_start + timedelta(days=1)
+            day = start_date + timedelta(days=day_offset)
+            day_start, day_end = self._local_day_bounds(day)
             buckets.append(
                 {
-                    "date": day_start.date().isoformat(),
-                    "label": day_start.strftime("%d %b"),
+                    "date": day.isoformat(),
+                    "label": day.strftime("%d %b"),
                     "start": day_start,
                     "end": day_end,
                     "seconds": 0,
@@ -171,8 +232,9 @@ class TaskService:
         return buckets
 
     def summary_by_range(self, start_date, end_date):
-        start_day = datetime.combine(start_date, datetime.min.time())
-        end_day = datetime.combine(end_date + timedelta(days=1), datetime.min.time())
+        self._rollover_running_entries()
+        start_day, _ = self._local_day_bounds(start_date)
+        _, end_day = self._local_day_bounds(end_date)
 
         entries = self.repository.fetch_time_entries_between(
             start_day.isoformat(), end_day.isoformat()
@@ -181,12 +243,12 @@ class TaskService:
         days = (end_date - start_date).days + 1
         buckets = []
         for day_offset in range(days):
-            day_start = start_day + timedelta(days=day_offset)
-            day_end = day_start + timedelta(days=1)
+            day = start_date + timedelta(days=day_offset)
+            day_start, day_end = self._local_day_bounds(day)
             buckets.append(
                 {
-                    "date": day_start.date().isoformat(),
-                    "label": day_start.strftime("%d %b"),
+                    "date": day.isoformat(),
+                    "label": day.strftime("%d %b"),
                     "start": day_start,
                     "end": day_end,
                     "seconds": 0,
@@ -221,8 +283,9 @@ class TaskService:
         return buckets
 
     def project_distribution_by_range(self, start_date, end_date):
-        start_day = datetime.combine(start_date, datetime.min.time())
-        end_day = datetime.combine(end_date + timedelta(days=1), datetime.min.time())
+        self._rollover_running_entries()
+        start_day, _ = self._local_day_bounds(start_date)
+        _, end_day = self._local_day_bounds(end_date)
         entries = self.repository.fetch_time_entries_with_projects_between(
             start_day.isoformat(), end_day.isoformat()
         )
@@ -258,8 +321,9 @@ class TaskService:
         return distribution, total_seconds
 
     def distribution_by_range(self, start_date, end_date, group_by):
-        start_day = datetime.combine(start_date, datetime.min.time())
-        end_day = datetime.combine(end_date + timedelta(days=1), datetime.min.time())
+        self._rollover_running_entries()
+        start_day, _ = self._local_day_bounds(start_date)
+        _, end_day = self._local_day_bounds(end_date)
 
         if group_by == "tasks":
             entries = self.repository.fetch_time_entries_with_tasks_between(
@@ -311,8 +375,9 @@ class TaskService:
         return distribution, total_seconds
 
     def list_time_entries_by_range(self, start_date, end_date):
-        start_day = datetime.combine(start_date, datetime.min.time())
-        end_day = datetime.combine(end_date + timedelta(days=1), datetime.min.time())
+        self._rollover_running_entries()
+        start_day, _ = self._local_day_bounds(start_date)
+        _, end_day = self._local_day_bounds(end_date)
         entries = self.repository.fetch_time_entries_with_task_details_between(
             start_day.isoformat(), end_day.isoformat()
         )
@@ -326,16 +391,16 @@ class TaskService:
 
         days = (end_date - start_date).days + 1
         buckets = []
-        today = datetime.utcnow().date()
+        today = self.current_local_date()
         for day_offset in range(days):
-            day_start = start_day + timedelta(days=day_offset)
-            day_end = day_start + timedelta(days=1)
-            if day_start.date() == today:
+            day = start_date + timedelta(days=day_offset)
+            day_start, day_end = self._local_day_bounds(day)
+            if day == today:
                 label = "Today"
-            elif day_start.date() == (today - timedelta(days=1)):
+            elif day == (today - timedelta(days=1)):
                 label = "Yesterday"
             else:
-                label = day_start.strftime("%a, %d %b")
+                label = day.strftime("%a, %d %b")
             buckets.append(
                 {
                     "label": label,
@@ -392,6 +457,7 @@ class TaskService:
         return result
 
     def list_time_entries_for_calendar(self, start_dt, end_dt):
+        self._rollover_running_entries()
         entries = self.repository.fetch_time_entries_with_task_details_between(
             start_dt.isoformat(), end_dt.isoformat()
         )
@@ -661,7 +727,7 @@ class TaskService:
         }
 
     def habit_completion_series(self, days=14):
-        today = datetime.utcnow().date()
+        today = self.current_local_date()
         start_date = today - timedelta(days=days - 1)
         date_labels = [
             (start_date + timedelta(days=offset)).isoformat() for offset in range(days)
