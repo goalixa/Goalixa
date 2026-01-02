@@ -32,14 +32,20 @@
               </label>
             </div>
             <div class="goal-form-row">
-              <label>
+              <label class="habit-goal-field">
                 Goal
-                <select name="goal_name">
-                  <option value="">Select a goal</option>
-                  {% for goal in goals %}
-                    <option value="{{ goal['name'] }}">{{ goal['name'] }}</option>
-                  {% endfor %}
-                </select>
+                <div class="habit-goal-select">
+                  <select name="goal_name">
+                    <option value="">Select a goal</option>
+                    {% for goal in goals %}
+                      <option value="{{ goal['name'] }}" data-goal-id="{{ goal['id'] }}">{{ goal['name'] }}</option>
+                    {% endfor %}
+                  </select>
+                  <button class="btn btn-outline-danger btn-sm habit-goal-delete" type="button" data-goal-delete>
+                    <i class="bi bi-trash"></i>
+                    Delete goal
+                  </button>
+                </div>
               </label>
               <label>
                 Sub-goal
@@ -168,16 +174,22 @@
                   </label>
                 </div>
                 <div class="goal-form-row">
-                  <label>
+                  <label class="habit-goal-field">
                     Goal
-                    <select name="goal_name">
-                      <option value="">Select a goal</option>
-                      {% for goal in goals %}
-                        <option value="{{ goal['name'] }}" {% if habit['goal_name'] == goal['name'] %}selected{% endif %}>
-                          {{ goal['name'] }}
-                        </option>
-                      {% endfor %}
-                    </select>
+                    <div class="habit-goal-select">
+                      <select name="goal_name">
+                        <option value="">Select a goal</option>
+                        {% for goal in goals %}
+                          <option value="{{ goal['name'] }}" data-goal-id="{{ goal['id'] }}" {% if habit['goal_name'] == goal['name'] %}selected{% endif %}>
+                            {{ goal['name'] }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                      <button class="btn btn-outline-danger btn-sm habit-goal-delete" type="button" data-goal-delete>
+                        <i class="bi bi-trash"></i>
+                        Delete goal
+                      </button>
+                    </div>
                   </label>
                   <label>
                     Sub-goal
@@ -263,6 +275,26 @@
       document.addEventListener("click", (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) {
+          return;
+        }
+        const deleteButton = target.closest("[data-goal-delete]");
+        if (deleteButton) {
+          const wrapper = deleteButton.closest(".habit-goal-select");
+          const select = wrapper?.querySelector("select");
+          const selected = select?.selectedOptions?.[0];
+          const goalId = selected?.dataset?.goalId;
+          if (!goalId) {
+            return;
+          }
+          const confirmed = window.confirm("Delete selected goal?");
+          if (!confirmed) {
+            return;
+          }
+          const form = document.createElement("form");
+          form.method = "post";
+          form.action = `/goals/${goalId}/delete`;
+          document.body.appendChild(form);
+          form.submit();
           return;
         }
         const editButton = target.closest("[data-edit-target]");

@@ -398,6 +398,22 @@ body {
   letter-spacing: 0.02em;
 }
 
+.habit-goal-field {
+  display: grid;
+  gap: 8px;
+}
+
+.habit-goal-select {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.habit-goal-select .btn {
+  white-space: nowrap;
+}
+
 .habit-create-panel input,
 .habit-create-panel select,
 .habit-create-panel textarea {
