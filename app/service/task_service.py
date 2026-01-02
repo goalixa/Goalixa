@@ -627,6 +627,10 @@ class TaskService:
             meta_parts = [habit["frequency"]]
             if habit["time_of_day"]:
                 meta_parts.append(habit["time_of_day"])
+            if habit["goal_name"]:
+                meta_parts.append(f"Goal: {habit['goal_name']}")
+            if habit["subgoal_name"]:
+                meta_parts.append(f"Sub-goal: {habit['subgoal_name']}")
             habit_list.append(
                 {
                     **dict(habit),
@@ -652,12 +656,14 @@ class TaskService:
             "focus_window": focus_window,
         }
 
-    def add_habit(self, name, frequency, time_of_day, reminder, notes):
+    def add_habit(self, name, frequency, time_of_day, reminder, notes, goal_name, subgoal_name):
         name = (name or "").strip()
         frequency = (frequency or "Daily").strip()
         time_of_day = (time_of_day or "").strip() or None
         reminder = (reminder or "").strip() or None
         notes = (notes or "").strip() or None
+        goal_name = (goal_name or "").strip() or None
+        subgoal_name = (subgoal_name or "").strip() or None
         if not name:
             return
         self.repository.create_habit(
@@ -666,15 +672,29 @@ class TaskService:
             time_of_day,
             reminder,
             notes,
+            goal_name,
+            subgoal_name,
             datetime.utcnow().isoformat(),
         )
 
-    def update_habit(self, habit_id, name, frequency, time_of_day, reminder, notes):
+    def update_habit(
+        self,
+        habit_id,
+        name,
+        frequency,
+        time_of_day,
+        reminder,
+        notes,
+        goal_name,
+        subgoal_name,
+    ):
         name = (name or "").strip()
         frequency = (frequency or "Daily").strip()
         time_of_day = (time_of_day or "").strip() or None
         reminder = (reminder or "").strip() or None
         notes = (notes or "").strip() or None
+        goal_name = (goal_name or "").strip() or None
+        subgoal_name = (subgoal_name or "").strip() or None
         if not name:
             return
         self.repository.update_habit(
@@ -684,6 +704,8 @@ class TaskService:
             time_of_day,
             reminder,
             notes,
+            goal_name,
+            subgoal_name,
         )
 
     def delete_habit(self, habit_id):

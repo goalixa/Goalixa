@@ -111,6 +111,8 @@ class SQLiteTaskRepository:
                 time_of_day TEXT,
                 reminder TEXT,
                 notes TEXT,
+                goal_name TEXT,
+                subgoal_name TEXT,
                 created_at TEXT NOT NULL
             );
 
@@ -128,6 +130,12 @@ class SQLiteTaskRepository:
         column_names = {column["name"] for column in columns}
         if "project_id" not in column_names:
             db.execute("ALTER TABLE tasks ADD COLUMN project_id INTEGER")
+        habit_columns = db.execute("PRAGMA table_info(habits)").fetchall()
+        habit_names = {column["name"] for column in habit_columns}
+        if "goal_name" not in habit_names:
+            db.execute("ALTER TABLE habits ADD COLUMN goal_name TEXT")
+        if "subgoal_name" not in habit_names:
+            db.execute("ALTER TABLE habits ADD COLUMN subgoal_name TEXT")
         db.commit()
 
     def ensure_default_project(self, name, created_at):
@@ -543,33 +551,53 @@ class SQLiteTaskRepository:
         db = self._get_db()
         return db.execute(
             """
-            SELECT id, name, frequency, time_of_day, reminder, notes, created_at
+            SELECT id, name, frequency, time_of_day, reminder, notes, goal_name, subgoal_name, created_at
             FROM habits
             ORDER BY created_at DESC
             """
         ).fetchall()
 
-    def create_habit(self, name, frequency, time_of_day, reminder, notes, created_at):
+    def create_habit(
+        self,
+        name,
+        frequency,
+        time_of_day,
+        reminder,
+        notes,
+        goal_name,
+        subgoal_name,
+        created_at,
+    ):
         db = self._get_db()
         db.execute(
             """
-            INSERT INTO habits (name, frequency, time_of_day, reminder, notes, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO habits (name, frequency, time_of_day, reminder, notes, goal_name, subgoal_name, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (name, frequency, time_of_day, reminder, notes, created_at),
+            (name, frequency, time_of_day, reminder, notes, goal_name, subgoal_name, created_at),
         )
         db.commit()
         return db.execute("SELECT last_insert_rowid()").fetchone()[0]
 
-    def update_habit(self, habit_id, name, frequency, time_of_day, reminder, notes):
+    def update_habit(
+        self,
+        habit_id,
+        name,
+        frequency,
+        time_of_day,
+        reminder,
+        notes,
+        goal_name,
+        subgoal_name,
+    ):
         db = self._get_db()
         db.execute(
             """
             UPDATE habits
-            SET name = ?, frequency = ?, time_of_day = ?, reminder = ?, notes = ?
+            SET name = ?, frequency = ?, time_of_day = ?, reminder = ?, notes = ?, goal_name = ?, subgoal_name = ?
             WHERE id = ?
             """,
-            (name, frequency, time_of_day, reminder, notes, habit_id),
+            (name, frequency, time_of_day, reminder, notes, goal_name, subgoal_name, habit_id),
         )
         db.commit()
 
