@@ -1,0 +1,96 @@
+{% extends "layout.html" %}
+{% set title = "Create Goal" %}
+{% set active_page = "goals" %}
+
+{% block content %}
+  <div class="container py-4 goals-page">
+    <header class="header">
+      <h1>Create Goal</h1>
+      <p>Break down big outcomes into focused milestones.</p>
+    </header>
+
+    <section class="card goal-create-card">
+      <div class="goal-create-header">
+        <div>
+          <p class="goals-label">New goal</p>
+          <h2 class="goals-title">Turn outcomes into a plan</h2>
+        </div>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('goals') }}">
+          <i class="bi bi-arrow-left"></i>
+          Back to goals
+        </a>
+      </div>
+      <form class="goal-form" method="post" action="{{ url_for('create_goal') }}">
+        <div class="goal-form-row">
+          <label>
+            Goal name
+            <input type="text" name="name" placeholder="Finish AWS Cloud Technical Essential" required />
+          </label>
+          <label>
+            Target date
+            <input type="date" name="target_date" />
+          </label>
+        </div>
+        <div class="goal-form-row">
+          <label>
+            Priority
+            <select name="priority">
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </label>
+          <label>
+            Status
+            <select name="status">
+              <option value="active" selected>Active</option>
+              <option value="at_risk">At risk</option>
+              <option value="completed">Completed</option>
+              <option value="archived">Archived</option>
+            </select>
+          </label>
+        </div>
+        <div class="goal-form-row">
+          <label>
+            Target hours
+            <input type="number" name="target_hours" min="0" step="0.5" placeholder="40" />
+          </label>
+          <label>
+            Link projects
+            <div class="goal-select">
+              <select name="project_ids">
+                <option value="">Select a project</option>
+                {% for project in projects %}
+                  <option value="{{ project['id'] }}">{{ project['name'] }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </label>
+        </div>
+        <label>
+          Link tasks
+          <div class="goal-select">
+            <select name="task_ids">
+              <option value="">Select a task</option>
+              {% for task in tasks %}
+                <option value="{{ task['id'] }}">{{ task['name'] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </label>
+        <label>
+          Description
+          <textarea rows="2" name="description" placeholder="What does success look like?"></textarea>
+        </label>
+        <label>
+          Sub-goals (one per line)
+          <textarea rows="3" name="subgoals" placeholder="Finish Module 1&#10;Build first lab&#10;Review practice quiz"></textarea>
+        </label>
+        <div class="goal-form-actions">
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('goals') }}">Cancel</a>
+          <button class="btn btn-primary btn-sm" type="submit">Create goal</button>
+        </div>
+      </form>
+    </section>
+  </div>
+{% endblock %}

@@ -88,6 +88,17 @@ def register_routes(app, service):
             targets_set=targets_set,
         )
 
+    @app.route("/goals/new", methods=["GET"])
+    @auth_required()
+    def new_goal():
+        projects = service.list_projects()
+        tasks = service.list_tasks()
+        return render_template(
+            "goals_new.html",
+            projects=projects,
+            tasks=tasks,
+        )
+
     @app.route("/goals", methods=["POST"])
     @auth_required()
     def create_goal():
