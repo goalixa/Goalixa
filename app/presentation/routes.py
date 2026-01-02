@@ -69,6 +69,23 @@ def register_routes(app, service):
     def calendar():
         return render_template("calendar.html")
 
+    @app.route("/habits", methods=["GET"])
+    @auth_required()
+    def habits():
+        habits_list = [
+            {"id": 1, "name": "Morning review", "schedule": "Daily", "streak": 6, "done": False},
+            {"id": 2, "name": "Study AWS basics", "schedule": "Mon, Wed, Fri", "streak": 3, "done": True},
+            {"id": 3, "name": "Plan tomorrow", "schedule": "Daily", "streak": 12, "done": False},
+            {"id": 4, "name": "Stretch break", "schedule": "Daily", "streak": 21, "done": True},
+        ]
+        completed = len([habit for habit in habits_list if habit["done"]])
+        return render_template(
+            "habits.html",
+            habits=habits_list,
+            total_habits=len(habits_list),
+            completed_habits=completed,
+        )
+
     @app.route("/goals", methods=["GET"])
     @auth_required()
     def goals():

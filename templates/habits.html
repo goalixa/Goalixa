@@ -1,0 +1,125 @@
+{% extends "layout.html" %}
+{% set title = "Habits" %}
+{% set active_page = "habits" %}
+
+{% block content %}
+  <div class="container py-4 habits-page">
+    <header class="header habits-header">
+      <div>
+        <h1>Habits</h1>
+        <p>Track daily routines and close the day with a clear checklist.</p>
+      </div>
+      <button class="btn btn-primary btn-sm" type="button">
+        <i class="bi bi-plus-lg"></i>
+        Create habit
+      </button>
+    </header>
+
+    <section class="habits-hero">
+      <div class="habit-stat-card">
+        <span class="habit-stat-label">Completed today</span>
+        <span class="habit-stat-value">{{ completed_habits or 0 }}</span>
+        <span class="habit-stat-meta">Out of {{ total_habits or 0 }}</span>
+      </div>
+      <div class="habit-stat-card">
+        <span class="habit-stat-label">Daily streak</span>
+        <span class="habit-stat-value">7 days</span>
+        <span class="habit-stat-meta">Keep the chain moving</span>
+      </div>
+      <div class="habit-stat-card">
+        <span class="habit-stat-label">Focus ritual</span>
+        <span class="habit-stat-value">Night close</span>
+        <span class="habit-stat-meta">Mark done before sleep</span>
+      </div>
+    </section>
+
+    <section class="card habits-card">
+      <div class="habits-card-header">
+        <div>
+          <p class="goals-label">Tonight</p>
+          <h2 class="goals-title">Daily checklist</h2>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm" type="button">
+          <i class="bi bi-calendar-check"></i>
+          Mark all complete
+        </button>
+      </div>
+      <div class="habit-list">
+        {% if habits %}
+          {% for habit in habits %}
+            <label class="habit-row">
+              <span class="habit-left">
+                <span class="habit-checkbox">
+                  <input type="checkbox" {% if habit['done'] %}checked{% endif %} />
+                  <span class="habit-checkmark"></span>
+                </span>
+                <span class="habit-text">
+                  <span class="habit-name">{{ habit['name'] }}</span>
+                  <span class="habit-meta">{{ habit['schedule'] }}</span>
+                </span>
+              </span>
+              <span class="habit-streak">
+                <i class="bi bi-fire"></i>
+                {{ habit['streak'] }} day streak
+              </span>
+            </label>
+          {% endfor %}
+        {% else %}
+          <p class="empty">No habits yet.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="card habit-create-card">
+      <div class="habit-create-header">
+        <div>
+          <p class="goals-label">New habit</p>
+          <h2 class="goals-title">Create a routine that sticks</h2>
+        </div>
+      </div>
+      <form class="habit-form">
+        <div class="goal-form-row">
+          <label>
+            Habit name
+            <input type="text" placeholder="Review day plan" />
+          </label>
+          <label>
+            Frequency
+            <select>
+              <option>Daily</option>
+              <option>Weekdays</option>
+              <option>Weekends</option>
+              <option>Custom</option>
+            </select>
+          </label>
+        </div>
+        <div class="goal-form-row">
+          <label>
+            Best time
+            <select>
+              <option>Morning</option>
+              <option>Afternoon</option>
+              <option>Evening</option>
+            </select>
+          </label>
+          <label>
+            Reminder
+            <select>
+              <option>None</option>
+              <option>21:00</option>
+              <option>22:30</option>
+            </select>
+          </label>
+        </div>
+        <label>
+          Notes
+          <textarea rows="2" placeholder="Why is this habit important?"></textarea>
+        </label>
+        <div class="goal-form-actions">
+          <button class="btn btn-outline-secondary btn-sm" type="button">Reset</button>
+          <button class="btn btn-primary btn-sm" type="button">Add habit</button>
+        </div>
+      </form>
+    </section>
+  </div>
+{% endblock %}

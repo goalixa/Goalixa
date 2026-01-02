@@ -364,6 +364,179 @@ body {
   margin-bottom: 6px;
 }
 
+.habits-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+}
+
+.habits-page {
+  display: grid;
+  gap: 24px;
+}
+
+.habits-hero {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.habit-stat-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.habit-stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.habit-stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.habit-stat-meta {
+  color: var(--muted);
+}
+
+.habits-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.habits-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.habit-list {
+  display: grid;
+  gap: 12px;
+}
+
+.habit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.habit-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.habit-checkbox {
+  position: relative;
+  width: 22px;
+  height: 22px;
+}
+
+.habit-checkbox input {
+  opacity: 0;
+  width: 22px;
+  height: 22px;
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+
+.habit-checkmark {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid rgba(31, 111, 235, 0.4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, border 0.2s ease;
+}
+
+.habit-checkmark::after {
+  content: "";
+  width: 10px;
+  height: 6px;
+  border-left: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+  transform: rotate(-45deg);
+  transition: border-color 0.2s ease;
+}
+
+.habit-checkbox input:checked + .habit-checkmark {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.habit-checkbox input:checked + .habit-checkmark::after {
+  border-color: #ffffff;
+}
+
+.habit-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.habit-name {
+  font-weight: 600;
+}
+
+.habit-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.habit-streak {
+  color: var(--muted);
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.habit-create-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.habit-create-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .habits-header,
+  .habits-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .habit-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 .header h1 {
   margin: 0 0 8px;
   font-size: 1.7rem;
