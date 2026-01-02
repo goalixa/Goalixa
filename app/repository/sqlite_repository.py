@@ -658,6 +658,20 @@ class SQLiteTaskRepository:
             )
         db.commit()
 
+    def fetch_habit_log_counts(self, start_date, end_date):
+        db = self._get_db()
+        rows = db.execute(
+            """
+            SELECT log_date, COUNT(*) AS total
+            FROM habit_logs
+            WHERE log_date BETWEEN ? AND ?
+            GROUP BY log_date
+            ORDER BY log_date ASC
+            """,
+            (start_date, end_date),
+        ).fetchall()
+        return {row["log_date"]: row["total"] for row in rows}
+
     def fetch_task_labels_map(self, task_ids):
         if not task_ids:
             return {}

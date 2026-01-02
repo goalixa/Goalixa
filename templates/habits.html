@@ -244,10 +244,24 @@
       </div>
     </section>
 
+    <section class="card habits-chart">
+      <div class="habits-card-header">
+        <div>
+          <p class="goals-label">Progress</p>
+          <h2 class="goals-title">Habit completion over time</h2>
+        </div>
+        <span class="habit-chart-note">Last 14 days</span>
+      </div>
+      <div class="chart-panel is-active">
+        <canvas id="habits-chart" height="160"></canvas>
+      </div>
+    </section>
+
   </div>
 {% endblock %}
 
 {% block scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const toggleButton = document.querySelector("[data-habit-toggle]");
@@ -336,6 +350,54 @@
           openForm.classList.remove("is-open");
         });
       });
+
+      const chartEl = document.getElementById("habits-chart");
+      if (chartEl && typeof Chart !== "undefined") {
+        const labels = {{ habit_series["labels"] | tojson }};
+        const values = {{ habit_series["values"] | tojson }};
+        const ctx = chartEl.getContext("2d");
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Completion %",
+                data: values,
+                borderColor: "#1f6feb",
+                backgroundColor: "rgba(31, 111, 235, 0.15)",
+                fill: true,
+                tension: 0.35,
+                pointRadius: 3,
+                pointBackgroundColor: "#1f6feb",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                min: 0,
+                max: 100,
+                ticks: {
+                  callback: (value) => `${value}%`,
+                },
+              },
+            },
+            plugins: {
+              legend: {
+                display: false,
+              },
+              tooltip: {
+                callbacks: {
+                  label: (context) => `${context.parsed.y}% complete`,
+                },
+              },
+            },
+          },
+        });
+      }
     });
   </script>
 {% endblock %}

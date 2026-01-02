@@ -660,6 +660,27 @@ class TaskService:
             "focus_window": focus_window,
         }
 
+    def habit_completion_series(self, days=14):
+        today = datetime.utcnow().date()
+        start_date = today - timedelta(days=days - 1)
+        date_labels = [
+            (start_date + timedelta(days=offset)).isoformat() for offset in range(days)
+        ]
+        habits = self.repository.fetch_habits()
+        total_habits = len(habits)
+        counts = self.repository.fetch_habit_log_counts(
+            start_date.isoformat(), today.isoformat()
+        )
+        values = []
+        for date_label in date_labels:
+            done_count = counts.get(date_label, 0)
+            percent = int((done_count / total_habits) * 100) if total_habits else 0
+            values.append(percent)
+        return {
+            "labels": date_labels,
+            "values": values,
+        }
+
     def add_habit(self, name, frequency, time_of_day, reminder, notes, goal_name, subgoal_name):
         name = (name or "").strip()
         frequency = (frequency or "Daily").strip()

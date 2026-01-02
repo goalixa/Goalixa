@@ -76,6 +76,7 @@ def register_routes(app, service):
         habits_list = service.list_habits(today)
         summary = service.habits_summary(habits_list)
         goals_list = service.list_goals()
+        series = service.habit_completion_series(14)
         return render_template(
             "habits.html",
             habits=habits_list,
@@ -85,6 +86,7 @@ def register_routes(app, service):
             best_streak=summary["best_streak"],
             focus_window=summary["focus_window"],
             today=today,
+            habit_series=series,
         )
 
     @app.route("/habits", methods=["POST"])

@@ -520,6 +520,11 @@ body {
   gap: 12px;
 }
 
+.habit-chart-note {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .habit-list {
   display: grid;
   gap: 12px;
