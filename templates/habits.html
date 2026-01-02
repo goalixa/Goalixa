@@ -33,6 +33,32 @@
             </div>
             <div class="goal-form-row">
               <label>
+                Goal
+                <select name="goal_name">
+                  <option value="">Select a goal</option>
+                  {% for goal in goals %}
+                    <option value="{{ goal['name'] }}">{{ goal['name'] }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label>
+                Sub-goal
+                <select name="subgoal_name">
+                  <option value="">Select a sub-goal</option>
+                  {% for goal in goals %}
+                    {% if goal['subgoals'] %}
+                      <optgroup label="{{ goal['name'] }}">
+                        {% for subgoal in goal['subgoals'] %}
+                          <option value="{{ subgoal['title'] }}">{{ subgoal['title'] }}</option>
+                        {% endfor %}
+                      </optgroup>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              </label>
+            </div>
+            <div class="goal-form-row">
+              <label>
                 Best time
                 <select name="time_of_day">
                   <option value="">Anytime</option>
@@ -138,6 +164,36 @@
                       <option value="Weekdays" {% if habit['frequency'] == 'Weekdays' %}selected{% endif %}>Weekdays</option>
                       <option value="Weekends" {% if habit['frequency'] == 'Weekends' %}selected{% endif %}>Weekends</option>
                       <option value="Custom" {% if habit['frequency'] == 'Custom' %}selected{% endif %}>Custom</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="goal-form-row">
+                  <label>
+                    Goal
+                    <select name="goal_name">
+                      <option value="">Select a goal</option>
+                      {% for goal in goals %}
+                        <option value="{{ goal['name'] }}" {% if habit['goal_name'] == goal['name'] %}selected{% endif %}>
+                          {{ goal['name'] }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </label>
+                  <label>
+                    Sub-goal
+                    <select name="subgoal_name">
+                      <option value="">Select a sub-goal</option>
+                      {% for goal in goals %}
+                        {% if goal['subgoals'] %}
+                          <optgroup label="{{ goal['name'] }}">
+                            {% for subgoal in goal['subgoals'] %}
+                              <option value="{{ subgoal['title'] }}" {% if habit['subgoal_name'] == subgoal['title'] %}selected{% endif %}>
+                                {{ subgoal['title'] }}
+                              </option>
+                            {% endfor %}
+                          </optgroup>
+                        {% endif %}
+                      {% endfor %}
                     </select>
                   </label>
                 </div>

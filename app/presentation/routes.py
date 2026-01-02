@@ -75,9 +75,11 @@ def register_routes(app, service):
         today = datetime.utcnow().date().isoformat()
         habits_list = service.list_habits(today)
         summary = service.habits_summary(habits_list)
+        goals_list = service.list_goals()
         return render_template(
             "habits.html",
             habits=habits_list,
+            goals=goals_list,
             total_habits=summary["total"],
             completed_habits=summary["completed"],
             best_streak=summary["best_streak"],
@@ -94,6 +96,8 @@ def register_routes(app, service):
             request.form.get("time_of_day", ""),
             request.form.get("reminder", ""),
             request.form.get("notes", ""),
+            request.form.get("goal_name", ""),
+            request.form.get("subgoal_name", ""),
         )
         return redirect(url_for("habits"))
 
@@ -115,6 +119,8 @@ def register_routes(app, service):
             request.form.get("time_of_day", ""),
             request.form.get("reminder", ""),
             request.form.get("notes", ""),
+            request.form.get("goal_name", ""),
+            request.form.get("subgoal_name", ""),
         )
         return redirect(url_for("habits"))
 
