@@ -559,8 +559,10 @@ class TaskService:
             target_seconds,
             created_at,
         )
-        self.repository.set_goal_projects(goal_id, [int(pid) for pid in project_ids or []])
-        self.repository.set_goal_tasks(goal_id, [int(tid) for tid in task_ids or []])
+        filtered_project_ids = [int(pid) for pid in project_ids or [] if str(pid).strip()]
+        filtered_task_ids = [int(tid) for tid in task_ids or [] if str(tid).strip()]
+        self.repository.set_goal_projects(goal_id, filtered_project_ids)
+        self.repository.set_goal_tasks(goal_id, filtered_task_ids)
         self.repository.set_goal_subgoals(goal_id, subgoals, created_at)
 
     def update_goal(
@@ -594,8 +596,10 @@ class TaskService:
             target_date,
             target_seconds,
         )
-        self.repository.set_goal_projects(int(goal_id), [int(pid) for pid in project_ids or []])
-        self.repository.set_goal_tasks(int(goal_id), [int(tid) for tid in task_ids or []])
+        filtered_project_ids = [int(pid) for pid in project_ids or [] if str(pid).strip()]
+        filtered_task_ids = [int(tid) for tid in task_ids or [] if str(tid).strip()]
+        self.repository.set_goal_projects(int(goal_id), filtered_project_ids)
+        self.repository.set_goal_tasks(int(goal_id), filtered_task_ids)
         self.repository.set_goal_subgoals(int(goal_id), subgoals, datetime.utcnow().isoformat())
 
     def delete_goal(self, goal_id):
