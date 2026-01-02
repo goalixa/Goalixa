@@ -9,7 +9,7 @@
         <h1>Habits</h1>
         <p>Track daily routines and close the day with a clear checklist.</p>
       </div>
-      <button class="btn btn-primary btn-sm" type="button">
+      <button class="btn btn-primary btn-sm" type="button" data-habit-toggle>
         <i class="bi bi-plus-lg"></i>
         Create habit
       </button>
@@ -44,7 +44,7 @@
           Mark all complete
         </button>
       </div>
-      <div class="habit-list">
+      <div class="habit-list" id="habit-list">
         {% if habits %}
           {% for habit in habits %}
             <label class="habit-row">
@@ -70,22 +70,16 @@
       </div>
     </section>
 
-    <section class="card habit-create-card">
-      <div class="habit-create-header">
-        <div>
-          <p class="goals-label">New habit</p>
-          <h2 class="goals-title">Create a routine that sticks</h2>
-        </div>
-      </div>
-      <form class="habit-form">
+    <section class="card habit-create-card is-hidden" id="habit-create">
+      <form class="habit-form" id="habit-form">
         <div class="goal-form-row">
           <label>
             Habit name
-            <input type="text" placeholder="Review day plan" />
+            <input type="text" name="habit_name" placeholder="Review day plan" required />
           </label>
           <label>
             Frequency
-            <select>
+            <select name="habit_frequency">
               <option>Daily</option>
               <option>Weekdays</option>
               <option>Weekends</option>
@@ -96,7 +90,7 @@
         <div class="goal-form-row">
           <label>
             Best time
-            <select>
+            <select name="habit_time">
               <option>Morning</option>
               <option>Afternoon</option>
               <option>Evening</option>
@@ -104,7 +98,7 @@
           </label>
           <label>
             Reminder
-            <select>
+            <select name="habit_reminder">
               <option>None</option>
               <option>21:00</option>
               <option>22:30</option>
@@ -113,13 +107,69 @@
         </div>
         <label>
           Notes
-          <textarea rows="2" placeholder="Why is this habit important?"></textarea>
+          <textarea rows="2" name="habit_notes" placeholder="Why is this habit important?"></textarea>
         </label>
         <div class="goal-form-actions">
-          <button class="btn btn-outline-secondary btn-sm" type="button">Reset</button>
-          <button class="btn btn-primary btn-sm" type="button">Add habit</button>
+          <button class="btn btn-outline-secondary btn-sm" type="reset">Reset</button>
+          <button class="btn btn-primary btn-sm" type="submit">Create habit</button>
         </div>
       </form>
     </section>
   </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("habit-form");
+      const list = document.getElementById("habit-list");
+      if (!form || !list) {
+        return;
+      }
+      const toggleButton = document.querySelector("[data-habit-toggle]");
+      const createPanel = document.getElementById("habit-create");
+      if (toggleButton && createPanel) {
+        toggleButton.addEventListener("click", () => {
+          const isHidden = createPanel.classList.toggle("is-hidden");
+          if (!isHidden) {
+            const input = createPanel.querySelector('input[name="habit_name"]');
+            if (input) {
+              input.focus();
+            }
+          }
+        });
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const name = form.habit_name?.value?.trim();
+        if (!name) {
+          return;
+        }
+        const schedule = form.habit_frequency?.value || "Daily";
+        const row = document.createElement("label");
+        row.className = "habit-row";
+        row.innerHTML = `
+          <span class="habit-left">
+            <span class="habit-checkbox">
+              <input type="checkbox" />
+              <span class="habit-checkmark"></span>
+            </span>
+            <span class="habit-text">
+              <span class="habit-name"></span>
+              <span class="habit-meta"></span>
+            </span>
+          </span>
+          <span class="habit-streak">
+            <i class="bi bi-fire"></i>
+            0 day streak
+          </span>
+        `;
+        row.querySelector(".habit-name").textContent = name;
+        row.querySelector(".habit-meta").textContent = schedule;
+        list.appendChild(row);
+        form.reset();
+      });
+    });
+  </script>
 {% endblock %}
