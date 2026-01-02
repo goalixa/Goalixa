@@ -2038,6 +2038,48 @@ body {
   display: flex;
 }
 
+.goal-edit-form label {
+  color: var(--muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
+.goal-edit-form input,
+.goal-edit-form select,
+.goal-edit-form textarea {
+  margin-top: 6px;
+  border-radius: 14px;
+  border: 1px solid rgba(31, 111, 235, 0.2);
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  background: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.goal-edit-form input:focus,
+.goal-edit-form select:focus,
+.goal-edit-form textarea:focus {
+  outline: none;
+  border-color: rgba(31, 111, 235, 0.55);
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.12);
+}
+
+.goal-edit-form select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #1f6feb 50%),
+    linear-gradient(135deg, #1f6feb 50%, transparent 50%),
+    linear-gradient(to right, rgba(31, 111, 235, 0.15), rgba(31, 111, 235, 0.05));
+  background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px),
+    calc(100% - 34px) 50%;
+  background-size: 6px 6px, 6px 6px, 20px 24px;
+  background-repeat: no-repeat;
+  padding-right: 40px;
+}
+
+.goal-edit-form .goal-form-actions {
+  justify-content: flex-end;
+}
+
 .goal-delete-form {
   margin-top: 8px;
   display: none;
