@@ -5,6 +5,15 @@ class TaskService:
     def __init__(self, repository):
         self.repository = repository
 
+    def _parse_subgoals(self, raw_value):
+        lines = (raw_value or "").splitlines()
+        cleaned = []
+        for line in lines:
+            title = line.strip()
+            if title:
+                cleaned.append(title)
+        return cleaned
+
     def init_db(self):
         self.repository.init_db()
         default_project_id = self.repository.ensure_default_project(
@@ -440,6 +449,7 @@ class TaskService:
         goal_ids = [goal["id"] for goal in goals]
         goal_projects_map = self.repository.fetch_goal_projects(goal_ids)
         goal_tasks_map = self.repository.fetch_goal_tasks(goal_ids)
+        goal_subgoals_map = self.repository.fetch_goal_subgoals(goal_ids)
 
         project_ids = sorted(
             {pid for ids in goal_projects_map.values() for pid in ids}
@@ -478,6 +488,8 @@ class TaskService:
                     "project_ids": linked_project_ids,
                     "task_ids": direct_task_ids,
                     "projects": [projects_by_id[pid] for pid in linked_project_ids if pid in projects_by_id],
+                    "subgoals": goal_subgoals_map.get(goal_id, []),
+                    "subgoals_count": len(goal_subgoals_map.get(goal_id, [])),
                     "total_seconds": total_seconds,
                     "progress": progress,
                     "tasks_count": len(linked_task_ids),
@@ -504,6 +516,7 @@ class TaskService:
         priority,
         target_date,
         target_hours,
+        subgoals_text=None,
         project_ids=None,
         task_ids=None,
     ):
@@ -513,8 +526,10 @@ class TaskService:
         priority = (priority or "medium").strip()
         target_date = (target_date or "").strip() or None
         target_seconds = int(float(target_hours or 0) * 3600)
+        subgoals = self._parse_subgoals(subgoals_text)
         if not name:
             return
+        created_at = datetime.utcnow().isoformat()
         goal_id = self.repository.create_goal(
             name,
             description,
@@ -522,10 +537,11 @@ class TaskService:
             priority,
             target_date,
             target_seconds,
-            datetime.utcnow().isoformat(),
+            created_at,
         )
         self.repository.set_goal_projects(goal_id, [int(pid) for pid in project_ids or []])
         self.repository.set_goal_tasks(goal_id, [int(tid) for tid in task_ids or []])
+        self.repository.set_goal_subgoals(goal_id, subgoals, created_at)
 
     def update_goal(
         self,
@@ -536,6 +552,7 @@ class TaskService:
         priority,
         target_date,
         target_hours,
+        subgoals_text=None,
         project_ids=None,
         task_ids=None,
     ):
@@ -545,6 +562,7 @@ class TaskService:
         priority = (priority or "medium").strip()
         target_date = (target_date or "").strip() or None
         target_seconds = int(float(target_hours or 0) * 3600)
+        subgoals = self._parse_subgoals(subgoals_text)
         if not name:
             return
         self.repository.update_goal(
@@ -558,6 +576,7 @@ class TaskService:
         )
         self.repository.set_goal_projects(int(goal_id), [int(pid) for pid in project_ids or []])
         self.repository.set_goal_tasks(int(goal_id), [int(tid) for tid in task_ids or []])
+        self.repository.set_goal_subgoals(int(goal_id), subgoals, datetime.utcnow().isoformat())
 
     def delete_goal(self, goal_id):
         self.repository.delete_goal(goal_id)

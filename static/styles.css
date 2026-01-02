@@ -1488,6 +1488,22 @@ body {
   font-size: 0.95rem;
 }
 
+.goal-subgoals {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: var(--text);
+  display: grid;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.goal-subgoals-more {
+  color: var(--muted);
+  font-style: italic;
+  list-style: none;
+  margin-left: -18px;
+}
+
 .goal-tags {
   display: flex;
   flex-wrap: wrap;
@@ -1530,7 +1546,7 @@ body {
 
 .goal-meta {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 10px;
   padding: 10px;
   border-radius: 12px;

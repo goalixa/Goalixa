@@ -94,6 +94,10 @@
             Description
             <textarea rows="2" name="description" placeholder="What does success look like?"></textarea>
           </label>
+          <label>
+            Sub-goals (one per line)
+            <textarea rows="3" name="subgoals" placeholder="Finish Module 1&#10;Build first lab&#10;Review practice quiz"></textarea>
+          </label>
           <div class="goal-form-actions">
             <button class="btn btn-outline-secondary btn-sm" type="reset">Clear</button>
             <button class="btn btn-primary btn-sm" type="submit">Create goal</button>
@@ -157,6 +161,16 @@
               {% if goal['description'] %}
                 <p class="goal-desc">{{ goal['description'] }}</p>
               {% endif %}
+              {% if goal['subgoals'] %}
+                <ul class="goal-subgoals">
+                  {% for subgoal in goal['subgoals'][:3] %}
+                    <li>{{ subgoal['title'] }}</li>
+                  {% endfor %}
+                  {% if goal['subgoals_count'] > 3 %}
+                    <li class="goal-subgoals-more">+{{ goal['subgoals_count'] - 3 }} more</li>
+                  {% endif %}
+                </ul>
+              {% endif %}
               <div class="goal-progress">
                 <div class="goal-progress-bar">
                   <span style="width: {{ goal['progress'] }}%"></span>
@@ -171,6 +185,10 @@
                 <div class="goal-meta-block">
                   <span class="goal-meta-label">Tasks</span>
                   <span class="goal-meta-value">{{ goal['tasks_count'] }}</span>
+                </div>
+                <div class="goal-meta-block">
+                  <span class="goal-meta-label">Sub-goals</span>
+                  <span class="goal-meta-value">{{ goal['subgoals_count'] }}</span>
                 </div>
                 <div class="goal-meta-block">
                   <span class="goal-meta-label">Time logged</span>
@@ -246,6 +264,10 @@
                 <label>
                   Description
                   <textarea rows="2" name="description">{{ goal['description'] or '' }}</textarea>
+                </label>
+                <label>
+                  Sub-goals (one per line)
+                  <textarea rows="3" name="subgoals">{% for subgoal in goal['subgoals'] %}{{ subgoal['title'] }}{% if not loop.last %}&#10;{% endif %}{% endfor %}</textarea>
                 </label>
                 <div class="goal-form-actions">
                   <button class="btn btn-outline-secondary btn-sm" type="submit">Save changes</button>

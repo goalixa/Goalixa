@@ -98,6 +98,7 @@ def register_routes(app, service):
             request.form.get("priority", "medium"),
             request.form.get("target_date", ""),
             request.form.get("target_hours", 0),
+            request.form.get("subgoals", ""),
             request.form.getlist("project_ids"),
             request.form.getlist("task_ids"),
         )
@@ -114,6 +115,7 @@ def register_routes(app, service):
             request.form.get("priority", "medium"),
             request.form.get("target_date", ""),
             request.form.get("target_hours", 0),
+            request.form.get("subgoals", ""),
             request.form.getlist("project_ids"),
             request.form.getlist("task_ids"),
         )

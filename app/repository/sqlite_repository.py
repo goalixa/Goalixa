@@ -93,6 +93,15 @@ class SQLiteTaskRepository:
                 FOREIGN KEY (goal_id) REFERENCES goals (id) ON DELETE CASCADE,
                 FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE
             );
+
+            CREATE TABLE IF NOT EXISTS goal_subgoals (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                goal_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending',
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (goal_id) REFERENCES goals (id) ON DELETE CASCADE
+            );
             """
         )
         columns = db.execute("PRAGMA table_info(tasks)").fetchall()
@@ -411,6 +420,7 @@ class SQLiteTaskRepository:
         db = self._get_db()
         db.execute("DELETE FROM goal_tasks WHERE goal_id = ?", (goal_id,))
         db.execute("DELETE FROM goal_projects WHERE goal_id = ?", (goal_id,))
+        db.execute("DELETE FROM goal_subgoals WHERE goal_id = ?", (goal_id,))
         db.execute("DELETE FROM goals WHERE id = ?", (goal_id,))
         db.commit()
 
@@ -450,6 +460,32 @@ class SQLiteTaskRepository:
             mapping.setdefault(row["goal_id"], []).append(row["task_id"])
         return mapping
 
+    def fetch_goal_subgoals(self, goal_ids):
+        if not goal_ids:
+            return {}
+        db = self._get_db()
+        placeholders = ",".join(["?"] * len(goal_ids))
+        rows = db.execute(
+            f"""
+            SELECT id, goal_id, title, status, created_at
+            FROM goal_subgoals
+            WHERE goal_id IN ({placeholders})
+            ORDER BY created_at ASC
+            """,
+            tuple(goal_ids),
+        ).fetchall()
+        mapping = {}
+        for row in rows:
+            mapping.setdefault(row["goal_id"], []).append(
+                {
+                    "id": row["id"],
+                    "title": row["title"],
+                    "status": row["status"],
+                    "created_at": row["created_at"],
+                }
+            )
+        return mapping
+
     def set_goal_projects(self, goal_id, project_ids):
         db = self._get_db()
         db.execute("DELETE FROM goal_projects WHERE goal_id = ?", (goal_id,))
@@ -467,6 +503,19 @@ class SQLiteTaskRepository:
             db.execute(
                 "INSERT OR IGNORE INTO goal_tasks (goal_id, task_id) VALUES (?, ?)",
                 (goal_id, task_id),
+            )
+        db.commit()
+
+    def set_goal_subgoals(self, goal_id, subgoal_titles, created_at):
+        db = self._get_db()
+        db.execute("DELETE FROM goal_subgoals WHERE goal_id = ?", (goal_id,))
+        for title in subgoal_titles:
+            db.execute(
+                """
+                INSERT INTO goal_subgoals (goal_id, title, status, created_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (goal_id, title, "pending", created_at),
             )
         db.commit()
 
