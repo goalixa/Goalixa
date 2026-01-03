@@ -75,7 +75,6 @@ class TaskService:
             started_at = datetime.fromisoformat(entry["started_at"])
             if started_at < today_start:
                 self.repository.stop_time_entry(entry["id"], today_start.isoformat())
-                self.repository.start_task(entry["task_id"], today_start.isoformat())
 
     def init_db(self):
         self.repository.init_db()

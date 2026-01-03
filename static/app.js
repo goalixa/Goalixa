@@ -22,17 +22,17 @@ function setTasksState(tasks) {
     tasks.map((task) => [
       String(task.id),
       {
-        rollingSeconds: Number(task.rolling_24h_seconds || 0),
+        todaySeconds: Number(task.today_seconds || 0),
         isRunning: Boolean(task.is_running),
       },
     ]),
   );
 }
 
-function updateTimeDisplay(taskId, rollingSeconds) {
+function updateTimeDisplay(taskId, todaySeconds) {
   const timeEl = document.querySelector(`.task-time[data-task-id="${taskId}"]`);
   if (timeEl) {
-    timeEl.textContent = formatSeconds(rollingSeconds);
+    timeEl.textContent = formatSeconds(todaySeconds);
   }
 }
 
@@ -105,7 +105,7 @@ function renderTasks(tasks) {
     .map((task) => {
       const name = escapeHtml(task.name);
       const project = escapeHtml(task.project_name || "Unassigned");
-      const time = formatSeconds(task.rolling_24h_seconds || 0);
+      const time = formatSeconds(task.today_seconds || 0);
       const labels = renderLabelChips(task.labels || [], `task-${task.id}`);
       const editFormId = `edit-task-${task.id}`;
       const editField = `<div class="editable-field">
@@ -213,8 +213,8 @@ function startLiveTimer() {
       if (!state.isRunning) {
         continue;
       }
-      state.rollingSeconds = Math.min(86400, state.rollingSeconds + 1);
-      updateTimeDisplay(taskId, state.rollingSeconds);
+      state.todaySeconds = Math.min(86400, state.todaySeconds + 1);
+      updateTimeDisplay(taskId, state.todaySeconds);
     }
   }, 1000);
 }
