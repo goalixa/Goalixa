@@ -788,6 +788,21 @@ body {
   border-color: #cce9d6;
 }
 
+[data-theme="dark"] .task-column {
+  background: #141a22;
+  border-color: #2b3442;
+}
+
+[data-theme="dark"] #task-list.task-column {
+  background: linear-gradient(180deg, #172135 0%, #141a22 100%);
+  border-color: #273246;
+}
+
+[data-theme="dark"] #done-today-list.task-column {
+  background: linear-gradient(180deg, #13281d 0%, #141a22 100%);
+  border-color: #244234;
+}
+
 .task-column .empty {
   margin: 0;
 }
@@ -807,6 +822,12 @@ body {
   border-radius: 14px;
   border: 1px solid var(--border);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="dark"] .task-item {
+  background: #1c222c;
+  border-color: #2a3342;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45);
 }
 
 .task-info {
@@ -898,6 +919,11 @@ body {
   color: #1e1b4b;
 }
 
+[data-theme="dark"] .name-task {
+  background: #1f2a44;
+  color: #dbe4ff;
+}
+
 .name-project {
   background: #fff1d9;
   color: #7a4a00;
@@ -927,6 +953,10 @@ body {
 .task-title {
   font-size: 1rem;
   letter-spacing: 0.2px;
+}
+
+[data-theme="dark"] .label-chip {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
 .task-status {
@@ -1011,6 +1041,12 @@ body {
   z-index: 10;
 }
 
+[data-theme="dark"] .menu-panel {
+  background: #1c222c;
+  border: 1px solid #2a3342;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5);
+}
+
 .menu-panel.is-open {
   display: block;
 }
@@ -1030,9 +1066,19 @@ body {
   font-weight: 600;
 }
 
+[data-theme="dark"] .menu-item {
+  background: #232a36;
+  color: var(--text);
+}
+
 .menu-item.danger {
   background: #ffe8ec;
   color: #b3263f;
+}
+
+[data-theme="dark"] .menu-item.danger {
+  background: #3a1f26;
+  color: #ff9aa8;
 }
 
 .menu-panel .label-form {
