@@ -76,6 +76,29 @@ class TaskService:
             if started_at < today_start:
                 self.repository.stop_time_entry(entry["id"], today_start.isoformat())
 
+    def _hydrate_tasks(self, tasks, log_date):
+        task_ids = [task["id"] for task in tasks]
+        labels_map = self.repository.fetch_task_labels_map(task_ids)
+        checked_today = self.repository.fetch_task_daily_checks_for_date(
+            task_ids, log_date
+        )
+        check_counts = self.repository.fetch_task_daily_check_counts(task_ids)
+        hydrated = []
+        for task in tasks:
+            task_id = task["id"]
+            data = dict(task)
+            status = data.get("status") or "active"
+            hydrated.append(
+                {
+                    **data,
+                    "status": status,
+                    "labels": labels_map.get(task_id, []),
+                    "checked_today": task_id in checked_today,
+                    "daily_checks": int(check_counts.get(task_id, 0) or 0),
+                }
+            )
+        return hydrated
+
     def init_db(self):
         self.repository.init_db()
         default_project_id = self.repository.ensure_default_project(
@@ -89,24 +112,18 @@ class TaskService:
         now_utc = datetime.utcnow()
         today = self.current_local_date()
         day_start, _ = self._local_day_bounds(today)
+        log_date = today.isoformat()
         now_ts = int(now_utc.timestamp())
         day_start_ts = int(day_start.timestamp())
         rolling_start_ts = now_ts - 24 * 60 * 60
         tasks = self.repository.fetch_tasks(now_ts, rolling_start_ts, day_start_ts)
-        task_ids = [task["id"] for task in tasks]
-        labels_map = self.repository.fetch_task_labels_map(task_ids)
-        return [
-            {
-                **dict(task),
-                "labels": labels_map.get(task["id"], []),
-            }
-            for task in tasks
-        ]
+        return self._hydrate_tasks(tasks, log_date)
 
     def list_tasks_by_project(self, project_id):
         now_utc = datetime.utcnow()
         today = self.current_local_date()
         day_start, _ = self._local_day_bounds(today)
+        log_date = today.isoformat()
         now_ts = int(now_utc.timestamp())
         day_start_ts = int(day_start.timestamp())
         rolling_start_ts = now_ts - 24 * 60 * 60
@@ -116,15 +133,19 @@ class TaskService:
             rolling_start_ts,
             day_start_ts,
         )
-        task_ids = [task["id"] for task in tasks]
-        labels_map = self.repository.fetch_task_labels_map(task_ids)
-        return [
-            {
-                **dict(task),
-                "labels": labels_map.get(task["id"], []),
-            }
-            for task in tasks
-        ]
+        return self._hydrate_tasks(tasks, log_date)
+
+    def list_tasks_for_today(self):
+        tasks = self.list_tasks()
+        active_tasks = []
+        completed_tasks = []
+        for task in tasks:
+            status = task.get("status") or "active"
+            if status == "completed":
+                completed_tasks.append(task)
+            elif not task.get("checked_today"):
+                active_tasks.append(task)
+        return {"tasks": active_tasks, "completed_tasks": completed_tasks}
 
     def add_task(self, name, project_id, label_ids=None):
         name = (name or "").strip()
@@ -679,6 +700,19 @@ class TaskService:
 
     def delete_task(self, task_id):
         self.repository.delete_task(task_id)
+
+    def set_task_daily_check(self, task_id, done):
+        log_date = self.current_local_date().isoformat()
+        self.repository.set_task_daily_check(int(task_id), log_date, done)
+
+    def set_task_status(self, task_id, status):
+        status = (status or "").strip().lower()
+        if status not in {"active", "completed"}:
+            return
+        completed_at = datetime.utcnow().isoformat() if status == "completed" else None
+        if status == "completed" and self.repository.is_task_running(task_id):
+            self.repository.stop_task(task_id, datetime.utcnow().isoformat())
+        self.repository.set_task_status(int(task_id), status, completed_at)
 
     def list_habits(self, log_date):
         habits = self.repository.fetch_habits()

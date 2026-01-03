@@ -314,11 +314,15 @@ def register_routes(app, service):
     @app.route("/tasks", methods=["GET"])
     @auth_required()
     def index():
-        tasks = service.list_tasks()
+        task_view = service.list_tasks_for_today()
         projects = service.list_projects()
         labels = service.list_labels()
         return render_template(
-            "index.html", tasks=tasks, projects=projects, labels=labels
+            "index.html",
+            tasks=task_view["tasks"],
+            completed_tasks=task_view["completed_tasks"],
+            projects=projects,
+            labels=labels,
         )
 
     @app.route("/tasks", methods=["POST"])
@@ -334,7 +338,7 @@ def register_routes(app, service):
     @app.route("/api/tasks", methods=["GET"])
     @auth_required()
     def list_tasks():
-        tasks = service.list_tasks()
+        task_view = service.list_tasks_for_today()
         return {
             "tasks": [
                 {
@@ -347,9 +351,31 @@ def register_routes(app, service):
                     "project_id": task["project_id"],
                     "project_name": task["project_name"],
                     "labels": task["labels"],
+                    "status": task.get("status") or "active",
+                    "checked_today": bool(task.get("checked_today")),
+                    "daily_checks": int(task.get("daily_checks") or 0),
+                    "completed_at": task.get("completed_at"),
                 }
-                for task in tasks
-            ]
+                for task in task_view["tasks"]
+            ],
+            "completed_tasks": [
+                {
+                    "id": task["id"],
+                    "name": task["name"],
+                    "total_seconds": int(task["total_seconds"] or 0),
+                    "rolling_24h_seconds": int(task["rolling_24h_seconds"] or 0),
+                    "today_seconds": int(task.get("today_seconds") or 0),
+                    "is_running": bool(task["is_running"]),
+                    "project_id": task["project_id"],
+                    "project_name": task["project_name"],
+                    "labels": task["labels"],
+                    "status": task.get("status") or "active",
+                    "checked_today": bool(task.get("checked_today")),
+                    "daily_checks": int(task.get("daily_checks") or 0),
+                    "completed_at": task.get("completed_at"),
+                }
+                for task in task_view["completed_tasks"]
+            ],
         }
 
     @app.route("/api/tasks", methods=["POST"])
@@ -381,6 +407,24 @@ def register_routes(app, service):
         service.delete_task(task_id)
         return list_tasks()
 
+    @app.route("/api/tasks/<int:task_id>/daily-check", methods=["POST"])
+    @auth_required()
+    def daily_check_task_api(task_id):
+        service.set_task_daily_check(task_id, True)
+        return list_tasks()
+
+    @app.route("/api/tasks/<int:task_id>/complete", methods=["POST"])
+    @auth_required()
+    def complete_task_api(task_id):
+        service.set_task_status(task_id, "completed")
+        return list_tasks()
+
+    @app.route("/api/tasks/<int:task_id>/reopen", methods=["POST"])
+    @auth_required()
+    def reopen_task_api(task_id):
+        service.set_task_status(task_id, "active")
+        return list_tasks()
+
     @app.route("/tasks/<int:task_id>/start", methods=["POST"])
     @auth_required()
     def start_task(task_id):
@@ -398,6 +442,24 @@ def register_routes(app, service):
     def delete_task(task_id):
         service.delete_task(task_id)
         return redirect(url_for("index"))
+
+    @app.route("/tasks/<int:task_id>/daily-check", methods=["POST"])
+    @auth_required()
+    def daily_check_task(task_id):
+        service.set_task_daily_check(task_id, True)
+        return redirect(request.referrer or url_for("index"))
+
+    @app.route("/tasks/<int:task_id>/complete", methods=["POST"])
+    @auth_required()
+    def complete_task(task_id):
+        service.set_task_status(task_id, "completed")
+        return redirect(request.referrer or url_for("index"))
+
+    @app.route("/tasks/<int:task_id>/reopen", methods=["POST"])
+    @auth_required()
+    def reopen_task(task_id):
+        service.set_task_status(task_id, "active")
+        return redirect(request.referrer or url_for("index"))
 
     @app.route("/tasks/<int:task_id>/edit", methods=["POST"])
     @auth_required()

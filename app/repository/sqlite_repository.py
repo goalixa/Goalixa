@@ -68,6 +68,14 @@ class SQLiteTaskRepository:
                 FOREIGN KEY (task_id) REFERENCES tasks (id)
             );
 
+            CREATE TABLE IF NOT EXISTS task_daily_checks (
+                task_id INTEGER NOT NULL,
+                log_date TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                PRIMARY KEY (task_id, log_date),
+                FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE
+            );
+
             CREATE TABLE IF NOT EXISTS goals (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -135,6 +143,12 @@ class SQLiteTaskRepository:
         column_names = {column["name"] for column in columns}
         if "project_id" not in column_names:
             db.execute("ALTER TABLE tasks ADD COLUMN project_id INTEGER")
+        if "status" not in column_names:
+            db.execute(
+                "ALTER TABLE tasks ADD COLUMN status TEXT NOT NULL DEFAULT 'active'"
+            )
+        if "completed_at" not in column_names:
+            db.execute("ALTER TABLE tasks ADD COLUMN completed_at TEXT")
         habit_columns = db.execute("PRAGMA table_info(habits)").fetchall()
         habit_names = {column["name"] for column in habit_columns}
         if "goal_name" not in habit_names:
@@ -180,7 +194,8 @@ class SQLiteTaskRepository:
                     ? AS rolling_start,
                     ? AS day_start
             )
-            SELECT t.id, t.name, t.project_id, p.name AS project_name,
+            SELECT t.id, t.name, t.project_id, t.status, t.completed_at,
+                   p.name AS project_name,
                    IFNULL(SUM(
                        CASE
                            WHEN te.id IS NULL THEN 0
@@ -240,7 +255,8 @@ class SQLiteTaskRepository:
                     ? AS rolling_start,
                     ? AS day_start
             )
-            SELECT t.id, t.name, t.project_id, p.name AS project_name,
+            SELECT t.id, t.name, t.project_id, t.status, t.completed_at,
+                   p.name AS project_name,
                    IFNULL(SUM(
                        CASE
                            WHEN te.id IS NULL THEN 0
@@ -306,6 +322,14 @@ class SQLiteTaskRepository:
         db.execute(
             "UPDATE tasks SET name = ? WHERE id = ?",
             (name, task_id),
+        )
+        db.commit()
+
+    def set_task_status(self, task_id, status, completed_at):
+        db = self._get_db()
+        db.execute(
+            "UPDATE tasks SET status = ?, completed_at = ? WHERE id = ?",
+            (status, completed_at, task_id),
         )
         db.commit()
 
@@ -758,6 +782,54 @@ class SQLiteTaskRepository:
             )
         return labels_map
 
+    def fetch_task_daily_checks_for_date(self, task_ids, log_date):
+        if not task_ids:
+            return set()
+        db = self._get_db()
+        placeholders = ",".join(["?"] * len(task_ids))
+        rows = db.execute(
+            f"""
+            SELECT task_id
+            FROM task_daily_checks
+            WHERE task_id IN ({placeholders}) AND log_date = ?
+            """,
+            tuple(task_ids) + (log_date,),
+        ).fetchall()
+        return {row["task_id"] for row in rows}
+
+    def fetch_task_daily_check_counts(self, task_ids):
+        if not task_ids:
+            return {}
+        db = self._get_db()
+        placeholders = ",".join(["?"] * len(task_ids))
+        rows = db.execute(
+            f"""
+            SELECT task_id, COUNT(*) AS total
+            FROM task_daily_checks
+            WHERE task_id IN ({placeholders})
+            GROUP BY task_id
+            """,
+            tuple(task_ids),
+        ).fetchall()
+        return {row["task_id"]: row["total"] for row in rows}
+
+    def set_task_daily_check(self, task_id, log_date, done):
+        db = self._get_db()
+        if done:
+            db.execute(
+                """
+                INSERT OR IGNORE INTO task_daily_checks (task_id, log_date, created_at)
+                VALUES (?, ?, ?)
+                """,
+                (task_id, log_date, datetime.utcnow().isoformat()),
+            )
+        else:
+            db.execute(
+                "DELETE FROM task_daily_checks WHERE task_id = ? AND log_date = ?",
+                (task_id, log_date),
+            )
+        db.commit()
+
     def fetch_project_labels_map(self, project_ids):
         if not project_ids:
             return {}
@@ -833,6 +905,8 @@ class SQLiteTaskRepository:
     def delete_task(self, task_id):
         db = self._get_db()
         db.execute("DELETE FROM time_entries WHERE task_id = ?", (task_id,))
+        db.execute("DELETE FROM task_labels WHERE task_id = ?", (task_id,))
+        db.execute("DELETE FROM task_daily_checks WHERE task_id = ?", (task_id,))
         db.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
         db.commit()
 
