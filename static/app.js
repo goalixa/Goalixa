@@ -69,7 +69,7 @@ function renderLabelChips(labels, scopeId) {
           const safeColor = escapeHtml(label.color);
           const formId = `edit-label-${label.id}-${scopeId}`;
           return `<div class="editable-label">
-              <span class="label-chip" style="background-color: ${safeColor}">${safeName}</span>
+              <span class="label-chip" style="background-color: ${safeColor}" title="${safeName}">${safeName}</span>
               <button class="edit-toggle icon-button" type="button" aria-label="Edit label" data-edit-target="${formId}">
                 <i class="bi bi-pencil"></i>
               </button>
@@ -118,22 +118,14 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
         const name = escapeHtml(task.name);
         const project = escapeHtml(task.project_name || "Unassigned");
         const time = formatSeconds(task.today_seconds || 0);
-        const dailyChecks = Number(task.daily_checks || 0);
         const labels = renderLabelChips(task.labels || [], `task-${task.id}`);
         const editFormId = `edit-task-${task.id}`;
         const editField = `<div class="editable-field">
-            <span class="name-badge name-task">${name}</span>
+            <span class="name-badge name-task task-title">${name}</span>
             <button class="edit-toggle icon-button" type="button" aria-label="Edit task" data-edit-target="${editFormId}">
               <i class="bi bi-pencil"></i>
             </button>
           </div>`;
-        const startStop = task.is_running
-          ? `<form method="post" action="/tasks/${task.id}/stop" data-action="stop" data-task-id="${task.id}">
-               <button class="menu-item danger" type="submit">Stop</button>
-             </form>`
-          : `<form method="post" action="/tasks/${task.id}/start" data-action="start" data-task-id="${task.id}">
-               <button class="menu-item" type="submit">Start</button>
-             </form>`;
         const labelOptions = availableLabels
           .map(
             (label) =>
@@ -143,7 +135,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
         return `<li class="task-item">
                   <div class="task-info">
                     ${editField}
-                    <span class="task-project">${project}</span>
+                    <span class="task-project" title="${project}">${project}</span>
                     ${labels}
                     <form id="${editFormId}" class="edit-form" method="post" action="/tasks/${task.id}/edit">
                       <input type="text" name="name" value="${name}" required />
@@ -159,7 +151,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                       </div>
                     </form>
                     <span class="task-time" data-task-id="${task.id}">${time}</span>
-                    <span class="task-meta">Daily checks: ${dailyChecks}</span>
+                    <span class="task-status">In progress</span>
                   </div>
                   <div class="task-actions">
                     <form method="post" action="/tasks/${task.id}/daily-check" data-action="daily-check" data-task-id="${task.id}">
@@ -167,13 +159,23 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                         <i class="bi bi-check2-circle"></i>
                       </button>
                     </form>
+                    ${task.is_running
+                      ? `<form method="post" action="/tasks/${task.id}/stop" data-action="stop" data-task-id="${task.id}">
+                           <button class="btn btn-outline-warning btn-sm menu-item danger" type="submit" aria-label="Stop">
+                             <i class="bi bi-pause-fill"></i>
+                           </button>
+                         </form>`
+                      : `<form method="post" action="/tasks/${task.id}/start" data-action="start" data-task-id="${task.id}">
+                           <button class="btn btn-outline-primary btn-sm menu-item" type="submit" aria-label="Start">
+                             <i class="bi bi-play-fill"></i>
+                           </button>
+                         </form>`}
                     <div class="menu">
                       <button class="menu-button icon-button" type="button" aria-label="More">
                         <i class="bi bi-three-dots"></i>
                       </button>
                       <div class="menu-panel">
                         <button class="menu-item" type="button" data-edit-target="${editFormId}">Edit task</button>
-                        ${startStop}
                         <form method="post" action="/tasks/${task.id}/complete" data-action="complete" data-task-id="${task.id}">
                           <button class="menu-item" type="submit">Complete</button>
                         </form>
@@ -200,7 +202,6 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
           const name = escapeHtml(task.name);
           const project = escapeHtml(task.project_name || "Unassigned");
           const time = formatSeconds(task.today_seconds || 0);
-          const dailyChecks = Number(task.daily_checks || 0);
           const labels = renderLabelChips(task.labels || [], `done-${task.id}`);
           const editFormId = `edit-task-${task.id}`;
           const labelOptions = availableLabels
@@ -209,22 +210,15 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                 `<option value="${label.id}">${escapeHtml(label.name)}</option>`,
             )
             .join("");
-          const startStop = task.is_running
-            ? `<form method="post" action="/tasks/${task.id}/stop" data-action="stop" data-task-id="${task.id}">
-                 <button class="menu-item danger" type="submit">Stop</button>
-               </form>`
-            : `<form method="post" action="/tasks/${task.id}/start" data-action="start" data-task-id="${task.id}">
-                 <button class="menu-item" type="submit">Start</button>
-               </form>`;
           return `<li class="task-item is-done-today">
                     <div class="task-info">
                       <div class="editable-field">
-                        <span class="name-badge name-task">${name}</span>
+                        <span class="name-badge name-task task-title">${name}</span>
                         <button class="edit-toggle icon-button" type="button" aria-label="Edit task" data-edit-target="${editFormId}">
                           <i class="bi bi-pencil"></i>
                         </button>
                       </div>
-                      <span class="task-project">${project}</span>
+                      <span class="task-project" title="${project}">${project}</span>
                       ${labels}
                       <form id="${editFormId}" class="edit-form" method="post" action="/tasks/${task.id}/edit">
                         <input type="text" name="name" value="${name}" required />
@@ -240,16 +234,26 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                         </div>
                       </form>
                       <span class="task-time" data-task-id="${task.id}">${time}</span>
-                      <span class="task-meta">Daily checks: ${dailyChecks}</span>
+                      <span class="task-status">Done today</span>
                     </div>
                     <div class="task-actions">
+                      ${task.is_running
+                        ? `<form method="post" action="/tasks/${task.id}/stop" data-action="stop" data-task-id="${task.id}">
+                             <button class="btn btn-outline-warning btn-sm menu-item danger" type="submit" aria-label="Stop">
+                               <i class="bi bi-pause-fill"></i>
+                             </button>
+                           </form>`
+                        : `<form method="post" action="/tasks/${task.id}/start" data-action="start" data-task-id="${task.id}">
+                             <button class="btn btn-outline-primary btn-sm menu-item" type="submit" aria-label="Start">
+                               <i class="bi bi-play-fill"></i>
+                             </button>
+                           </form>`}
                       <div class="menu">
                         <button class="menu-button icon-button" type="button" aria-label="More">
                           <i class="bi bi-three-dots"></i>
                         </button>
                         <div class="menu-panel">
                           <button class="menu-item" type="button" data-edit-target="${editFormId}">Edit task</button>
-                          ${startStop}
                           <form method="post" action="/tasks/${task.id}/complete" data-action="complete" data-task-id="${task.id}">
                             <button class="menu-item" type="submit">Complete</button>
                           </form>
@@ -275,17 +279,16 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
           const name = escapeHtml(task.name);
           const project = escapeHtml(task.project_name || "Unassigned");
           const time = formatSeconds(task.total_seconds || 0);
-          const dailyChecks = Number(task.daily_checks || 0);
           const labels = renderLabelChips(task.labels || [], `completed-${task.id}`);
           return `<li class="task-item is-completed">
                     <div class="task-info">
                       <div class="editable-field">
-                        <span class="name-badge name-task">${name}</span>
+                        <span class="name-badge name-task task-title">${name}</span>
                       </div>
-                      <span class="task-project">${project}</span>
+                      <span class="task-project" title="${project}">${project}</span>
                       ${labels}
                       <span class="task-time">${time}</span>
-                      <span class="task-meta">Daily checks: ${dailyChecks}</span>
+                      <span class="task-status">Completed</span>
                     </div>
                     <div class="task-actions">
                       <form method="post" action="/tasks/${task.id}/reopen" data-action="reopen" data-task-id="${task.id}">

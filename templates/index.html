@@ -46,17 +46,17 @@
                 <li class="task-item">
                 <div class="task-info">
                   <div class="editable-field">
-                    <span class="name-badge name-task">{{ task['name'] }}</span>
+                    <span class="name-badge name-task task-title">{{ task['name'] }}</span>
                     <button class="edit-toggle icon-button" type="button" aria-label="Edit task" data-edit-target="edit-task-{{ task['id'] }}">
                       <i class="bi bi-pencil"></i>
                     </button>
                   </div>
-                  <span class="task-project">{{ task['project_name'] or 'Unassigned' }}</span>
+                  <span class="task-project" title="{{ task['project_name'] or 'Unassigned' }}">{{ task['project_name'] or 'Unassigned' }}</span>
                   {% if task['labels'] %}
                     <div class="label-list">
                       {% for label in task['labels'] %}
                         <div class="editable-label">
-                          <span class="label-chip" style="background-color: {{ label['color'] }}">{{ label['name'] }}</span>
+                          <span class="label-chip" style="background-color: {{ label['color'] }}" title="{{ label['name'] }}">{{ label['name'] }}</span>
                           <button class="edit-toggle icon-button" type="button" aria-label="Edit label" data-edit-target="edit-label-{{ label['id'] }}-task-{{ task['id'] }}">
                             <i class="bi bi-pencil"></i>
                           </button>
@@ -87,8 +87,8 @@
                       </button>
                     </div>
                   </form>
-                  <span class="task-time">{{ task['today_seconds'] | format_seconds }}</span>
-                  <span class="task-meta">Daily checks: {{ task['daily_checks'] }}</span>
+                  <span class="task-time" data-task-id="{{ task['id'] }}">{{ task['today_seconds'] | format_seconds }}</span>
+                  <span class="task-status">In progress</span>
                 </div>
                 <div class="task-actions">
                   <form method="post" action="{{ url_for('daily_check_task', task_id=task['id']) }}" data-action="daily-check" data-task-id="{{ task['id'] }}">
@@ -96,21 +96,25 @@
                       <i class="bi bi-check2-circle"></i>
                     </button>
                   </form>
+                  {% if task['is_running'] %}
+                    <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}" data-action="stop" data-task-id="{{ task['id'] }}">
+                      <button class="btn btn-outline-warning btn-sm menu-item danger" type="submit" aria-label="Stop">
+                        <i class="bi bi-pause-fill"></i>
+                      </button>
+                    </form>
+                  {% else %}
+                    <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}" data-action="start" data-task-id="{{ task['id'] }}">
+                      <button class="btn btn-outline-primary btn-sm menu-item" type="submit" aria-label="Start">
+                        <i class="bi bi-play-fill"></i>
+                      </button>
+                    </form>
+                  {% endif %}
                   <div class="menu">
                     <button class="menu-button icon-button" type="button" aria-label="More">
                       <i class="bi bi-three-dots"></i>
                     </button>
                     <div class="menu-panel">
                       <button class="menu-item" type="button" data-edit-target="edit-task-{{ task['id'] }}">Edit task</button>
-                      {% if task['is_running'] %}
-                        <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}" data-action="stop" data-task-id="{{ task['id'] }}">
-                          <button class="menu-item danger" type="submit">Stop</button>
-                        </form>
-                      {% else %}
-                        <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}" data-action="start" data-task-id="{{ task['id'] }}">
-                          <button class="menu-item" type="submit">Start</button>
-                        </form>
-                      {% endif %}
                       <form method="post" action="{{ url_for('complete_task', task_id=task['id']) }}" data-action="complete" data-task-id="{{ task['id'] }}">
                         <button class="menu-item" type="submit">Complete</button>
                       </form>
@@ -135,17 +139,17 @@
                 <li class="task-item is-done-today">
                   <div class="task-info">
                     <div class="editable-field">
-                      <span class="name-badge name-task">{{ task['name'] }}</span>
+                      <span class="name-badge name-task task-title">{{ task['name'] }}</span>
                       <button class="edit-toggle icon-button" type="button" aria-label="Edit task" data-edit-target="edit-task-{{ task['id'] }}">
                         <i class="bi bi-pencil"></i>
                       </button>
                     </div>
-                    <span class="task-project">{{ task['project_name'] or 'Unassigned' }}</span>
+                    <span class="task-project" title="{{ task['project_name'] or 'Unassigned' }}">{{ task['project_name'] or 'Unassigned' }}</span>
                     {% if task['labels'] %}
                       <div class="label-list">
                         {% for label in task['labels'] %}
                           <div class="editable-label">
-                            <span class="label-chip" style="background-color: {{ label['color'] }}">{{ label['name'] }}</span>
+                            <span class="label-chip" style="background-color: {{ label['color'] }}" title="{{ label['name'] }}">{{ label['name'] }}</span>
                             <button class="edit-toggle icon-button" type="button" aria-label="Edit label" data-edit-target="edit-label-{{ label['id'] }}-task-{{ task['id'] }}">
                               <i class="bi bi-pencil"></i>
                             </button>
@@ -177,24 +181,28 @@
                       </div>
                     </form>
                     <span class="task-time" data-task-id="{{ task['id'] }}">{{ task['today_seconds'] | format_seconds }}</span>
-                    <span class="task-meta">Daily checks: {{ task['daily_checks'] }}</span>
+                    <span class="task-status">Done today</span>
                   </div>
                   <div class="task-actions">
+                    {% if task['is_running'] %}
+                      <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}" data-action="stop" data-task-id="{{ task['id'] }}">
+                        <button class="btn btn-outline-warning btn-sm menu-item danger" type="submit" aria-label="Stop">
+                          <i class="bi bi-pause-fill"></i>
+                        </button>
+                      </form>
+                    {% else %}
+                      <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}" data-action="start" data-task-id="{{ task['id'] }}">
+                        <button class="btn btn-outline-primary btn-sm menu-item" type="submit" aria-label="Start">
+                          <i class="bi bi-play-fill"></i>
+                        </button>
+                      </form>
+                    {% endif %}
                     <div class="menu">
                       <button class="menu-button icon-button" type="button" aria-label="More">
                         <i class="bi bi-three-dots"></i>
                       </button>
                       <div class="menu-panel">
                         <button class="menu-item" type="button" data-edit-target="edit-task-{{ task['id'] }}">Edit task</button>
-                        {% if task['is_running'] %}
-                          <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}" data-action="stop" data-task-id="{{ task['id'] }}">
-                            <button class="menu-item danger" type="submit">Stop</button>
-                          </form>
-                        {% else %}
-                          <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}" data-action="start" data-task-id="{{ task['id'] }}">
-                            <button class="menu-item" type="submit">Start</button>
-                          </form>
-                        {% endif %}
                         <form method="post" action="{{ url_for('complete_task', task_id=task['id']) }}" data-action="complete" data-task-id="{{ task['id'] }}">
                           <button class="menu-item" type="submit">Complete</button>
                         </form>
@@ -223,18 +231,18 @@
               <li class="task-item is-completed">
                 <div class="task-info">
                   <div class="editable-field">
-                    <span class="name-badge name-task">{{ task['name'] }}</span>
+                    <span class="name-badge name-task task-title">{{ task['name'] }}</span>
                   </div>
-                  <span class="task-project">{{ task['project_name'] or 'Unassigned' }}</span>
+                  <span class="task-project" title="{{ task['project_name'] or 'Unassigned' }}">{{ task['project_name'] or 'Unassigned' }}</span>
                   {% if task['labels'] %}
                     <div class="label-list">
                       {% for label in task['labels'] %}
-                        <span class="label-chip" style="background-color: {{ label['color'] }}">{{ label['name'] }}</span>
+                        <span class="label-chip" style="background-color: {{ label['color'] }}" title="{{ label['name'] }}">{{ label['name'] }}</span>
                       {% endfor %}
                     </div>
                   {% endif %}
                   <span class="task-time">{{ task['total_seconds'] | format_seconds }}</span>
-                  <span class="task-meta">Daily checks: {{ task['daily_checks'] }}</span>
+                  <span class="task-status">Completed</span>
                 </div>
                 <div class="task-actions">
                   <form method="post" action="{{ url_for('reopen_task', task_id=task['id']) }}" data-action="reopen" data-task-id="{{ task['id'] }}">

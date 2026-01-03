@@ -770,6 +770,18 @@ body {
   gap: 16px;
 }
 
+.task-column {
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  min-height: 100%;
+}
+
+.task-column .empty {
+  margin: 0;
+}
+
 .task-column h3 {
   font-size: 1rem;
   font-weight: 700;
@@ -780,9 +792,11 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 12px;
+  padding: 14px 16px;
+  background: var(--card);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
 .task-info {
@@ -870,8 +884,8 @@ body {
 }
 
 .name-task {
-  background: #e9f2ff;
-  color: #1346a8;
+  background: #eef2ff;
+  color: #1e1b4b;
 }
 
 .name-project {
@@ -898,6 +912,20 @@ body {
 .task-meta {
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+.task-title {
+  font-size: 1rem;
+  letter-spacing: 0.2px;
+}
+
+.task-status {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0f172a;
+  background: #e2e8f0;
+  border-radius: 999px;
+  padding: 4px 10px;
 }
 
 .task-item.is-completed {
