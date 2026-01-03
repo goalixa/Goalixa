@@ -103,7 +103,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
   const combined = activeList.concat(doneTodayList);
   if (!combined.length) {
     container.innerHTML =
-      '<h3>Not done</h3><p class="empty">No tasks yet.</p>';
+      '<h3>In progress</h3><p class="empty">No tasks yet.</p>';
     tasksState = new Map();
   } else {
     setTasksState(combined);
@@ -111,17 +111,20 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
 
   if (!activeList.length) {
     container.innerHTML =
-      '<h3>Not done</h3><p class="empty">No tasks yet.</p>';
+      '<h3>In progress</h3><p class="empty">No tasks yet.</p>';
   } else {
     const items = activeList
       .map((task) => {
         const name = escapeHtml(task.name);
         const project = escapeHtml(task.project_name || "Unassigned");
         const time = formatSeconds(task.today_seconds || 0);
-        const labels = renderLabelChips(task.labels || [], `task-${task.id}`);
+        const tooltip =
+          task.labels && task.labels.length
+            ? `${name} · ${project} · ${task.labels.map((label) => label.name).join(", ")}`
+            : `${name} · ${project}`;
         const editFormId = `edit-task-${task.id}`;
         const editField = `<div class="editable-field">
-            <span class="name-badge name-task task-title">${name}</span>
+            <span class="name-badge name-task task-title" title="${escapeHtml(tooltip)}">${name}</span>
             <button class="edit-toggle icon-button" type="button" aria-label="Edit task" data-edit-target="${editFormId}">
               <i class="bi bi-pencil"></i>
             </button>
@@ -135,8 +138,6 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
         return `<li class="task-item">
                   <div class="task-info">
                     ${editField}
-                    <span class="task-project" title="${project}">${project}</span>
-                    ${labels}
                     <form id="${editFormId}" class="edit-form" method="post" action="/tasks/${task.id}/edit">
                       <input type="text" name="name" value="${name}" required />
                       <div class="task-edit-row">
@@ -151,7 +152,6 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                       </div>
                     </form>
                     <span class="task-time" data-task-id="${task.id}">${time}</span>
-                    <span class="task-status">In progress</span>
                   </div>
                   <div class="task-actions">
                     <form method="post" action="/tasks/${task.id}/daily-check" data-action="daily-check" data-task-id="${task.id}">
@@ -189,7 +189,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
       })
       .join("");
 
-    container.innerHTML = `<h3>Not done</h3><ul class="task-list">${items}</ul>`;
+    container.innerHTML = `<h3>In progress</h3><ul class="task-list">${items}</ul>`;
   }
 
   if (doneTodayContainer) {
@@ -202,7 +202,10 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
           const name = escapeHtml(task.name);
           const project = escapeHtml(task.project_name || "Unassigned");
           const time = formatSeconds(task.today_seconds || 0);
-          const labels = renderLabelChips(task.labels || [], `done-${task.id}`);
+          const tooltip =
+            task.labels && task.labels.length
+              ? `${name} · ${project} · ${task.labels.map((label) => label.name).join(", ")}`
+              : `${name} · ${project}`;
           const editFormId = `edit-task-${task.id}`;
           const labelOptions = availableLabels
             .map(
@@ -213,13 +216,11 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
           return `<li class="task-item is-done-today">
                     <div class="task-info">
                       <div class="editable-field">
-                        <span class="name-badge name-task task-title">${name}</span>
+                        <span class="name-badge name-task task-title" title="${escapeHtml(tooltip)}">${name}</span>
                         <button class="edit-toggle icon-button" type="button" aria-label="Edit task" data-edit-target="${editFormId}">
                           <i class="bi bi-pencil"></i>
                         </button>
                       </div>
-                      <span class="task-project" title="${project}">${project}</span>
-                      ${labels}
                       <form id="${editFormId}" class="edit-form" method="post" action="/tasks/${task.id}/edit">
                         <input type="text" name="name" value="${name}" required />
                         <div class="task-edit-row">
@@ -234,7 +235,6 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                         </div>
                       </form>
                       <span class="task-time" data-task-id="${task.id}">${time}</span>
-                      <span class="task-status">Done today</span>
                     </div>
                     <div class="task-actions">
                       ${task.is_running
@@ -279,16 +279,16 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
           const name = escapeHtml(task.name);
           const project = escapeHtml(task.project_name || "Unassigned");
           const time = formatSeconds(task.total_seconds || 0);
-          const labels = renderLabelChips(task.labels || [], `completed-${task.id}`);
+          const tooltip =
+            task.labels && task.labels.length
+              ? `${name} · ${project} · ${task.labels.map((label) => label.name).join(", ")}`
+              : `${name} · ${project}`;
           return `<li class="task-item is-completed">
                     <div class="task-info">
                       <div class="editable-field">
-                        <span class="name-badge name-task task-title">${name}</span>
+                        <span class="name-badge name-task task-title" title="${escapeHtml(tooltip)}">${name}</span>
                       </div>
-                      <span class="task-project" title="${project}">${project}</span>
-                      ${labels}
                       <span class="task-time">${time}</span>
-                      <span class="task-status">Completed</span>
                     </div>
                     <div class="task-actions">
                       <form method="post" action="/tasks/${task.id}/reopen" data-action="reopen" data-task-id="${task.id}">

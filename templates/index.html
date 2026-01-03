@@ -39,39 +39,18 @@
       <h2>Tasks</h2>
       <div class="task-columns">
         <div id="task-list" class="task-column">
-          <h3>Not done</h3>
+          <h3>In progress</h3>
           {% if tasks %}
             <ul class="task-list">
               {% for task in tasks %}
                 <li class="task-item">
                 <div class="task-info">
                   <div class="editable-field">
-                    <span class="name-badge name-task task-title">{{ task['name'] }}</span>
+                    <span class="name-badge name-task task-title" title="{{ task['name'] }} · {{ task['project_name'] or 'Unassigned' }}{% if task['labels'] %} · {{ task['labels'] | map(attribute='name') | join(', ') }}{% endif %}">{{ task['name'] }}</span>
                     <button class="edit-toggle icon-button" type="button" aria-label="Edit task" data-edit-target="edit-task-{{ task['id'] }}">
                       <i class="bi bi-pencil"></i>
                     </button>
                   </div>
-                  <span class="task-project" title="{{ task['project_name'] or 'Unassigned' }}">{{ task['project_name'] or 'Unassigned' }}</span>
-                  {% if task['labels'] %}
-                    <div class="label-list">
-                      {% for label in task['labels'] %}
-                        <div class="editable-label">
-                          <span class="label-chip" style="background-color: {{ label['color'] }}" title="{{ label['name'] }}">{{ label['name'] }}</span>
-                          <button class="edit-toggle icon-button" type="button" aria-label="Edit label" data-edit-target="edit-label-{{ label['id'] }}-task-{{ task['id'] }}">
-                            <i class="bi bi-pencil"></i>
-                          </button>
-                          <form id="edit-label-{{ label['id'] }}-task-{{ task['id'] }}" class="edit-form" method="post" action="{{ url_for('edit_label', label_id=label['id']) }}">
-                            <input type="text" name="name" value="{{ label['name'] }}" required />
-                            <input type="color" name="color" value="{{ label['color'] }}" aria-label="Label color" />
-                            <button class="btn btn-outline-secondary btn-sm" type="submit">
-                              <i class="bi bi-check2"></i>
-                              Save
-                            </button>
-                          </form>
-                        </div>
-                      {% endfor %}
-                    </div>
-                  {% endif %}
                   <form id="edit-task-{{ task['id'] }}" class="edit-form" method="post" action="{{ url_for('edit_task', task_id=task['id']) }}">
                     <input type="text" name="name" value="{{ task['name'] }}" required />
                     <div class="task-edit-row">
@@ -88,7 +67,6 @@
                     </div>
                   </form>
                   <span class="task-time" data-task-id="{{ task['id'] }}">{{ task['today_seconds'] | format_seconds }}</span>
-                  <span class="task-status">In progress</span>
                 </div>
                 <div class="task-actions">
                   <form method="post" action="{{ url_for('daily_check_task', task_id=task['id']) }}" data-action="daily-check" data-task-id="{{ task['id'] }}">
@@ -139,32 +117,11 @@
                 <li class="task-item is-done-today">
                   <div class="task-info">
                     <div class="editable-field">
-                      <span class="name-badge name-task task-title">{{ task['name'] }}</span>
+                      <span class="name-badge name-task task-title" title="{{ task['name'] }} · {{ task['project_name'] or 'Unassigned' }}{% if task['labels'] %} · {{ task['labels'] | map(attribute='name') | join(', ') }}{% endif %}">{{ task['name'] }}</span>
                       <button class="edit-toggle icon-button" type="button" aria-label="Edit task" data-edit-target="edit-task-{{ task['id'] }}">
                         <i class="bi bi-pencil"></i>
                       </button>
                     </div>
-                    <span class="task-project" title="{{ task['project_name'] or 'Unassigned' }}">{{ task['project_name'] or 'Unassigned' }}</span>
-                    {% if task['labels'] %}
-                      <div class="label-list">
-                        {% for label in task['labels'] %}
-                          <div class="editable-label">
-                            <span class="label-chip" style="background-color: {{ label['color'] }}" title="{{ label['name'] }}">{{ label['name'] }}</span>
-                            <button class="edit-toggle icon-button" type="button" aria-label="Edit label" data-edit-target="edit-label-{{ label['id'] }}-task-{{ task['id'] }}">
-                              <i class="bi bi-pencil"></i>
-                            </button>
-                            <form id="edit-label-{{ label['id'] }}-task-{{ task['id'] }}" class="edit-form" method="post" action="{{ url_for('edit_label', label_id=label['id']) }}">
-                              <input type="text" name="name" value="{{ label['name'] }}" required />
-                              <input type="color" name="color" value="{{ label['color'] }}" aria-label="Label color" />
-                              <button class="btn btn-outline-secondary btn-sm" type="submit">
-                                <i class="bi bi-check2"></i>
-                                Save
-                              </button>
-                            </form>
-                          </div>
-                        {% endfor %}
-                      </div>
-                    {% endif %}
                     <form id="edit-task-{{ task['id'] }}" class="edit-form" method="post" action="{{ url_for('edit_task', task_id=task['id']) }}">
                       <input type="text" name="name" value="{{ task['name'] }}" required />
                       <div class="task-edit-row">
@@ -181,7 +138,6 @@
                       </div>
                     </form>
                     <span class="task-time" data-task-id="{{ task['id'] }}">{{ task['today_seconds'] | format_seconds }}</span>
-                    <span class="task-status">Done today</span>
                   </div>
                   <div class="task-actions">
                     {% if task['is_running'] %}
@@ -231,18 +187,9 @@
               <li class="task-item is-completed">
                 <div class="task-info">
                   <div class="editable-field">
-                    <span class="name-badge name-task task-title">{{ task['name'] }}</span>
+                    <span class="name-badge name-task task-title" title="{{ task['name'] }} · {{ task['project_name'] or 'Unassigned' }}{% if task['labels'] %} · {{ task['labels'] | map(attribute='name') | join(', ') }}{% endif %}">{{ task['name'] }}</span>
                   </div>
-                  <span class="task-project" title="{{ task['project_name'] or 'Unassigned' }}">{{ task['project_name'] or 'Unassigned' }}</span>
-                  {% if task['labels'] %}
-                    <div class="label-list">
-                      {% for label in task['labels'] %}
-                        <span class="label-chip" style="background-color: {{ label['color'] }}" title="{{ label['name'] }}">{{ label['name'] }}</span>
-                      {% endfor %}
-                    </div>
-                  {% endif %}
                   <span class="task-time">{{ task['total_seconds'] | format_seconds }}</span>
-                  <span class="task-status">Completed</span>
                 </div>
                 <div class="task-actions">
                   <form method="post" action="{{ url_for('reopen_task', task_id=task['id']) }}" data-action="reopen" data-task-id="{{ task['id'] }}">

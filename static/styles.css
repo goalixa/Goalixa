@@ -774,8 +774,18 @@ body {
   padding: 16px;
   border-radius: 16px;
   border: 1px solid var(--border);
-  background: var(--card);
+  background: #f8fafc;
   min-height: 100%;
+}
+
+#task-list.task-column {
+  background: linear-gradient(180deg, #f0f7ff 0%, #f8fafc 100%);
+  border-color: #d7e6ff;
+}
+
+#done-today-list.task-column {
+  background: linear-gradient(180deg, #effdf3 0%, #f8fafc 100%);
+  border-color: #cce9d6;
 }
 
 .task-column .empty {
