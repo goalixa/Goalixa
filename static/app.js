@@ -88,21 +88,31 @@ function renderLabelChips(labels, scopeId) {
   </div>`;
 }
 
-function renderTasks(tasks, completedTasks) {
+function renderTasks(tasks, doneTodayTasks, completedTasks) {
   const container = document.getElementById("task-list");
+  const doneTodayContainer = document.getElementById("done-today-list");
   const completedContainer = document.getElementById("completed-task-list");
   if (!container) {
     return;
   }
 
   const activeList = Array.isArray(tasks) ? tasks : [];
+  const doneTodayList = Array.isArray(doneTodayTasks) ? doneTodayTasks : [];
   const completedList = Array.isArray(completedTasks) ? completedTasks : [];
 
-  if (!activeList.length) {
-    container.innerHTML = '<p class="empty">No tasks yet.</p>';
+  const combined = activeList.concat(doneTodayList);
+  if (!combined.length) {
+    container.innerHTML =
+      '<h3>Not done</h3><p class="empty">No tasks yet.</p>';
     tasksState = new Map();
   } else {
-    setTasksState(activeList);
+    setTasksState(combined);
+  }
+
+  if (!activeList.length) {
+    container.innerHTML =
+      '<h3>Not done</h3><p class="empty">No tasks yet.</p>';
+  } else {
     const items = activeList
       .map((task) => {
         const name = escapeHtml(task.name);
@@ -117,79 +127,143 @@ function renderTasks(tasks, completedTasks) {
               <i class="bi bi-pencil"></i>
             </button>
           </div>`;
-        const editForm = `<form id="${editFormId}" class="edit-form" method="post" action="/tasks/${task.id}/edit">
-            <input type="text" name="name" value="${name}" required />
-            <button class="btn btn-outline-secondary btn-sm" type="submit">
-              <i class="bi bi-check2"></i>
-              Save
-            </button>
-          </form>`;
         const startStop = task.is_running
           ? `<form method="post" action="/tasks/${task.id}/stop" data-action="stop" data-task-id="${task.id}">
-               <button class="btn btn-outline-warning btn-sm menu-item danger" type="submit">
-                 <i class="bi bi-pause-fill"></i>
-                 Stop
-               </button>
+               <button class="menu-item danger" type="submit">Stop</button>
              </form>`
           : `<form method="post" action="/tasks/${task.id}/start" data-action="start" data-task-id="${task.id}">
-               <button class="btn btn-outline-primary btn-sm menu-item" type="submit">
-                 <i class="bi bi-play-fill"></i>
-                 Start
-               </button>
+               <button class="menu-item" type="submit">Start</button>
              </form>`;
-        const labelForm = availableLabels.length
-          ? `<form class="label-form" method="post" action="/tasks/${task.id}/labels">
-               <select name="label_id" required>
-                 <option value="" disabled selected>Add label</option>
-                 ${availableLabels
-                   .map(
-                     (label) =>
-                       `<option value="${label.id}">${escapeHtml(label.name)}</option>`,
-                   )
-                   .join("")}
-               </select>
-               <button class="btn btn-outline-secondary btn-sm menu-item" type="submit">
-                 <i class="bi bi-plus-lg"></i>
-                 Add
-               </button>
-             </form>`
-          : "";
+        const labelOptions = availableLabels
+          .map(
+            (label) =>
+              `<option value="${label.id}">${escapeHtml(label.name)}</option>`,
+          )
+          .join("");
         return `<li class="task-item">
                   <div class="task-info">
                     ${editField}
                     <span class="task-project">${project}</span>
                     ${labels}
-                    ${editForm}
+                    <form id="${editFormId}" class="edit-form" method="post" action="/tasks/${task.id}/edit">
+                      <input type="text" name="name" value="${name}" required />
+                      <div class="task-edit-row">
+                        <select name="label_id">
+                          <option value="" selected>Add label</option>
+                          ${labelOptions}
+                        </select>
+                        <button class="btn btn-outline-secondary btn-sm" type="submit">
+                          <i class="bi bi-check2"></i>
+                          Save
+                        </button>
+                      </div>
+                    </form>
                     <span class="task-time" data-task-id="${task.id}">${time}</span>
                     <span class="task-meta">Daily checks: ${dailyChecks}</span>
                   </div>
                   <div class="task-actions">
                     <form method="post" action="/tasks/${task.id}/daily-check" data-action="daily-check" data-task-id="${task.id}">
-                      <button class="btn btn-outline-success btn-sm menu-item" type="submit">
+                      <button class="btn btn-outline-success btn-sm menu-item" type="submit" aria-label="Done today">
                         <i class="bi bi-check2-circle"></i>
-                        Done today
                       </button>
                     </form>
-                    ${startStop}
-                    <form method="post" action="/tasks/${task.id}/complete" data-action="complete" data-task-id="${task.id}">
-                      <button class="btn btn-outline-secondary btn-sm menu-item" type="submit">
-                        <i class="bi bi-check2"></i>
-                        Complete
+                    <div class="menu">
+                      <button class="menu-button icon-button" type="button" aria-label="More">
+                        <i class="bi bi-three-dots"></i>
                       </button>
-                    </form>
-                    <form method="post" action="/tasks/${task.id}/delete" data-action="delete" data-task-id="${task.id}">
-                      <button class="btn btn-outline-danger btn-sm menu-item danger" type="submit">
-                        <i class="bi bi-trash"></i>
-                        Delete task
-                      </button>
-                    </form>
-                    ${labelForm}
+                      <div class="menu-panel">
+                        <button class="menu-item" type="button" data-edit-target="${editFormId}">Edit task</button>
+                        ${startStop}
+                        <form method="post" action="/tasks/${task.id}/complete" data-action="complete" data-task-id="${task.id}">
+                          <button class="menu-item" type="submit">Complete</button>
+                        </form>
+                        <form method="post" action="/tasks/${task.id}/delete" data-action="delete" data-task-id="${task.id}">
+                          <button class="menu-item danger" type="submit">Delete task</button>
+                        </form>
+                      </div>
+                    </div>
                   </div>
                 </li>`;
       })
       .join("");
 
-    container.innerHTML = `<ul class="task-list">${items}</ul>`;
+    container.innerHTML = `<h3>Not done</h3><ul class="task-list">${items}</ul>`;
+  }
+
+  if (doneTodayContainer) {
+    if (!doneTodayList.length) {
+      doneTodayContainer.innerHTML =
+        '<h3>Done today</h3><p class="empty">No tasks done today.</p>';
+    } else {
+      const items = doneTodayList
+        .map((task) => {
+          const name = escapeHtml(task.name);
+          const project = escapeHtml(task.project_name || "Unassigned");
+          const time = formatSeconds(task.today_seconds || 0);
+          const dailyChecks = Number(task.daily_checks || 0);
+          const labels = renderLabelChips(task.labels || [], `done-${task.id}`);
+          const editFormId = `edit-task-${task.id}`;
+          const labelOptions = availableLabels
+            .map(
+              (label) =>
+                `<option value="${label.id}">${escapeHtml(label.name)}</option>`,
+            )
+            .join("");
+          const startStop = task.is_running
+            ? `<form method="post" action="/tasks/${task.id}/stop" data-action="stop" data-task-id="${task.id}">
+                 <button class="menu-item danger" type="submit">Stop</button>
+               </form>`
+            : `<form method="post" action="/tasks/${task.id}/start" data-action="start" data-task-id="${task.id}">
+                 <button class="menu-item" type="submit">Start</button>
+               </form>`;
+          return `<li class="task-item is-done-today">
+                    <div class="task-info">
+                      <div class="editable-field">
+                        <span class="name-badge name-task">${name}</span>
+                        <button class="edit-toggle icon-button" type="button" aria-label="Edit task" data-edit-target="${editFormId}">
+                          <i class="bi bi-pencil"></i>
+                        </button>
+                      </div>
+                      <span class="task-project">${project}</span>
+                      ${labels}
+                      <form id="${editFormId}" class="edit-form" method="post" action="/tasks/${task.id}/edit">
+                        <input type="text" name="name" value="${name}" required />
+                        <div class="task-edit-row">
+                          <select name="label_id">
+                            <option value="" selected>Add label</option>
+                            ${labelOptions}
+                          </select>
+                          <button class="btn btn-outline-secondary btn-sm" type="submit">
+                            <i class="bi bi-check2"></i>
+                            Save
+                          </button>
+                        </div>
+                      </form>
+                      <span class="task-time" data-task-id="${task.id}">${time}</span>
+                      <span class="task-meta">Daily checks: ${dailyChecks}</span>
+                    </div>
+                    <div class="task-actions">
+                      <div class="menu">
+                        <button class="menu-button icon-button" type="button" aria-label="More">
+                          <i class="bi bi-three-dots"></i>
+                        </button>
+                        <div class="menu-panel">
+                          <button class="menu-item" type="button" data-edit-target="${editFormId}">Edit task</button>
+                          ${startStop}
+                          <form method="post" action="/tasks/${task.id}/complete" data-action="complete" data-task-id="${task.id}">
+                            <button class="menu-item" type="submit">Complete</button>
+                          </form>
+                          <form method="post" action="/tasks/${task.id}/delete" data-action="delete" data-task-id="${task.id}">
+                            <button class="menu-item danger" type="submit">Delete task</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </li>`;
+        })
+        .join("");
+      doneTodayContainer.innerHTML = `<h3>Done today</h3><ul class="task-list">${items}</ul>`;
+    }
   }
 
   if (completedContainer) {
@@ -249,6 +323,7 @@ async function createTask(name, projectId, labelIds) {
   const payload = await response.json();
   return {
     tasks: payload.tasks || [],
+    doneTodayTasks: payload.done_today_tasks || [],
     completedTasks: payload.completed_tasks || [],
   };
 }
@@ -261,6 +336,7 @@ async function loadTasks() {
   const payload = await response.json();
   return {
     tasks: payload.tasks || [],
+    doneTodayTasks: payload.done_today_tasks || [],
     completedTasks: payload.completed_tasks || [],
   };
 }
@@ -277,6 +353,7 @@ async function updateTaskState(taskId, action) {
   const payload = await response.json();
   return {
     tasks: payload.tasks || [],
+    doneTodayTasks: payload.done_today_tasks || [],
     completedTasks: payload.completed_tasks || [],
   };
 }
@@ -301,6 +378,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const createLabelToggle = document.getElementById("create-label-toggle");
   const createLabelPicker = document.getElementById("create-label-picker");
   const taskList = document.getElementById("task-list");
+  const doneTodayList = document.getElementById("done-today-list");
   const completedTaskList = document.getElementById("completed-task-list");
   const labelToggles = document.querySelectorAll(".label-toggle[data-target]");
 
@@ -325,7 +403,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         const taskPayload = await createTask(name, projectId, labelIds);
-        renderTasks(taskPayload.tasks, taskPayload.completedTasks);
+        renderTasks(
+          taskPayload.tasks,
+          taskPayload.doneTodayTasks,
+          taskPayload.completedTasks,
+        );
         input.value = "";
         input.focus();
         if (labelsSelect) {
@@ -338,7 +420,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     loadTasks()
       .then((taskPayload) => {
-        renderTasks(taskPayload.tasks, taskPayload.completedTasks);
+        renderTasks(
+          taskPayload.tasks,
+          taskPayload.doneTodayTasks,
+          taskPayload.completedTasks,
+        );
       })
       .catch(() => {});
     startLiveTimer();
@@ -366,7 +452,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       try {
         const taskPayload = await updateTaskState(taskId, action);
-        renderTasks(taskPayload.tasks, taskPayload.completedTasks);
+        renderTasks(
+          taskPayload.tasks,
+          taskPayload.doneTodayTasks,
+          taskPayload.completedTasks,
+        );
       } catch (error) {
         target.submit();
       }
@@ -374,7 +464,38 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   bindTaskList(taskList);
+  bindTaskList(doneTodayList);
   bindTaskList(completedTaskList);
+
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+    const menuButton = target.closest(".menu-button");
+    if (menuButton) {
+      const menu = menuButton.closest(".menu");
+      if (!menu) {
+        return;
+      }
+      const panel = menu.querySelector(".menu-panel");
+      if (!panel) {
+        return;
+      }
+      document.querySelectorAll(".menu-panel").forEach((el) => {
+        if (el !== panel) {
+          el.classList.remove("is-open");
+        }
+      });
+      panel.classList.toggle("is-open");
+      return;
+    }
+    if (!target.closest(".menu")) {
+      document.querySelectorAll(".menu-panel").forEach((el) => {
+        el.classList.remove("is-open");
+      });
+    }
+  });
 
   labelToggles.forEach((toggle) => {
     toggle.addEventListener("click", () => {

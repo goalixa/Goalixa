@@ -138,14 +138,21 @@ class TaskService:
     def list_tasks_for_today(self):
         tasks = self.list_tasks()
         active_tasks = []
+        done_today_tasks = []
         completed_tasks = []
         for task in tasks:
             status = task.get("status") or "active"
             if status == "completed":
                 completed_tasks.append(task)
-            elif not task.get("checked_today"):
+            elif task.get("checked_today"):
+                done_today_tasks.append(task)
+            else:
                 active_tasks.append(task)
-        return {"tasks": active_tasks, "completed_tasks": completed_tasks}
+        return {
+            "tasks": active_tasks,
+            "done_today_tasks": done_today_tasks,
+            "completed_tasks": completed_tasks,
+        }
 
     def add_task(self, name, project_id, label_ids=None):
         name = (name or "").strip()

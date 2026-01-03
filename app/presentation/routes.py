@@ -320,6 +320,7 @@ def register_routes(app, service):
         return render_template(
             "index.html",
             tasks=task_view["tasks"],
+            done_today_tasks=task_view["done_today_tasks"],
             completed_tasks=task_view["completed_tasks"],
             projects=projects,
             labels=labels,
@@ -357,6 +358,24 @@ def register_routes(app, service):
                     "completed_at": task.get("completed_at"),
                 }
                 for task in task_view["tasks"]
+            ],
+            "done_today_tasks": [
+                {
+                    "id": task["id"],
+                    "name": task["name"],
+                    "total_seconds": int(task["total_seconds"] or 0),
+                    "rolling_24h_seconds": int(task["rolling_24h_seconds"] or 0),
+                    "today_seconds": int(task.get("today_seconds") or 0),
+                    "is_running": bool(task["is_running"]),
+                    "project_id": task["project_id"],
+                    "project_name": task["project_name"],
+                    "labels": task["labels"],
+                    "status": task.get("status") or "active",
+                    "checked_today": bool(task.get("checked_today")),
+                    "daily_checks": int(task.get("daily_checks") or 0),
+                    "completed_at": task.get("completed_at"),
+                }
+                for task in task_view["done_today_tasks"]
             ],
             "completed_tasks": [
                 {
@@ -465,6 +484,9 @@ def register_routes(app, service):
     @auth_required()
     def edit_task(task_id):
         service.update_task(task_id, request.form.get("name", ""))
+        label_id = request.form.get("label_id")
+        if label_id:
+            service.add_label_to_task(task_id, int(label_id))
         return redirect(request.referrer or url_for("index"))
 
     @app.route("/tasks/<int:task_id>/labels", methods=["POST"])

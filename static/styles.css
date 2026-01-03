@@ -764,6 +764,18 @@ body {
   gap: 12px;
 }
 
+.task-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.task-column h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
 .task-item {
   display: flex;
   justify-content: space-between;
@@ -816,6 +828,20 @@ body {
   padding: 6px 10px;
   border-radius: 10px;
   border: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.task-edit-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.task-edit-row select {
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
   font-size: 0.9rem;
 }
 
@@ -876,6 +902,10 @@ body {
 
 .task-item.is-completed {
   opacity: 0.75;
+}
+
+.task-item.is-done-today {
+  opacity: 0.85;
 }
 
 .task-actions button {
@@ -2674,6 +2704,10 @@ body {
   }
 
   .goals-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .task-columns {
     grid-template-columns: 1fr;
   }
 }
