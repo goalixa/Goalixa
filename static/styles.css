@@ -869,6 +869,15 @@ body {
   margin-left: 0;
 }
 
+.task-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.task-item.is-completed {
+  opacity: 0.75;
+}
+
 .task-actions button {
   padding: 8px 14px;
   border-radius: 10px;

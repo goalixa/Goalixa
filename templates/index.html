@@ -78,8 +78,15 @@
                   </button>
                 </form>
                 <span class="task-time">{{ task['today_seconds'] | format_seconds }}</span>
+                <span class="task-meta">Daily checks: {{ task['daily_checks'] }}</span>
               </div>
               <div class="task-actions">
+                <form method="post" action="{{ url_for('daily_check_task', task_id=task['id']) }}" data-action="daily-check" data-task-id="{{ task['id'] }}">
+                  <button class="btn btn-outline-success btn-sm menu-item" type="submit">
+                    <i class="bi bi-check2-circle"></i>
+                    Done today
+                  </button>
+                </form>
                 {% if task['is_running'] %}
                   <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}" data-action="stop" data-task-id="{{ task['id'] }}">
                   <button class="btn btn-outline-warning btn-sm menu-item danger" type="submit">
@@ -95,6 +102,12 @@
                   </button>
                 </form>
               {% endif %}
+                <form method="post" action="{{ url_for('complete_task', task_id=task['id']) }}" data-action="complete" data-task-id="{{ task['id'] }}">
+                  <button class="btn btn-outline-secondary btn-sm menu-item" type="submit">
+                    <i class="bi bi-check2"></i>
+                    Complete
+                  </button>
+                </form>
                 <form method="post" action="{{ url_for('delete_task', task_id=task['id']) }}" data-action="delete" data-task-id="{{ task['id'] }}">
                   <button class="btn btn-outline-danger btn-sm menu-item danger" type="submit">
                     <i class="bi bi-trash"></i>
@@ -122,9 +135,57 @@
         {% endif %}
       </div>
     </section>
+
+    <section class="card">
+      <h2>Completed</h2>
+      <div id="completed-task-list">
+        {% if completed_tasks %}
+          <ul class="task-list">
+            {% for task in completed_tasks %}
+              <li class="task-item is-completed">
+                <div class="task-info">
+                  <div class="editable-field">
+                    <span class="name-badge name-task">{{ task['name'] }}</span>
+                  </div>
+                  <span class="task-project">{{ task['project_name'] or 'Unassigned' }}</span>
+                  {% if task['labels'] %}
+                    <div class="label-list">
+                      {% for label in task['labels'] %}
+                        <span class="label-chip" style="background-color: {{ label['color'] }}">{{ label['name'] }}</span>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                  <span class="task-time">{{ task['total_seconds'] | format_seconds }}</span>
+                  <span class="task-meta">Daily checks: {{ task['daily_checks'] }}</span>
+                </div>
+                <div class="task-actions">
+                  <form method="post" action="{{ url_for('reopen_task', task_id=task['id']) }}" data-action="reopen" data-task-id="{{ task['id'] }}">
+                    <button class="btn btn-outline-secondary btn-sm menu-item" type="submit">
+                      <i class="bi bi-arrow-counterclockwise"></i>
+                      Reopen
+                    </button>
+                  </form>
+                  <form method="post" action="{{ url_for('delete_task', task_id=task['id']) }}" data-action="delete" data-task-id="{{ task['id'] }}">
+                    <button class="btn btn-outline-danger btn-sm menu-item danger" type="submit">
+                      <i class="bi bi-trash"></i>
+                      Delete task
+                    </button>
+                  </form>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">No completed tasks yet.</p>
+        {% endif %}
+      </div>
+    </section>
   </main>
 {% endblock %}
 
 {% block scripts %}
+  <script>
+    window.availableLabels = {{ labels | tojson }};
+  </script>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
 {% endblock %}
