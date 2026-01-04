@@ -77,9 +77,15 @@
                 <span class="goal-status {{ 'paused' if goal['display_status'] == 'at_risk' else 'completed' if goal['display_status'] in ['completed', 'archived'] else 'active' }}">
                   {{ goal['display_status'] | replace('_', ' ') }}
                 </span>
-                <span class="goal-deadline">
-                  {% if goal['target_date'] %}Target: {{ goal['target_date'] }}{% else %}No target{% endif %}
-                </span>
+                <div class="goal-deadline">
+                  {% if goal['target_date'] %}
+                    <div class="deadline-ring" style="--progress: {{ goal['deadline_percent'] or 0 }};" title="Target: {{ goal['target_date'] }}">
+                      <span>{{ goal['deadline_remaining_days'] }}</span>
+                    </div>
+                  {% else %}
+                    <span>No target</span>
+                  {% endif %}
+                </div>
               </div>
               <div class="goal-card-header">
                 <h3 class="goal-name">{{ goal['name'] }}</h3>
@@ -245,6 +251,13 @@
                   </span>
                 </div>
                 <div class="subgoal-list">
+                  <form class="subgoal-add-form" method="post" action="{{ url_for('add_goal_subgoal', goal_id=goal['id']) }}">
+                    <input type="text" name="title" placeholder="Add a sub-goal" required />
+                    <button class="btn btn-primary btn-sm" type="submit">
+                      <i class="bi bi-plus-lg"></i>
+                      Add
+                    </button>
+                  </form>
                   {% for subgoal in goal['subgoals'] %}
                     <div class="subgoal-item {% if subgoal['status'] == 'completed' %}is-done{% endif %}">
                       <form class="subgoal-toggle" method="post" action="{{ url_for('toggle_goal_subgoal', subgoal_id=subgoal['id']) }}">

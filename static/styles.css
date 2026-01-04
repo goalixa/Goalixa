@@ -2031,6 +2031,58 @@ body {
   color: var(--muted);
 }
 
+.goal-deadline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.deadline-ring {
+  --size: 44px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--accent) calc(var(--progress) * 1%),
+    var(--soft) 0
+  );
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-weight: 700;
+  color: var(--text);
+  font-size: 0.75rem;
+}
+
+.deadline-ring::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: var(--card);
+}
+
+.deadline-ring span {
+  position: relative;
+}
+
+.deadline-date {
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .deadline-ring {
+  background: conic-gradient(
+    var(--accent) calc(var(--progress) * 1%),
+    #273243 0
+  );
+}
+
+[data-theme="dark"] .deadline-ring::before {
+  background: #161c25;
+}
+
 .goal-status {
   padding: 4px 10px;
   border-radius: 999px;
@@ -2153,6 +2205,37 @@ body {
 .subgoal-list {
   display: grid;
   gap: 10px;
+}
+
+.subgoal-add-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px dashed var(--border);
+  background: var(--soft);
+}
+
+.subgoal-add-form input {
+  flex: 1;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  background: var(--card);
+  color: var(--text);
+}
+
+[data-theme="dark"] .subgoal-add-form {
+  background: #141a22;
+  border-color: #2a3342;
+}
+
+[data-theme="dark"] .subgoal-add-form input {
+  background: #121723;
+  border-color: #2a3342;
+  color: var(--text);
 }
 
 .subgoal-item {

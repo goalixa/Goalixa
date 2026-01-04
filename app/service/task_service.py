@@ -580,6 +580,7 @@ class TaskService:
         task_totals = self.repository.fetch_task_total_seconds(task_ids)
 
         goal_list = []
+        today = self.current_local_date()
         for goal in goals:
             goal_id = goal["id"]
             direct_task_ids = goal_tasks_map.get(goal_id, [])
@@ -591,6 +592,25 @@ class TaskService:
 
             linked_task_ids = sorted(linked_task_ids)
             total_seconds = sum(task_totals.get(task_id, 0) for task_id in linked_task_ids)
+            deadline_total_days = None
+            deadline_remaining_days = None
+            deadline_percent = None
+            target_date_value = goal["target_date"] if "target_date" in goal.keys() else None
+            if target_date_value:
+                try:
+                    target_date = datetime.fromisoformat(target_date_value).date()
+                except ValueError:
+                    target_date = None
+                if target_date:
+                    try:
+                        created_date = datetime.fromisoformat(goal["created_at"]).date()
+                    except ValueError:
+                        created_date = today
+                    total_days = max(1, (target_date - created_date).days)
+                    remaining_days = max(0, (target_date - today).days)
+                    deadline_total_days = total_days
+                    deadline_remaining_days = remaining_days
+                    deadline_percent = min(100, max(0, int((remaining_days / total_days) * 100)))
             subgoals = goal_subgoals_map.get(goal_id, [])
             subgoals_total = len(subgoals)
             subgoals_done = sum(1 for subgoal in subgoals if subgoal["status"] == "completed")
@@ -617,6 +637,9 @@ class TaskService:
                     "display_status": display_status,
                     "tasks_count": len(linked_task_ids),
                     "projects_count": len(linked_project_ids),
+                    "deadline_total_days": deadline_total_days,
+                    "deadline_remaining_days": deadline_remaining_days,
+                    "deadline_percent": deadline_percent,
                 }
             )
         return goal_list
@@ -731,6 +754,14 @@ class TaskService:
             goal["priority"],
             goal["target_date"],
             int(goal["target_seconds"] or 0),
+        )
+
+    def add_goal_subgoal(self, goal_id, title):
+        title = (title or "").strip()
+        if not title:
+            return
+        self.repository.add_goal_subgoal(
+            int(goal_id), title, datetime.utcnow().isoformat()
         )
 
     def start_task(self, task_id):

@@ -654,6 +654,17 @@ class SQLiteTaskRepository:
         )
         db.commit()
 
+    def add_goal_subgoal(self, goal_id, title, created_at):
+        db = self._get_db()
+        db.execute(
+            """
+            INSERT INTO goal_subgoals (goal_id, title, status, created_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (goal_id, title, "pending", created_at),
+        )
+        db.commit()
+
     def fetch_habits(self):
         db = self._get_db()
         return db.execute(
