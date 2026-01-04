@@ -62,6 +62,7 @@
     interval_minutes: 30,
     show_system: true,
     show_toast: true,
+    play_sound: true,
     title: "Tracking reminder",
     message: "Start a Pomodoro to keep tracking your focus.",
   };
@@ -104,6 +105,40 @@
   };
 
   window.showPomodoroToast = showPomodoroToast;
+
+  let audioContext = null;
+
+  const ensureAudioContext = () => {
+    if (!audioContext) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        audioContext = new AudioCtx();
+      }
+    }
+    return audioContext;
+  };
+
+  const playChime = () => {
+    const ctx = ensureAudioContext();
+    if (!ctx) {
+      return;
+    }
+    const now = ctx.currentTime;
+    const tones = [440, 660, 880];
+    tones.forEach((freq, index) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now + index * 0.12);
+      gain.gain.linearRampToValueAtTime(0.2, now + index * 0.12 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.12 + 0.1);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + index * 0.12);
+      osc.stop(now + index * 0.12 + 0.12);
+    });
+  };
 
   const getNextPomodoroMode = (state) => {
     if (state.mode === "work") {
@@ -193,6 +228,9 @@
     if (reminderSettings.show_system) {
       sendSystemNotification(reminderSettings.title, reminderSettings.message);
     }
+    if (reminderSettings.play_sound) {
+      playChime();
+    }
   };
 
   const pomodoroDisplay = document.getElementById("pomodoro-display");
@@ -226,6 +264,14 @@
       savePomodoro(state);
     }, 1000);
   }
+
+  document.addEventListener(
+    "click",
+    () => {
+      ensureAudioContext();
+    },
+    { once: true },
+  );
 
   document.addEventListener("click", (event) => {
     const target = event.target;
@@ -296,4 +342,21 @@
       }
     }
   });
+
+  const testButton = document.getElementById("notifications-test");
+  if (testButton) {
+    testButton.addEventListener("click", () => {
+      loadReminderSettings();
+      ensureSystemNotificationPermission();
+      if (reminderSettings.show_toast) {
+        showPomodoroToast(reminderSettings.title, reminderSettings.message);
+      }
+      if (reminderSettings.show_system) {
+        sendSystemNotification(reminderSettings.title, reminderSettings.message);
+      }
+      if (reminderSettings.play_sound) {
+        playChime();
+      }
+    });
+  }
 })();

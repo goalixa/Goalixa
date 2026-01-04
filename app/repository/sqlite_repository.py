@@ -621,6 +621,41 @@ class SQLiteTaskRepository:
         )
         db.commit()
 
+    def set_project_labels(self, project_id, label_ids):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        owns_project = db.execute(
+            "SELECT 1 FROM projects WHERE id = ? AND user_id = ?",
+            (project_id, user_id),
+        ).fetchone()
+        if not owns_project:
+            return
+        cleaned_ids = []
+        for label_id in label_ids or []:
+            try:
+                cleaned_ids.append(int(label_id))
+            except (TypeError, ValueError):
+                continue
+        allowed_ids = set()
+        if cleaned_ids:
+            placeholders = ",".join(["?"] * len(cleaned_ids))
+            rows = db.execute(
+                f"""
+                SELECT id
+                FROM labels
+                WHERE user_id = ? AND id IN ({placeholders})
+                """,
+                (user_id, *cleaned_ids),
+            ).fetchall()
+            allowed_ids = {row["id"] for row in rows}
+        db.execute("DELETE FROM project_labels WHERE project_id = ?", (project_id,))
+        for label_id in sorted(allowed_ids):
+            db.execute(
+                "INSERT OR IGNORE INTO project_labels (project_id, label_id) VALUES (?, ?)",
+                (project_id, label_id),
+            )
+        db.commit()
+
     def fetch_goals(self):
         db = self._get_db()
         user_id = self._require_user_id()

@@ -3,48 +3,122 @@
 {% set active_page = "projects" %}
 
 {% block content %}
-  <main class="container py-4">
-    <header class="header">
-      <h1>{{ project['name'] }}</h1>
-      <p>Tasks for this project</p>
+  <main class="container py-4 project-detail-page">
+    <header class="header project-detail-header">
+      <div>
+        <h1>{{ project['name'] }}</h1>
+        <p>Tasks, focus time, and tags for this project.</p>
+      </div>
+      <div class="project-detail-actions">
+        <button class="btn btn-outline-secondary btn-sm edit-toggle" type="button" aria-label="Edit project" data-edit-target="edit-project-{{ project['id'] }}">
+          <i class="bi bi-pencil"></i>
+          Edit project
+        </button>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('projects') }}">
+          <i class="bi bi-arrow-left"></i>
+          Back to projects
+        </a>
+      </div>
     </header>
 
-    <section class="card">
-      {% if project['labels'] %}
-        <div class="label-list">
-          {% for label in project['labels'] %}
-            <div class="editable-label">
-              <span class="label-chip" style="background-color: {{ label['color'] }}">{{ label['name'] }}</span>
-              <button class="edit-toggle icon-button" type="button" aria-label="Edit label" data-edit-target="edit-label-{{ label['id'] }}-project-{{ project['id'] }}">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <form id="edit-label-{{ label['id'] }}-project-{{ project['id'] }}" class="edit-form" method="post" action="{{ url_for('edit_label', label_id=label['id']) }}">
-                <input type="text" name="name" value="{{ label['name'] }}" required />
-                <input type="color" name="color" value="{{ label['color'] }}" aria-label="Label color" />
-                <button class="btn btn-outline-secondary btn-sm" type="submit">
-                  <i class="bi bi-check2"></i>
-                  Save
-                </button>
-              </form>
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-      <form class="label-form" method="post" action="{{ url_for('add_project_label', project_id=project['id']) }}">
-        <select name="label_id" required>
-          <option value="" disabled selected>Add project label</option>
-          {% for label in labels %}
-            <option value="{{ label['id'] }}">{{ label['name'] }}</option>
-          {% endfor %}
-        </select>
-        <button class="btn btn-outline-secondary btn-sm menu-item" type="submit">
-          <i class="bi bi-plus-lg"></i>
-          Add
-        </button>
-      </form>
+    <section class="projects-hero project-detail-hero">
+      <div class="project-stat-card">
+        <span class="project-stat-label">Open tasks</span>
+        <span class="project-stat-value">{{ active_task_count or 0 }}</span>
+        <span class="project-stat-meta">In this project</span>
+      </div>
+      <div class="project-stat-card">
+        <span class="project-stat-label">Completed</span>
+        <span class="project-stat-value">{{ completed_task_count or 0 }}</span>
+        <span class="project-stat-meta">Tasks finished</span>
+      </div>
+      <div class="project-stat-card">
+        <span class="project-stat-label">Focus logged</span>
+        <span class="project-stat-value">{{ total_focus_seconds | format_seconds }}</span>
+        <span class="project-stat-meta">All time</span>
+      </div>
+      <div class="project-stat-card">
+        <span class="project-stat-label">Tags</span>
+        <span class="project-stat-value">{{ project['labels'] | length }}</span>
+        <span class="project-stat-meta">Applied labels</span>
+      </div>
     </section>
 
-    <section class="card">
+    <section class="card project-settings-card">
+      <div class="projects-card-header">
+        <div>
+          <p class="goals-label">Settings</p>
+          <h2 class="goals-title">Project details</h2>
+        </div>
+      </div>
+      <div class="project-settings-grid">
+        <div class="project-labels">
+          {% if project['labels'] %}
+            <div class="label-list">
+              {% for label in project['labels'] %}
+                <div class="editable-label">
+                  <span class="label-chip" style="background-color: {{ label['color'] }}">{{ label['name'] }}</span>
+                  <button class="edit-toggle icon-button" type="button" aria-label="Edit label" data-edit-target="edit-label-{{ label['id'] }}-project-{{ project['id'] }}">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <form id="edit-label-{{ label['id'] }}-project-{{ project['id'] }}" class="edit-form" method="post" action="{{ url_for('edit_label', label_id=label['id']) }}">
+                    <input type="text" name="name" value="{{ label['name'] }}" required />
+                    <input type="color" name="color" value="{{ label['color'] }}" aria-label="Label color" />
+                    <button class="btn btn-outline-secondary btn-sm" type="submit">
+                      <i class="bi bi-check2"></i>
+                      Save
+                    </button>
+                  </form>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="empty">No tags yet.</p>
+          {% endif %}
+          {% set can_add_label = (labels | length) > (project['label_ids'] | length) %}
+          <form class="label-form project-label-form" method="post" action="{{ url_for('add_project_label', project_id=project['id']) }}">
+            <select name="label_id" {% if not can_add_label %}disabled{% endif %} required>
+              <option value="" disabled selected>
+                {% if can_add_label %}Add project label{% else %}All tags assigned{% endif %}
+              </option>
+              {% if can_add_label %}
+                {% for label in labels %}
+                  {% if label['id'] not in project['label_ids'] %}
+                    <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            </select>
+            <button class="btn btn-outline-secondary btn-sm menu-item" type="submit" {% if not can_add_label %}disabled{% endif %}>
+              <i class="bi bi-plus-lg"></i>
+              Add
+            </button>
+          </form>
+        </div>
+        <form id="edit-project-{{ project['id'] }}" class="edit-form project-edit-form project-edit-panel" method="post" action="{{ url_for('edit_project', project_id=project['id']) }}">
+          <label>
+            Project name
+            <input type="text" name="name" value="{{ project['name'] }}" required />
+          </label>
+          <label>
+            Project tags
+            <select name="label_ids" multiple>
+              {% for label in labels %}
+                <option value="{{ label['id'] }}" {% if label['id'] in project['label_ids'] %}selected{% endif %}>
+                  {{ label['name'] }}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+          <button class="btn btn-outline-secondary btn-sm" type="submit">
+            <i class="bi bi-check2"></i>
+            Save changes
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <section class="card project-task-create">
       <form class="task-form" id="task-form" method="post" action="{{ url_for('create_task') }}" data-project-id="{{ project['id'] }}">
         <input type="text" id="task-name" name="name" placeholder="Task name" required />
         <input type="hidden" name="project_id" value="{{ project['id'] }}" />
@@ -66,8 +140,13 @@
     </section>
 
     {% if tasks %}
-      <section class="card">
-        <h2>Tasks</h2>
+      <section class="card projects-card">
+        <div class="projects-card-header">
+          <div>
+            <p class="goals-label">Tasks</p>
+            <h2 class="goals-title">Focus list</h2>
+          </div>
+        </div>
         <ul class="task-list">
           {% for task in tasks %}
             <li class="task-item">

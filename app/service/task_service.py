@@ -67,6 +67,9 @@ class TaskService:
         show_toast = self._parse_bool_setting(
             self.repository.get_setting("notifications_show_toast"), True
         )
+        play_sound = self._parse_bool_setting(
+            self.repository.get_setting("notifications_play_sound"), True
+        )
         title = self.repository.get_setting("notifications_title") or "Tracking reminder"
         message = (
             self.repository.get_setting("notifications_message")
@@ -77,6 +80,7 @@ class TaskService:
             "interval_minutes": interval_minutes,
             "show_system": show_system,
             "show_toast": show_toast,
+            "play_sound": play_sound,
             "title": title,
             "message": message,
         }
@@ -95,6 +99,9 @@ class TaskService:
         show_toast = self._parse_bool_setting(
             form_data.get("notifications_show_toast"), True
         )
+        play_sound = self._parse_bool_setting(
+            form_data.get("notifications_play_sound"), True
+        )
         title = (form_data.get("notifications_title") or "").strip() or "Tracking reminder"
         message = (form_data.get("notifications_message") or "").strip()
         if not message:
@@ -110,6 +117,9 @@ class TaskService:
         )
         self.repository.set_setting(
             "notifications_show_toast", "1" if show_toast else "0"
+        )
+        self.repository.set_setting(
+            "notifications_play_sound", "1" if play_sound else "0"
         )
         self.repository.set_setting("notifications_title", title)
         self.repository.set_setting("notifications_message", message)
@@ -254,6 +264,9 @@ class TaskService:
             {
                 **dict(project),
                 "labels": labels_map.get(project["id"], []),
+                "label_ids": [
+                    label["id"] for label in labels_map.get(project["id"], [])
+                ],
             }
             for project in projects
         ]
@@ -263,9 +276,11 @@ class TaskService:
         if project is None:
             return None
         labels_map = self.repository.fetch_project_labels_map([project["id"]])
+        project_labels = labels_map.get(project["id"], [])
         return {
             **dict(project),
-            "labels": labels_map.get(project["id"], []),
+            "labels": project_labels,
+            "label_ids": [label["id"] for label in project_labels],
         }
 
     def add_project(self, name, label_ids=None):
@@ -277,10 +292,12 @@ class TaskService:
             for label_id in label_ids or []:
                 self.repository.add_label_to_project(project_id, int(label_id))
 
-    def update_project(self, project_id, name):
+    def update_project(self, project_id, name, label_ids=None):
         name = (name or "").strip()
         if name:
             self.repository.update_project(int(project_id), name)
+        if label_ids is not None:
+            self.repository.set_project_labels(int(project_id), label_ids)
 
     def delete_project(self, project_id):
         self.repository.delete_project(project_id)

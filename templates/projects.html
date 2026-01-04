@@ -3,14 +3,45 @@
 {% set active_page = "projects" %}
 
 {% block content %}
-  <main class="container py-4">
-    <header class="header">
-      <h1>Projects</h1>
-      <p>Manage your project list</p>
+  <main class="container py-4 projects-page">
+    <header class="header projects-header">
+      <div>
+        <h1>Projects</h1>
+        <p>Plan workstreams, add tags, and keep momentum visible.</p>
+      </div>
     </header>
 
-    <section class="card">
-      <form class="task-form" method="post" action="{{ url_for('create_project') }}">
+    <section class="projects-hero">
+      <div class="project-stat-card">
+        <span class="project-stat-label">Total projects</span>
+        <span class="project-stat-value">{{ projects | length }}</span>
+        <span class="project-stat-meta">Active workstreams</span>
+      </div>
+      <div class="project-stat-card">
+        <span class="project-stat-label">Open tasks</span>
+        <span class="project-stat-value">{{ active_task_count or 0 }}</span>
+        <span class="project-stat-meta">Across all projects</span>
+      </div>
+      <div class="project-stat-card">
+        <span class="project-stat-label">Focus logged</span>
+        <span class="project-stat-value">{{ total_focus_seconds | format_seconds }}</span>
+        <span class="project-stat-meta">Total time tracked</span>
+      </div>
+      <div class="project-stat-card">
+        <span class="project-stat-label">Labels in use</span>
+        <span class="project-stat-value">{{ label_count or 0 }}</span>
+        <span class="project-stat-meta">Available tags</span>
+      </div>
+    </section>
+
+    <section class="card projects-card">
+      <div class="projects-card-header">
+        <div>
+          <p class="goals-label">Create</p>
+          <h2 class="goals-title">New project</h2>
+        </div>
+      </div>
+      <form class="task-form project-form" method="post" action="{{ url_for('create_project') }}">
         <input type="text" name="name" placeholder="Project name" required />
         <button class="btn btn-light btn-sm label-toggle icon-button" type="button" data-target="#project-label-picker" aria-label="Labels">
           <i class="bi bi-tags"></i>
@@ -29,13 +60,18 @@
       </form>
     </section>
 
-    <section class="card">
-      <h2>Projects</h2>
+    <section class="card projects-card">
+      <div class="projects-card-header">
+        <div>
+          <p class="goals-label">Workspace</p>
+          <h2 class="goals-title">Project list</h2>
+        </div>
+      </div>
       {% if projects %}
-        <ul class="task-list">
+        <ul class="task-list project-list">
           {% for project in projects %}
-            <li class="task-item">
-              <div class="task-info">
+            <li class="task-item project-item">
+              <div class="task-info project-info">
                 <div class="editable-field">
                   <a class="name-badge name-project" href="{{ url_for('project_detail', project_id=project['id']) }}">{{ project['name'] }}</a>
                   <button class="edit-toggle icon-button" type="button" aria-label="Edit project" data-edit-target="edit-project-{{ project['id'] }}">
@@ -62,15 +98,47 @@
                     {% endfor %}
                   </div>
                 {% endif %}
-                <form id="edit-project-{{ project['id'] }}" class="edit-form" method="post" action="{{ url_for('edit_project', project_id=project['id']) }}">
-                  <input type="text" name="name" value="{{ project['name'] }}" required />
-                  <button class="btn btn-outline-secondary btn-sm" type="submit">
-                    <i class="bi bi-check2"></i>
-                    Save
+                {% set can_add_label = (labels | length) > (project['label_ids'] | length) %}
+                <form class="label-form project-label-form" method="post" action="{{ url_for('add_project_label', project_id=project['id']) }}">
+                  <select name="label_id" {% if not can_add_label %}disabled{% endif %} required>
+                    <option value="" disabled selected>
+                      {% if can_add_label %}Add tag{% else %}All tags assigned{% endif %}
+                    </option>
+                    {% if can_add_label %}
+                      {% for label in labels %}
+                        {% if label['id'] not in project['label_ids'] %}
+                          <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    {% endif %}
+                  </select>
+                  <button class="btn btn-outline-secondary btn-sm menu-item" type="submit" {% if not can_add_label %}disabled{% endif %}>
+                    <i class="bi bi-plus-lg"></i>
+                    Add
                   </button>
                 </form>
+                <form id="edit-project-{{ project['id'] }}" class="edit-form project-edit-form project-edit-inline" method="post" action="{{ url_for('edit_project', project_id=project['id']) }}">
+                  <input type="text" name="name" value="{{ project['name'] }}" required />
+                  <div class="project-edit-row">
+                    <select name="label_ids" multiple>
+                      {% for label in labels %}
+                        <option value="{{ label['id'] }}" {% if label['id'] in project['label_ids'] %}selected{% endif %}>
+                          {{ label['name'] }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                    <button class="btn btn-outline-secondary btn-sm" type="submit">
+                      <i class="bi bi-check2"></i>
+                      Save
+                    </button>
+                  </div>
+                </form>
               </div>
-              <div class="task-actions">
+              <div class="task-actions project-actions">
+                <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('project_detail', project_id=project['id']) }}">
+                  <i class="bi bi-box-arrow-up-right"></i>
+                  Open
+                </a>
                 <form method="post" action="{{ url_for('delete_project', project_id=project['id']) }}">
                   <button class="btn btn-outline-danger btn-sm delete" type="submit">
                     <i class="bi bi-trash"></i>

@@ -87,6 +87,18 @@
               Send system notification
             </label>
           </div>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              name="notifications_play_sound"
+              id="notifications-play-sound"
+              {% if notification_settings.play_sound %}checked{% endif %}
+            />
+            <label class="form-check-label" for="notifications-play-sound">
+              Play sound
+            </label>
+          </div>
         </div>
         <label class="d-block mb-3">
           Popup title
@@ -105,10 +117,16 @@
             rows="3"
           >{{ notification_settings.message }}</textarea>
         </label>
-        <button class="btn btn-outline-primary btn-sm" type="submit">
-          <i class="bi bi-check2-circle"></i>
-          Save notification settings
-        </button>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-outline-primary btn-sm" type="submit">
+            <i class="bi bi-check2-circle"></i>
+            Save notification settings
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" type="button" id="notifications-test">
+            <i class="bi bi-bell"></i>
+            Test notification
+          </button>
+        </div>
       </form>
     </section>
   </main>

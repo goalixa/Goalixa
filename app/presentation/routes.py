@@ -542,8 +542,20 @@ def register_routes(app, service):
     def projects():
         projects_list = service.list_projects()
         labels = service.list_labels()
+        tasks = service.list_tasks()
+        active_task_count = len(
+            [task for task in tasks if task.get("status") != "completed"]
+        )
+        total_focus_seconds = sum(
+            task.get("total_seconds", 0) for task in tasks
+        )
         return render_template(
-            "projects.html", projects=projects_list, labels=labels
+            "projects.html",
+            projects=projects_list,
+            labels=labels,
+            active_task_count=active_task_count,
+            total_focus_seconds=total_focus_seconds,
+            label_count=len(labels),
         )
 
     @app.route("/projects/<int:project_id>", methods=["GET"])
@@ -554,11 +566,17 @@ def register_routes(app, service):
             return redirect(url_for("projects"))
         tasks = service.list_tasks_by_project(project_id)
         labels = service.list_labels()
+        active_tasks = [task for task in tasks if task.get("status") != "completed"]
+        completed_tasks = [task for task in tasks if task.get("status") == "completed"]
+        total_focus_seconds = sum(task.get("total_seconds", 0) for task in tasks)
         return render_template(
             "project_detail.html",
             project=project,
             tasks=tasks,
             labels=labels,
+            active_task_count=len(active_tasks),
+            completed_task_count=len(completed_tasks),
+            total_focus_seconds=total_focus_seconds,
         )
 
     @app.route("/projects", methods=["POST"])
@@ -579,7 +597,11 @@ def register_routes(app, service):
     @app.route("/projects/<int:project_id>/edit", methods=["POST"])
     @auth_required()
     def edit_project(project_id):
-        service.update_project(project_id, request.form.get("name", ""))
+        service.update_project(
+            project_id,
+            request.form.get("name", ""),
+            request.form.getlist("label_ids"),
+        )
         return redirect(request.referrer or url_for("projects"))
 
     @app.route("/projects/<int:project_id>/labels", methods=["POST"])

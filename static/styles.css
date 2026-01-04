@@ -817,6 +817,160 @@ body {
   margin: 0 0 10px;
 }
 
+.projects-page {
+  display: grid;
+  gap: 24px;
+}
+
+.projects-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.projects-hero {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.project-stat-card {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="dark"] .project-stat-card {
+  background: #161c25;
+  border-color: #2a3342;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.45);
+}
+
+.project-stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.project-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.project-stat-meta {
+  color: var(--muted);
+}
+
+.projects-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.projects-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.project-info {
+  gap: 10px 12px;
+}
+
+.project-actions {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.project-label-form {
+  margin-top: 6px;
+}
+
+.project-label-form select {
+  min-width: 160px;
+}
+
+.project-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.project-edit-inline.is-open {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.project-edit-inline select {
+  min-width: 180px;
+}
+
+.project-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.project-detail-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.project-settings-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.project-settings-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.project-edit-panel.is-open {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+
+.project-edit-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.project-edit-panel input,
+.project-edit-panel select {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 900px) {
+  .project-settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .task-form {
   display: flex;
   gap: 12px;
@@ -963,6 +1117,10 @@ body {
 
 .edit-form.is-open {
   display: flex;
+}
+
+.edit-form.project-edit-panel.is-open {
+  display: grid;
 }
 
 .edit-form input[type="text"] {
