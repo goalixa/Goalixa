@@ -678,6 +678,28 @@ body {
   pointer-events: auto;
 }
 
+.habit-actions .edit-toggle,
+.habit-actions .icon-button.danger {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border 0.15s ease;
+}
+
+.habit-actions .edit-toggle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="dark"] .habit-actions .edit-toggle {
+  background: #1b2230;
+  border-color: #2a3342;
+  color: var(--text);
+}
+
 .habit-actions .icon-button.danger {
   border-color: rgba(239, 68, 68, 0.4);
   color: #ef4444;
@@ -702,8 +724,46 @@ body {
   border: 1px dashed var(--border);
 }
 
+.habit-edit-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
+.habit-edit-form input,
+.habit-edit-form select,
+.habit-edit-form textarea {
+  margin-top: 0;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  background: var(--card);
+}
+
+[data-theme="dark"] .habit-edit-form input,
+[data-theme="dark"] .habit-edit-form select,
+[data-theme="dark"] .habit-edit-form textarea {
+  background: #121723;
+  border-color: #2a3342;
+  color: var(--text);
+}
+
 .habit-edit-form.is-open {
   display: grid;
+}
+
+.habit-edit-form .goal-form-actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.habit-edit-form .goal-form-actions .btn {
+  width: 100%;
+  justify-content: center;
 }
 
 .habit-create-card.is-hidden {
