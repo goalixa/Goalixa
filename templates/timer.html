@@ -134,13 +134,13 @@
                       <span class="timer-list-duration">{{ entry["duration_seconds"] | format_seconds }}</span>
                         <div class="timer-list-actions">
                           {% if entry["is_running"] %}
-                            <form method="post" action="{{ url_for('stop_task', task_id=entry['task_id']) }}">
+                            <form method="post" action="{{ url_for('stop_task', task_id=entry['task_id']) }}" data-action="stop" data-task-id="{{ entry['task_id'] }}" data-task-name="{{ entry['task_name'] }}">
                               <button class="btn btn-outline-warning btn-sm timer-list-action pause" type="submit">
                                 <i class="bi bi-pause-fill"></i>
                               </button>
                             </form>
                           {% else %}
-                            <form method="post" action="{{ url_for('start_task', task_id=entry['task_id']) }}">
+                            <form method="post" action="{{ url_for('start_task', task_id=entry['task_id']) }}" data-action="start" data-task-id="{{ entry['task_id'] }}" data-task-name="{{ entry['task_name'] }}">
                               <button class="btn btn-outline-primary btn-sm timer-list-action resume" type="submit">
                                 <i class="bi bi-play-fill"></i>
                               </button>
@@ -441,6 +441,12 @@
       };
 
       const notifyPomodoro = (completedMode, nextMode) => {
+        const toastTitle = completedMode === "work" ? "Focus complete" : "Break complete";
+        const toastBody =
+          completedMode === "work" ? "Time for a break." : "Time to focus.";
+        if (typeof window.showPomodoroToast === "function") {
+          window.showPomodoroToast(toastTitle, toastBody);
+        }
         if (completedMode === "work") {
           sendNotification("Focus complete", "Time for a break.");
         } else {

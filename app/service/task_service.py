@@ -73,8 +73,14 @@ class TaskService:
         running_entries = self.repository.fetch_running_time_entries()
         for entry in running_entries:
             started_at = datetime.fromisoformat(entry["started_at"])
+            end_at = None
             if started_at < today_start:
-                self.repository.stop_time_entry(entry["id"], today_start.isoformat())
+                end_at = today_start
+            pomodoro_end = started_at + timedelta(minutes=25)
+            if datetime.utcnow() >= pomodoro_end:
+                end_at = pomodoro_end if end_at is None else min(end_at, pomodoro_end)
+            if end_at:
+                self.repository.stop_time_entry(entry["id"], end_at.isoformat())
 
     def _hydrate_tasks(self, tasks, log_date):
         task_ids = [task["id"] for task in tasks]

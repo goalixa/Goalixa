@@ -123,13 +123,13 @@
                         <span class="projects-task-time">{{ task["total_seconds"] | format_seconds }}</span>
                         <div class="projects-task-actions">
                           {% if task["is_running"] %}
-                            <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}">
+                            <form method="post" action="{{ url_for('stop_task', task_id=task['id']) }}" data-action="stop" data-task-id="{{ task['id'] }}" data-task-name="{{ task['name'] }}">
                               <button class="btn btn-outline-warning btn-sm projects-task-action pause" type="submit">
                                 <i class="bi bi-pause-fill"></i>
                               </button>
                             </form>
                           {% else %}
-                            <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}">
+                            <form method="post" action="{{ url_for('start_task', task_id=task['id']) }}" data-action="start" data-task-id="{{ task['id'] }}" data-task-name="{{ task['name'] }}">
                               <button class="btn btn-outline-primary btn-sm projects-task-action resume" type="submit">
                                 <i class="bi bi-play-fill"></i>
                               </button>
