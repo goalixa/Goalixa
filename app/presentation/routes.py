@@ -166,6 +166,17 @@ def register_routes(app, service):
             targets_set=targets_set,
         )
 
+    @app.route("/goals/<int:goal_id>", methods=["GET"])
+    @auth_required()
+    def goal_detail(goal_id):
+        goal = service.get_goal(goal_id)
+        if not goal:
+            return redirect(url_for("goals"))
+        return render_template(
+            "goal_detail.html",
+            goal=goal,
+        )
+
     @app.route("/goals/new", methods=["GET"])
     @auth_required()
     def new_goal():

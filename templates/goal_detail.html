@@ -1,0 +1,143 @@
+{% extends "layout.html" %}
+{% set title = goal['name'] %}
+{% set active_page = "goals" %}
+
+{% block content %}
+  <div class="container py-4 goals-page">
+    <header class="header goals-header-bar">
+      <div>
+        <p class="goals-label">Goal detail</p>
+        <h1>{{ goal['name'] }}</h1>
+        {% if goal['description'] %}
+          <p>{{ goal['description'] }}</p>
+        {% endif %}
+      </div>
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('goals') }}">
+        <i class="bi bi-arrow-left"></i>
+        Back to goals
+      </a>
+    </header>
+
+    <section class="card goals-card">
+      <div class="goals-header">
+        <div>
+          <p class="goals-label">Progress</p>
+          <h2 class="goals-title">Goal snapshot</h2>
+        </div>
+      </div>
+
+      <div class="goal-details-grid">
+        <div class="goal-detail-card goal-detail-progress">
+          <div class="goal-detail-progress-top">
+            <div class="deadline-ring" style="--progress: {{ goal['progress'] }};" title="Progress {{ goal['progress'] }}%">
+              <span>{{ goal['progress'] }}%</span>
+            </div>
+            <span class="goal-status {{ 'paused' if goal['display_status'] == 'at_risk' else 'completed' if goal['display_status'] in ['completed', 'archived'] else 'active' }}">
+              {{ goal['display_status'] | replace('_', ' ') }}
+            </span>
+          </div>
+          <div class="goal-progress">
+            <div class="goal-progress-bar">
+              <span style="width: {{ goal['progress'] }}%"></span>
+            </div>
+            {% if goal['subgoals_count'] %}
+              <span class="goal-progress-text">{{ goal['subgoals_completed'] }} / {{ goal['subgoals_count'] }} sub-goals</span>
+            {% else %}
+              <span class="goal-progress-text">{{ goal['progress'] }}% complete</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="goal-detail-card">
+          <h3>Timeline</h3>
+          <ul class="goal-detail-list">
+            {% if goal['target_date'] %}
+              <li>Target date: {{ goal['target_date'] }}</li>
+              {% if goal['deadline_remaining_days'] is not none %}
+                <li>{{ goal['deadline_remaining_days'] }} days remaining</li>
+              {% endif %}
+            {% else %}
+              <li>No target date yet</li>
+            {% endif %}
+            {% if goal['created_at'] %}
+              <li>Created: {{ goal['created_at'][:10] }}</li>
+            {% endif %}
+          </ul>
+        </div>
+        <div class="goal-detail-card">
+          <h3>Workload</h3>
+          <ul class="goal-detail-list">
+            <li>Projects linked: {{ goal['projects_count'] }}</li>
+            <li>Tasks linked: {{ goal['tasks_count'] }}</li>
+            <li>Time logged: {{ goal['total_seconds'] | format_seconds }}</li>
+          </ul>
+        </div>
+        <div class="goal-detail-card">
+          <h3>Linked projects</h3>
+          <ul class="goal-detail-list">
+            {% if goal['projects'] %}
+              {% for project in goal['projects'] %}
+                <li>{{ project['name'] }}</li>
+              {% endfor %}
+            {% else %}
+              <li>No linked projects yet</li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="card subgoals-card">
+      <div class="goals-header">
+        <div>
+          <p class="goals-label">Breakdown</p>
+          <h2 class="goals-title">Sub-goals</h2>
+        </div>
+        <div class="subgoal-progress">
+          <div class="deadline-ring" style="--progress: {{ goal['progress'] }};" title="Progress {{ goal['progress'] }}%">
+            <span>{{ goal['progress'] }}%</span>
+          </div>
+          <span class="goal-status {{ 'paused' if goal['display_status'] == 'at_risk' else 'completed' if goal['display_status'] in ['completed', 'archived'] else 'active' }}">
+            {{ goal['display_status'] | replace('_', ' ') }}
+          </span>
+        </div>
+      </div>
+      <div class="subgoals-grid">
+        <article class="subgoal-group">
+          <div class="subgoal-group-header">
+            <div>
+              <h3>{{ goal['name'] }}</h3>
+              <p class="subgoal-group-meta">{{ goal['subgoals_completed'] }} / {{ goal['subgoals_count'] }} completed</p>
+            </div>
+            <span class="goal-status {{ 'paused' if goal['display_status'] == 'at_risk' else 'completed' if goal['display_status'] in ['completed', 'archived'] else 'active' }}">
+              {{ goal['display_status'] | replace('_', ' ') }}
+            </span>
+          </div>
+          <div class="subgoal-list">
+            <form class="subgoal-add-form" method="post" action="{{ url_for('add_goal_subgoal', goal_id=goal['id']) }}">
+              <input type="text" name="title" placeholder="Add a sub-goal" required />
+              <button class="btn btn-primary btn-sm" type="submit">
+                <i class="bi bi-plus-lg"></i>
+                Add
+              </button>
+            </form>
+            {% if goal['subgoals'] %}
+              {% for subgoal in goal['subgoals'] %}
+                <div class="subgoal-item {% if subgoal['status'] == 'completed' %}is-done{% endif %}">
+                  <form class="subgoal-toggle" method="post" action="{{ url_for('toggle_goal_subgoal', subgoal_id=subgoal['id']) }}">
+                    <label>
+                      <input type="checkbox" name="done" {% if subgoal['status'] == 'completed' %}checked{% endif %} onchange="this.form.submit()" />
+                      <span class="subgoal-title">{{ subgoal['title'] }}</span>
+                    </label>
+                  </form>
+                  <span class="subgoal-meta">{{ subgoal['created_at'][:10] }}</span>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p class="empty">No sub-goals yet.</p>
+            {% endif %}
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+{% endblock %}
