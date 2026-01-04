@@ -24,6 +24,14 @@ def register_routes(app, service):
             parsed = parsed.replace(tzinfo=tz)
         return parsed.astimezone(timezone.utc).replace(tzinfo=None)
 
+    @app.before_request
+    def load_user_context():
+        if current_user.is_authenticated:
+            service.repository.set_user_id(current_user.id)
+            service.ensure_user_setup()
+        else:
+            service.repository.set_user_id(None)
+
     @app.route("/", methods=["GET"])
     @auth_required()
     def overview():
