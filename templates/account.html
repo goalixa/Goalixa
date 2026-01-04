@@ -36,5 +36,80 @@
         </button>
       </form>
     </section>
+
+    <section class="card">
+      <h2>Notification settings</h2>
+      <form method="post" action="{{ url_for('update_notifications') }}">
+        <div class="form-check form-switch mb-3">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            name="notifications_enabled"
+            id="notifications-enabled"
+            {% if notification_settings.enabled %}checked{% endif %}
+          />
+          <label class="form-check-label" for="notifications-enabled">
+            Remind me to track focus when Pomodoro is off
+          </label>
+        </div>
+        <label class="d-block mb-3">
+          Reminder interval (minutes)
+          <select class="form-select mt-2" name="notifications_interval_minutes">
+            {% for minutes in [1, 5, 10, 15, 20] %}
+              <option value="{{ minutes }}" {% if minutes == notification_settings.interval_minutes %}selected{% endif %}>
+                {{ minutes }} minute{% if minutes != 1 %}s{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </label>
+        <div class="d-flex gap-3 flex-wrap mb-3">
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              name="notifications_show_toast"
+              id="notifications-show-toast"
+              {% if notification_settings.show_toast %}checked{% endif %}
+            />
+            <label class="form-check-label" for="notifications-show-toast">
+              Show in-page popup
+            </label>
+          </div>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              name="notifications_show_system"
+              id="notifications-show-system"
+              {% if notification_settings.show_system %}checked{% endif %}
+            />
+            <label class="form-check-label" for="notifications-show-system">
+              Send system notification
+            </label>
+          </div>
+        </div>
+        <label class="d-block mb-3">
+          Popup title
+          <input
+            class="form-control mt-2"
+            type="text"
+            name="notifications_title"
+            value="{{ notification_settings.title }}"
+          />
+        </label>
+        <label class="d-block mb-3">
+          Popup message
+          <textarea
+            class="form-control mt-2"
+            name="notifications_message"
+            rows="3"
+          >{{ notification_settings.message }}</textarea>
+        </label>
+        <button class="btn btn-outline-primary btn-sm" type="submit">
+          <i class="bi bi-check2-circle"></i>
+          Save notification settings
+        </button>
+      </form>
+    </section>
   </main>
 {% endblock %}

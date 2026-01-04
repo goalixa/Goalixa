@@ -44,6 +44,76 @@ class TaskService:
             tz_name = "UTC"
         return tz_name, tz
 
+    def _parse_bool_setting(self, value, default=False):
+        if value is None:
+            return default
+        if isinstance(value, bool):
+            return value
+        return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+    def get_notification_settings(self):
+        enabled = self._parse_bool_setting(
+            self.repository.get_setting("notifications_enabled"), False
+        )
+        interval_raw = self.repository.get_setting("notifications_interval_minutes")
+        try:
+            interval_minutes = int(interval_raw)
+        except (TypeError, ValueError):
+            interval_minutes = 30
+        interval_minutes = max(1, min(interval_minutes, 240))
+        show_system = self._parse_bool_setting(
+            self.repository.get_setting("notifications_show_system"), True
+        )
+        show_toast = self._parse_bool_setting(
+            self.repository.get_setting("notifications_show_toast"), True
+        )
+        title = self.repository.get_setting("notifications_title") or "Tracking reminder"
+        message = (
+            self.repository.get_setting("notifications_message")
+            or "Start a Pomodoro to keep tracking your focus."
+        )
+        return {
+            "enabled": enabled,
+            "interval_minutes": interval_minutes,
+            "show_system": show_system,
+            "show_toast": show_toast,
+            "title": title,
+            "message": message,
+        }
+
+    def set_notification_settings(self, form_data):
+        enabled = self._parse_bool_setting(form_data.get("notifications_enabled"), False)
+        interval_raw = form_data.get("notifications_interval_minutes", "")
+        try:
+            interval_minutes = int(interval_raw)
+        except (TypeError, ValueError):
+            interval_minutes = 30
+        interval_minutes = max(1, min(interval_minutes, 240))
+        show_system = self._parse_bool_setting(
+            form_data.get("notifications_show_system"), True
+        )
+        show_toast = self._parse_bool_setting(
+            form_data.get("notifications_show_toast"), True
+        )
+        title = (form_data.get("notifications_title") or "").strip() or "Tracking reminder"
+        message = (form_data.get("notifications_message") or "").strip()
+        if not message:
+            message = "Start a Pomodoro to keep tracking your focus."
+        self.repository.set_setting(
+            "notifications_enabled", "1" if enabled else "0"
+        )
+        self.repository.set_setting(
+            "notifications_interval_minutes", str(interval_minutes)
+        )
+        self.repository.set_setting(
+            "notifications_show_system", "1" if show_system else "0"
+        )
+        self.repository.set_setting(
+            "notifications_show_toast", "1" if show_toast else "0"
+        )
+        self.repository.set_setting("notifications_title", title)
+        self.repository.set_setting("notifications_message", message)
+
     def get_timezone_name(self):
         return self._get_timezone()[0]
 

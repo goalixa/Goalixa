@@ -55,6 +55,16 @@
     short: 5 * 60,
     long: 15 * 60,
   };
+  const reminderKey = "pomodoroReminderSettings";
+  const reminderLastKey = "pomodoroReminderLastAt";
+  const reminderDefaults = {
+    enabled: false,
+    interval_minutes: 30,
+    show_system: true,
+    show_toast: true,
+    title: "Tracking reminder",
+    message: "Start a Pomodoro to keep tracking your focus.",
+  };
 
   const loadPomodoro = () => {
     try {
@@ -112,8 +122,84 @@
     }
   };
 
+  const ensureSystemNotificationPermission = () => {
+    if (!("Notification" in window)) {
+      return;
+    }
+    if (Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {});
+    }
+  };
+
+  let reminderSettings = { ...reminderDefaults };
+
+  const loadReminderSettings = () => {
+    try {
+      const raw = localStorage.getItem(reminderKey);
+      if (raw) {
+        reminderSettings = { ...reminderDefaults, ...JSON.parse(raw) };
+      }
+    } catch (error) {
+      reminderSettings = { ...reminderDefaults };
+    }
+  };
+
+  const saveReminderSettings = (settings) => {
+    reminderSettings = { ...reminderDefaults, ...settings };
+    localStorage.setItem(reminderKey, JSON.stringify(reminderSettings));
+  };
+
+  const fetchReminderSettings = () => {
+    fetch("/api/settings/notifications")
+      .then((response) => {
+        if (!response.ok) {
+          return null;
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data) {
+          saveReminderSettings(data);
+        }
+      })
+      .catch(() => {});
+  };
+
+  const maybeSendReminder = () => {
+    if (!reminderSettings.enabled) {
+      return;
+    }
+    if (reminderSettings.show_system) {
+      ensureSystemNotificationPermission();
+    }
+    const state = loadPomodoro();
+    if (state.isRunning) {
+      return;
+    }
+    const intervalMinutes = Math.max(
+      1,
+      Math.min(parseInt(reminderSettings.interval_minutes || 30, 10), 240),
+    );
+    const intervalMs = intervalMinutes * 60 * 1000;
+    const now = Date.now();
+    const last = parseInt(localStorage.getItem(reminderLastKey) || "0", 10);
+    if (now - last < intervalMs) {
+      return;
+    }
+    localStorage.setItem(reminderLastKey, String(now));
+    if (reminderSettings.show_toast) {
+      showPomodoroToast(reminderSettings.title, reminderSettings.message);
+    }
+    if (reminderSettings.show_system) {
+      sendSystemNotification(reminderSettings.title, reminderSettings.message);
+    }
+  };
+
   const pomodoroDisplay = document.getElementById("pomodoro-display");
   if (!pomodoroDisplay) {
+    loadReminderSettings();
+    fetchReminderSettings();
+    setInterval(maybeSendReminder, 30000);
     setInterval(() => {
       const state = loadPomodoro();
       if (!state.isRunning || !state.lastTick) {

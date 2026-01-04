@@ -243,11 +243,13 @@ def register_routes(app, service):
             "Asia/Dubai",
             "Asia/Tokyo",
         ]
+        notification_settings = service.get_notification_settings()
         return render_template(
             "account.html",
             user=current_user,
             timezone_name=service.get_timezone_name(),
             timezone_options=timezone_options,
+            notification_settings=notification_settings,
         )
 
     @app.route("/settings/timezone", methods=["POST"])
@@ -255,6 +257,17 @@ def register_routes(app, service):
     def update_timezone():
         service.set_timezone_name(request.form.get("timezone", "UTC"))
         return redirect(url_for("account"))
+
+    @app.route("/settings/notifications", methods=["POST"])
+    @auth_required()
+    def update_notifications():
+        service.set_notification_settings(request.form)
+        return redirect(url_for("account"))
+
+    @app.route("/api/settings/notifications", methods=["GET"])
+    @auth_required()
+    def get_notification_settings():
+        return jsonify(service.get_notification_settings())
 
     @app.route("/reports", methods=["GET"])
     @auth_required()
