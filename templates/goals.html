@@ -72,18 +72,17 @@
       <div class="goals-grid">
         {% if goals %}
           {% for goal in goals %}
-            <article class="goal-card">
+            <article class="goal-card is-clickable" data-href="{{ url_for('goal_detail', goal_id=goal['id']) }}">
               <div class="goal-top">
                 <span class="goal-status {{ 'paused' if goal['display_status'] == 'at_risk' else 'completed' if goal['display_status'] in ['completed', 'archived'] else 'active' }}">
                   {{ goal['display_status'] | replace('_', ' ') }}
                 </span>
                 <div class="goal-deadline">
+                  <div class="deadline-ring" style="--progress: {{ goal['progress'] }};" title="Progress {{ goal['progress'] }}%">
+                    <span>{{ goal['progress'] }}%</span>
+                  </div>
                   {% if goal['target_date'] %}
-                    <div class="deadline-ring" style="--progress: {{ goal['deadline_percent'] or 0 }};" title="Target: {{ goal['target_date'] }}">
-                      <span>{{ goal['deadline_remaining_days'] }}</span>
-                    </div>
-                  {% else %}
-                    <span>No target</span>
+                    <span class="deadline-date">Target {{ goal['target_date'] }}</span>
                   {% endif %}
                 </div>
               </div>
@@ -116,34 +115,6 @@
                   <span class="goal-progress-text">{{ goal['progress'] }}% complete</span>
                 {% endif %}
               </div>
-              <div class="goal-meta">
-                <div class="goal-meta-block">
-                  <span class="goal-meta-label">Projects</span>
-                  <span class="goal-meta-value">{{ goal['projects_count'] }}</span>
-                </div>
-                <div class="goal-meta-block">
-                  <span class="goal-meta-label">Tasks</span>
-                  <span class="goal-meta-value">{{ goal['tasks_count'] }}</span>
-                </div>
-                <div class="goal-meta-block">
-                  <span class="goal-meta-label">Sub-goals</span>
-                  <span class="goal-meta-value">{{ goal['subgoals_completed'] }} / {{ goal['subgoals_count'] }}</span>
-                </div>
-                <div class="goal-meta-block">
-                  <span class="goal-meta-label">Time logged</span>
-                  <span class="goal-meta-value">{{ goal['total_seconds'] | format_seconds }}</span>
-                </div>
-              </div>
-              {% if goal['projects'] %}
-                <div class="goal-links">
-                  {% for project in goal['projects'] %}
-                    <div class="goal-project">
-                      <span class="goal-project-name">{{ project['name'] }}</span>
-                      <span class="goal-project-tasks">Project</span>
-                    </div>
-                  {% endfor %}
-                </div>
-              {% endif %}
               <form id="edit-goal-{{ goal['id'] }}" class="edit-form goal-edit-form" method="post" action="{{ url_for('edit_goal', goal_id=goal['id']) }}">
                 <div class="goal-form-row">
                   <label>
@@ -246,9 +217,14 @@
                     <h3>{{ goal['name'] }}</h3>
                     <p class="subgoal-group-meta">{{ goal['subgoals_completed'] }} / {{ goal['subgoals_count'] }} completed</p>
                   </div>
-                  <span class="goal-status {{ 'paused' if goal['display_status'] == 'at_risk' else 'completed' if goal['display_status'] in ['completed', 'archived'] else 'active' }}">
-                    {{ goal['display_status'] | replace('_', ' ') }}
-                  </span>
+                  <div class="subgoal-progress">
+                    <div class="deadline-ring" style="--progress: {{ goal['progress'] }};" title="Progress {{ goal['progress'] }}%">
+                      <span>{{ goal['progress'] }}%</span>
+                    </div>
+                    <span class="goal-status {{ 'paused' if goal['display_status'] == 'at_risk' else 'completed' if goal['display_status'] in ['completed', 'archived'] else 'active' }}">
+                      {{ goal['display_status'] | replace('_', ' ') }}
+                    </span>
+                  </div>
                 </div>
                 <div class="subgoal-list">
                   <form class="subgoal-add-form" method="post" action="{{ url_for('add_goal_subgoal', goal_id=goal['id']) }}">
@@ -318,6 +294,14 @@
         const target = event.target;
         if (!(target instanceof HTMLElement)) {
           return;
+        }
+        const card = target.closest(".goal-card.is-clickable");
+        if (card && !target.closest("a, button, input, select, textarea, label, form, .edit-form")) {
+          const href = card.dataset.href;
+          if (href) {
+            window.location.href = href;
+            return;
+          }
         }
         const editButton = target.closest("[data-edit-target]");
         if (editButton) {
