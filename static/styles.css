@@ -203,6 +203,104 @@ body {
   flex: 1;
 }
 
+.global-timer {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1000;
+  max-width: calc(100% - 48px);
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.global-timer.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+}
+
+.global-timer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  font-weight: 600;
+}
+
+.global-timer-dismiss {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+.global-timer-dismiss:hover {
+  color: var(--text);
+}
+
+.global-timer-label {
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+
+.global-timer-value {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+}
+
+.global-timer-meta,
+.global-timer-task {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+[data-theme="dark"] .global-timer-link {
+  background: #161c25;
+  border-color: #2a3342;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="dark"] .global-timer-dismiss {
+  background: #161c25;
+  border-color: #2a3342;
+  color: var(--muted);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 640px) {
+  .global-timer {
+    right: 16px;
+    bottom: 16px;
+  }
+
+  .global-timer-link {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px;
+  }
+}
+
 @media (min-width: 992px) {
   .app-shell {
     flex-wrap: nowrap;
