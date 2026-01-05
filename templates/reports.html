@@ -126,7 +126,7 @@
       <section class="reports-insights">
         <div class="card reports-insight-card">
           <h3>Focus notes</h3>
-          <p class="reports-insight-text">
+          <p class="reports-insight-text" id="reports-focus-notes">
             Compare weeks, keep tags consistent, and focus on your top 2 projects for clearer momentum.
           </p>
           <div class="reports-insight-actions">
@@ -136,15 +136,15 @@
         </div>
         <div class="card reports-insight-card">
           <h3>Categories tracked</h3>
-          <p class="reports-insight-metric">{{ summary | length }}</p>
+          <p class="reports-insight-metric" id="reports-categories-count">0</p>
           <p class="reports-insight-text">Charts update automatically with the range picker.</p>
         </div>
         <div class="card reports-insight-card">
           <h3>Weekly rhythm</h3>
           <ul class="reports-insight-list">
-            <li>Lock a 2-hour deep focus block.</li>
-            <li>Use labels for recurring themes.</li>
-            <li>Review the top project each Friday.</li>
+            <li>Busiest day: <span id="reports-busiest-day">-</span></li>
+            <li>Average daily focus: <span id="reports-avg-focus">-</span></li>
+            <li>Top category: <span id="reports-top-category">-</span></li>
           </ul>
         </div>
       </section>
@@ -402,6 +402,59 @@
       }
     };
 
+    const updateInsights = (summaryItems, distributionItems, totalSeconds, avgDailyHours) => {
+      const focusNotes = document.getElementById("reports-focus-notes");
+      const categoriesCount = document.getElementById("reports-categories-count");
+      const busiestDay = document.getElementById("reports-busiest-day");
+      const avgFocus = document.getElementById("reports-avg-focus");
+      const topCategory = document.getElementById("reports-top-category");
+
+      const distribution = Array.isArray(distributionItems) ? distributionItems : [];
+      const summaryList = Array.isArray(summaryItems) ? summaryItems : [];
+
+      if (categoriesCount) {
+        categoriesCount.textContent = String(distribution.length);
+      }
+
+      if (focusNotes) {
+        if (!distribution.length) {
+          focusNotes.textContent = "No activity yet. Log time to see focus notes.";
+        } else {
+          const sorted = [...distribution].sort((a, b) => (b.seconds || 0) - (a.seconds || 0));
+          const topLabels = sorted.slice(0, 2).map((item) => item.label).join(" and ");
+          const totalLabel = formatSeconds(totalSeconds || 0);
+          focusNotes.textContent = `Top focus: ${topLabels}. Total time ${totalLabel}.`;
+        }
+      }
+
+      if (busiestDay) {
+        if (!summaryList.length) {
+          busiestDay.textContent = "-";
+        } else {
+          const topDay = [...summaryList].sort((a, b) => (b.seconds || 0) - (a.seconds || 0))[0];
+          busiestDay.textContent = `${topDay.label} (${formatSeconds(topDay.seconds || 0)})`;
+        }
+      }
+
+      if (avgFocus) {
+        const avg = avgDailyHours || 0;
+        avgFocus.textContent = `${avg.toFixed(2)} hours`;
+      }
+
+      if (topCategory) {
+        if (!distribution.length) {
+          topCategory.textContent = "-";
+        } else {
+          const sorted = [...distribution].sort((a, b) => (b.seconds || 0) - (a.seconds || 0));
+          const top = sorted[0];
+          const percent = totalSeconds
+            ? ((top.seconds || 0) / totalSeconds) * 100
+            : 0;
+          topCategory.textContent = `${top.label} (${percent.toFixed(1)}%)`;
+        }
+      }
+    };
+
     buildChart(chartType);
 
     document.querySelectorAll(".mode-button").forEach((button) => {
@@ -509,6 +562,12 @@
             updateChart(payload.summary || []);
             updateSummaryMetrics(payload);
             updateDistribution(payload.distribution || [], payload.total_seconds || 0);
+            updateInsights(
+              payload.summary || [],
+              payload.distribution || [],
+              payload.total_seconds || 0,
+              payload.avg_daily_hours || 0,
+            );
           })
           .catch(() => {});
       };
