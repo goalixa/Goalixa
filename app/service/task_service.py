@@ -496,6 +496,73 @@ class TaskService:
         distribution.sort(key=lambda item: item["seconds"], reverse=True)
         return distribution, total_seconds
 
+    def project_totals_by_range(self, start_date, end_date):
+        self._rollover_running_entries()
+        start_day, _ = self._local_day_bounds(start_date)
+        _, end_day = self._local_day_bounds(end_date)
+        entries = self.repository.fetch_time_entries_with_task_details_between(
+            start_day.isoformat(), end_day.isoformat()
+        )
+        if not entries:
+            return []
+
+        task_ids = {entry["task_id"] for entry in entries}
+        task_id_list = list(task_ids)
+        labels_map = self.repository.fetch_task_labels_map(task_id_list)
+        running_map = {
+            task_id: self.repository.is_task_running(task_id)
+            for task_id in task_id_list
+        }
+
+        projects = {}
+        now = datetime.utcnow()
+        for entry in entries:
+            entry_start = datetime.fromisoformat(entry["started_at"])
+            entry_end = (
+                datetime.fromisoformat(entry["ended_at"])
+                if entry["ended_at"]
+                else now
+            )
+            overlap_start = max(entry_start, start_day)
+            overlap_end = min(entry_end, end_day)
+            if overlap_end <= overlap_start:
+                continue
+
+            seconds = int((overlap_end - overlap_start).total_seconds())
+            project_name = entry["project_name"] or "Unassigned"
+            project = projects.setdefault(
+                project_name,
+                {"name": project_name, "total_seconds": 0, "tasks": {}},
+            )
+            project["total_seconds"] += seconds
+
+            task_id = entry["task_id"]
+            task = project["tasks"].setdefault(
+                task_id,
+                {
+                    "id": task_id,
+                    "name": entry["task_name"] or "Unnamed Task",
+                    "total_seconds": 0,
+                    "labels": labels_map.get(task_id, []),
+                    "is_running": bool(running_map.get(task_id, False)),
+                },
+            )
+            task["total_seconds"] += seconds
+
+        project_list = []
+        for project in projects.values():
+            tasks = list(project["tasks"].values())
+            tasks.sort(key=lambda item: item["total_seconds"], reverse=True)
+            project_list.append(
+                {
+                    "name": project["name"],
+                    "total_seconds": project["total_seconds"],
+                    "tasks": tasks,
+                }
+            )
+        project_list.sort(key=lambda item: item["total_seconds"], reverse=True)
+        return project_list
+
     def list_time_entries_by_range(self, start_date, end_date):
         self._rollover_running_entries()
         start_day, _ = self._local_day_bounds(start_date)

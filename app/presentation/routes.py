@@ -291,27 +291,16 @@ def register_routes(app, service):
     @app.route("/reports", methods=["GET"])
     @auth_required()
     def reports():
-        tasks = service.list_tasks()
-        summary = service.summary_by_days(7)
-        projects = {}
-        for task in tasks:
-            project_name = task.get("project_name") or "Unassigned"
-            entry = projects.setdefault(
-                project_name,
-                {"name": project_name, "total_seconds": 0, "tasks": []},
-            )
-            entry["total_seconds"] += int(task.get("total_seconds") or 0)
-            entry["tasks"].append(task)
-        project_totals = sorted(
-            projects.values(),
-            key=lambda item: item["total_seconds"],
-            reverse=True,
-        )
+        end_date = service.current_local_date()
+        start_date = end_date - timedelta(days=6)
+        summary = service.summary_by_range(start_date, end_date)
+        project_totals = service.project_totals_by_range(start_date, end_date)
+        top_project = project_totals[0] if project_totals else None
         return render_template(
             "reports.html",
-            tasks=tasks,
             summary=summary,
             project_totals=project_totals,
+            top_project=top_project,
             allowed_ranges=[7],
         )
 
@@ -321,13 +310,33 @@ def register_routes(app, service):
         start = request.args.get("start")
         end = request.args.get("end")
         if not start or not end:
-            return jsonify({"summary": [], "total_seconds": 0, "avg_daily_hours": 0})
+            return jsonify(
+                {
+                    "summary": [],
+                    "distribution": [],
+                    "total_seconds": 0,
+                    "avg_daily_hours": 0,
+                    "project_totals": [],
+                    "active_projects": 0,
+                    "top_project": None,
+                }
+            )
 
         try:
             start_date = datetime.fromisoformat(start).date()
             end_date = datetime.fromisoformat(end).date()
         except ValueError:
-            return jsonify({"summary": [], "total_seconds": 0, "avg_daily_hours": 0})
+            return jsonify(
+                {
+                    "summary": [],
+                    "distribution": [],
+                    "total_seconds": 0,
+                    "avg_daily_hours": 0,
+                    "project_totals": [],
+                    "active_projects": 0,
+                    "top_project": None,
+                }
+            )
 
         if end_date < start_date:
             start_date, end_date = end_date, start_date
@@ -339,6 +348,8 @@ def register_routes(app, service):
         distribution, total_seconds = service.distribution_by_range(
             start_date, end_date, group_by
         )
+        project_totals = service.project_totals_by_range(start_date, end_date)
+        top_project = project_totals[0] if project_totals else None
         days = max((end_date - start_date).days + 1, 1)
         avg_daily_hours = total_seconds / 3600 / days
         return jsonify(
@@ -347,6 +358,9 @@ def register_routes(app, service):
                 "distribution": distribution,
                 "total_seconds": total_seconds,
                 "avg_daily_hours": avg_daily_hours,
+                "project_totals": project_totals,
+                "active_projects": len(project_totals),
+                "top_project": top_project,
             }
         )
 

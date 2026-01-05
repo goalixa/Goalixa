@@ -63,19 +63,19 @@
         </div>
         <div class="summary-item">
           <span class="summary-label">Active projects</span>
-          <span class="summary-value">{{ project_totals | length }}</span>
+          <span class="summary-value" id="summary-active-projects">{{ project_totals | length }}</span>
           <span class="summary-meta">Projects with activity</span>
         </div>
         <div class="summary-item">
           <span class="summary-label">Top project</span>
-          <span class="summary-value">
+          <span class="summary-value" id="summary-top-project">
             {% if top_project %}
               {{ top_project["name"] }}
             {% else %}
               None yet
             {% endif %}
           </span>
-          <span class="summary-meta">
+          <span class="summary-meta" id="summary-top-project-meta">
             {% if top_project %}
               {{ top_project["total_seconds"] | format_seconds }}
             {% else %}
@@ -156,8 +156,8 @@
             <h2 class="goals-title">Project totals</h2>
           </div>
         </div>
-        {% if project_totals %}
-          <div class="projects-total-list">
+        <div class="projects-total-list" id="projects-total-list">
+          {% if project_totals %}
             {% for project in project_totals %}
               <div class="projects-total-item" data-project-item>
                 <button class="btn btn-light projects-total-header" type="button" data-project-toggle>
@@ -201,10 +201,9 @@
                 </div>
               </div>
             {% endfor %}
-          </div>
-        {% else %}
-          <p class="empty">No projects yet.</p>
-        {% endif %}
+          {% endif %}
+        </div>
+        <p class="empty" id="projects-total-empty" {% if project_totals %}hidden{% endif %}>No projects yet.</p>
       </section>
     </main>
 {% endblock %}
@@ -213,15 +212,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="{{ url_for('static', filename='vendor/litepicker/litepicker.js') }}"></script>
   <script>
-    document.querySelectorAll("[data-project-toggle]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const item = button.closest("[data-project-item]");
-        if (item) {
-          item.classList.toggle("is-open");
-        }
-      });
-    });
-
     let summary = {{ summary | tojson }};
     let labels = summary.map((item) => item.label);
     let values = summary.map((item) => item.seconds);
@@ -229,6 +219,12 @@
     let chartType = "bar";
     let chartInstance = null;
     let distributionChart = null;
+
+    const escapeHtml = (value) => {
+      const div = document.createElement("div");
+      div.textContent = value == null ? "" : String(value);
+      return div.innerHTML;
+    };
 
     const buildChart = (type) => {
       if (!ctx) {
@@ -402,6 +398,113 @@
       }
     };
 
+    const bindProjectToggles = (scope) => {
+      const container = scope || document;
+      container.querySelectorAll("[data-project-toggle]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const item = button.closest("[data-project-item]");
+          if (item) {
+            item.classList.toggle("is-open");
+          }
+        });
+      });
+    };
+
+    const updateProjectSummary = (projectTotals) => {
+      const activeEl = document.getElementById("summary-active-projects");
+      const topNameEl = document.getElementById("summary-top-project");
+      const topMetaEl = document.getElementById("summary-top-project-meta");
+      const list = Array.isArray(projectTotals) ? projectTotals : [];
+      if (activeEl) {
+        activeEl.textContent = String(list.length);
+      }
+      if (topNameEl && topMetaEl) {
+        if (!list.length) {
+          topNameEl.textContent = "None yet";
+          topMetaEl.textContent = "Add time to see ranking";
+        } else {
+          topNameEl.textContent = list[0].name || "Unassigned";
+          topMetaEl.textContent = formatSeconds(list[0].total_seconds || 0);
+        }
+      }
+    };
+
+    const renderProjectTotals = (projectTotals) => {
+      const container = document.getElementById("projects-total-list");
+      const emptyState = document.getElementById("projects-total-empty");
+      if (!container) {
+        return;
+      }
+      const list = Array.isArray(projectTotals) ? projectTotals : [];
+      container.innerHTML = "";
+      if (!list.length) {
+        if (emptyState) {
+          emptyState.hidden = false;
+        }
+        return;
+      }
+      if (emptyState) {
+        emptyState.hidden = true;
+      }
+      const fragment = document.createDocumentFragment();
+      list.forEach((project, index) => {
+        const projectItem = document.createElement("div");
+        projectItem.className = "projects-total-item";
+        projectItem.dataset.projectItem = "";
+        const colorHue = (index * 47) % 360;
+        const projectName = escapeHtml(project.name || "Unassigned");
+        const projectSeconds = formatSeconds(project.total_seconds || 0);
+
+        const header = document.createElement("button");
+        header.className = "btn btn-light projects-total-header";
+        header.type = "button";
+        header.dataset.projectToggle = "";
+        header.innerHTML = `
+          <span class="projects-total-name">
+            <span class="project-dot" style="--project-color: hsl(${colorHue}, 78%, 45%);"></span>
+            ${projectName}
+          </span>
+          <span class="projects-total-time">${projectSeconds}</span>
+        `;
+
+        const details = document.createElement("div");
+        details.className = "projects-total-details";
+        const tasks = Array.isArray(project.tasks) ? project.tasks : [];
+        tasks.forEach((task) => {
+          const taskName = escapeHtml(task.name || "Unnamed Task");
+          const taskLabels = Array.isArray(task.labels)
+            ? task.labels.map((label) => escapeHtml(label.name)).join(", ")
+            : "";
+          const taskTime = formatSeconds(task.total_seconds || 0);
+          const taskRow = document.createElement("div");
+          taskRow.className = "projects-task-row";
+          taskRow.innerHTML = `
+            <div class="projects-task-info">
+              <span class="projects-task-name">${taskName}</span>
+              ${taskLabels ? `<span class="projects-task-labels">${taskLabels}</span>` : ""}
+            </div>
+            <div class="projects-task-meta">
+              <span class="projects-task-time">${taskTime}</span>
+              <div class="projects-task-actions">
+                <form method="post" action="/tasks/${task.id}/${task.is_running ? "stop" : "start"}" data-action="${task.is_running ? "stop" : "start"}" data-task-id="${task.id}" data-task-name="${taskName}">
+                  <button class="btn btn-outline-${task.is_running ? "warning" : "primary"} btn-sm projects-task-action ${task.is_running ? "pause" : "resume"}" type="submit">
+                    <i class="bi bi-${task.is_running ? "pause-fill" : "play-fill"}"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          `;
+          details.appendChild(taskRow);
+        });
+
+        projectItem.appendChild(header);
+        projectItem.appendChild(details);
+        fragment.appendChild(projectItem);
+      });
+      container.appendChild(fragment);
+      bindProjectToggles(container);
+    };
+
     const updateInsights = (summaryItems, distributionItems, totalSeconds, avgDailyHours) => {
       const focusNotes = document.getElementById("reports-focus-notes");
       const categoriesCount = document.getElementById("reports-categories-count");
@@ -456,6 +559,8 @@
     };
 
     buildChart(chartType);
+
+    bindProjectToggles(document);
 
     document.querySelectorAll(".mode-button").forEach((button) => {
       button.addEventListener("click", () => {
@@ -568,6 +673,8 @@
               payload.total_seconds || 0,
               payload.avg_daily_hours || 0,
             );
+            updateProjectSummary(payload.project_totals || []);
+            renderProjectTotals(payload.project_totals || []);
           })
           .catch(() => {});
       };
