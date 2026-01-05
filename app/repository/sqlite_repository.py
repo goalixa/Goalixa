@@ -160,6 +160,24 @@ class SQLiteTaskRepository:
                 FOREIGN KEY (habit_id) REFERENCES habits (id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS reminders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                notes TEXT,
+                remind_date TEXT,
+                remind_time TEXT,
+                repeat_interval TEXT NOT NULL DEFAULT 'none',
+                repeat_days TEXT,
+                priority TEXT NOT NULL DEFAULT 'normal',
+                channel_toast INTEGER NOT NULL DEFAULT 1,
+                channel_system INTEGER NOT NULL DEFAULT 0,
+                play_sound INTEGER NOT NULL DEFAULT 0,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
+            );
+
             CREATE TABLE IF NOT EXISTS app_settings (
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
@@ -1042,6 +1060,125 @@ class SQLiteTaskRepository:
         for row in rows:
             mapping.setdefault(row["habit_id"], set()).add(row["log_date"])
         return mapping
+
+    def fetch_reminders(self):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        return db.execute(
+            """
+            SELECT id, title, notes, remind_date, remind_time, repeat_interval, repeat_days,
+                   priority, channel_toast, channel_system, play_sound, is_active, created_at
+            FROM reminders
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+            """,
+            (user_id,),
+        ).fetchall()
+
+    def create_reminder(
+        self,
+        title,
+        notes,
+        remind_date,
+        remind_time,
+        repeat_interval,
+        repeat_days,
+        priority,
+        channel_toast,
+        channel_system,
+        play_sound,
+        is_active,
+        created_at,
+    ):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        db.execute(
+            """
+            INSERT INTO reminders (
+                user_id, title, notes, remind_date, remind_time, repeat_interval, repeat_days,
+                priority, channel_toast, channel_system, play_sound, is_active, created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                title,
+                notes,
+                remind_date,
+                remind_time,
+                repeat_interval,
+                repeat_days,
+                priority,
+                channel_toast,
+                channel_system,
+                play_sound,
+                is_active,
+                created_at,
+            ),
+        )
+        db.commit()
+        return db.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+    def update_reminder(
+        self,
+        reminder_id,
+        title,
+        notes,
+        remind_date,
+        remind_time,
+        repeat_interval,
+        repeat_days,
+        priority,
+        channel_toast,
+        channel_system,
+        play_sound,
+        is_active,
+    ):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        db.execute(
+            """
+            UPDATE reminders
+            SET title = ?, notes = ?, remind_date = ?, remind_time = ?, repeat_interval = ?,
+                repeat_days = ?, priority = ?, channel_toast = ?, channel_system = ?,
+                play_sound = ?, is_active = ?
+            WHERE id = ? AND user_id = ?
+            """,
+            (
+                title,
+                notes,
+                remind_date,
+                remind_time,
+                repeat_interval,
+                repeat_days,
+                priority,
+                channel_toast,
+                channel_system,
+                play_sound,
+                is_active,
+                reminder_id,
+                user_id,
+            ),
+        )
+        db.commit()
+
+    def set_reminder_active(self, reminder_id, is_active):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        db.execute(
+            "UPDATE reminders SET is_active = ? WHERE id = ? AND user_id = ?",
+            (1 if is_active else 0, reminder_id, user_id),
+        )
+        db.commit()
+
+    def delete_reminder(self, reminder_id):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        db.execute(
+            "DELETE FROM reminders WHERE id = ? AND user_id = ?",
+            (reminder_id, user_id),
+        )
+        db.commit()
 
     def set_habit_log(self, habit_id, log_date, done):
         db = self._get_db()

@@ -104,6 +104,56 @@ def register_routes(app, service):
             habit_series=series,
         )
 
+    @app.route("/reminders", methods=["GET"])
+    @auth_required()
+    def reminders():
+        reminders_list = service.list_reminders()
+        summary = service.reminders_summary(reminders_list)
+        today = service.current_local_date().isoformat()
+        notification_settings = service.get_notification_settings()
+        weekday_options = [
+            {"value": 0, "label": "Mon"},
+            {"value": 1, "label": "Tue"},
+            {"value": 2, "label": "Wed"},
+            {"value": 3, "label": "Thu"},
+            {"value": 4, "label": "Fri"},
+            {"value": 5, "label": "Sat"},
+            {"value": 6, "label": "Sun"},
+        ]
+        return render_template(
+            "reminders.html",
+            reminders=reminders_list,
+            reminders_summary=summary,
+            notification_settings=notification_settings,
+            today=today,
+            weekday_options=weekday_options,
+        )
+
+    @app.route("/reminders", methods=["POST"])
+    @auth_required()
+    def create_reminder():
+        service.add_reminder(request.form)
+        return redirect(url_for("reminders"))
+
+    @app.route("/reminders/<int:reminder_id>/update", methods=["POST"])
+    @auth_required()
+    def update_reminder(reminder_id):
+        service.update_reminder(reminder_id, request.form)
+        return redirect(url_for("reminders"))
+
+    @app.route("/reminders/<int:reminder_id>/toggle", methods=["POST"])
+    @auth_required()
+    def toggle_reminder(reminder_id):
+        is_active = request.form.get("is_active") in {"1", "true", "on", "yes"}
+        service.set_reminder_active(reminder_id, is_active)
+        return redirect(url_for("reminders"))
+
+    @app.route("/reminders/<int:reminder_id>/delete", methods=["POST"])
+    @auth_required()
+    def delete_reminder(reminder_id):
+        service.delete_reminder(reminder_id)
+        return redirect(url_for("reminders"))
+
     @app.route("/habits", methods=["POST"])
     @auth_required()
     def create_habit():

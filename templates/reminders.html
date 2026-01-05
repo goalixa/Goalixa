@@ -1,0 +1,454 @@
+{% extends "layout.html" %}
+{% set title = "Reminders" %}
+{% set active_page = "reminders" %}
+
+{% block content %}
+  <main class="container py-4 reminders-page">
+    <header class="header reminders-header">
+      <div>
+        <h1>Reminders</h1>
+        <p>Stay ahead of upcoming tasks, routines, and one-off moments that matter.</p>
+      </div>
+    </header>
+
+    <section class="reminders-hero">
+      <div class="reminder-stat-card">
+        <span class="reminder-stat-label">Total reminders</span>
+        <span class="reminder-stat-value">{{ reminders_summary.total }}</span>
+        <span class="reminder-stat-meta">Across all schedules</span>
+      </div>
+      <div class="reminder-stat-card">
+        <span class="reminder-stat-label">Active now</span>
+        <span class="reminder-stat-value">{{ reminders_summary.active }}</span>
+        <span class="reminder-stat-meta">Currently running</span>
+      </div>
+      <div class="reminder-stat-card">
+        <span class="reminder-stat-label">Overdue</span>
+        <span class="reminder-stat-value">{{ reminders_summary.overdue }}</span>
+        <span class="reminder-stat-meta">Need attention</span>
+      </div>
+      <div class="reminder-stat-card">
+        <span class="reminder-stat-label">Next up</span>
+        <span class="reminder-stat-value">{{ reminders_summary.next_label }}</span>
+        <span class="reminder-stat-meta">Local timezone</span>
+      </div>
+    </section>
+
+    <section class="reminders-grid">
+      <div class="reminders-main">
+        <section class="card reminders-card">
+          <div class="reminders-card-header">
+            <div>
+              <p class="goals-label">Create</p>
+              <h2 class="goals-title">New reminder</h2>
+            </div>
+          </div>
+          <form class="reminder-form" method="post" action="{{ url_for('create_reminder') }}">
+            <div class="reminder-form-grid">
+              <label class="reminder-field">
+                Title
+                <input type="text" name="title" placeholder="Focus check-in, standup, call mom" required />
+              </label>
+              <label class="reminder-field">
+                Date
+                <input type="date" name="remind_date" value="{{ today }}" required />
+              </label>
+              <label class="reminder-field">
+                Time
+                <input type="time" name="remind_time" value="09:00" required />
+              </label>
+              <label class="reminder-field">
+                Repeat
+                <select name="repeat_interval" data-repeat-select>
+                  <option value="none">One-time</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="repeat-group">
+              <div class="repeat-days" data-repeat-days>
+                {% for day in weekday_options %}
+                  <label class="day-chip">
+                    <input type="checkbox" name="repeat_days" value="{{ day.value }}" />
+                    <span>{{ day.label }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="reminder-form-grid">
+              <label class="reminder-field">
+                Priority
+                <select name="priority">
+                  <option value="low">Low</option>
+                  <option value="normal" selected>Normal</option>
+                  <option value="high">High</option>
+                </select>
+              </label>
+              <label class="reminder-field">
+                Notes
+                <textarea name="notes" rows="3" placeholder="Context, links, or a quick prep list."></textarea>
+              </label>
+            </div>
+
+            <div class="reminder-options">
+              <div class="reminder-switch">
+                <input type="checkbox" name="is_active" id="reminder-active" checked />
+                <label for="reminder-active">Active</label>
+              </div>
+              <div class="reminder-switch">
+                <input type="checkbox" name="channel_toast" id="reminder-toast" checked />
+                <label for="reminder-toast">In-app popup</label>
+              </div>
+              <div class="reminder-switch">
+                <input type="checkbox" name="channel_system" id="reminder-system" />
+                <label for="reminder-system">System notification</label>
+              </div>
+              <div class="reminder-switch">
+                <input type="checkbox" name="play_sound" id="reminder-sound" />
+                <label for="reminder-sound">Play sound</label>
+              </div>
+            </div>
+
+            <div class="reminder-actions">
+              <button class="btn btn-primary btn-sm" type="submit">
+                <i class="bi bi-plus-lg"></i>
+                Add reminder
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="card reminders-card">
+          <div class="reminders-card-header">
+            <div>
+              <p class="goals-label">Schedule</p>
+              <h2 class="goals-title">Your reminders</h2>
+            </div>
+          </div>
+          {% if reminders %}
+            <div class="reminder-list">
+              {% for reminder in reminders %}
+                <article class="reminder-item {% if reminder.status == 'overdue' %}is-overdue{% endif %} {% if reminder.status == 'paused' %}is-paused{% endif %}">
+                  <div class="reminder-item-header">
+                    <div>
+                      <h3>{{ reminder.title }}</h3>
+                      <p class="reminder-subtitle">{{ reminder.next_label }}</p>
+                    </div>
+                    <div class="reminder-badges">
+                      <span class="reminder-pill priority-{{ reminder.priority }}">{{ reminder.priority|capitalize }}</span>
+                      {% if reminder.status == "paused" %}
+                        <span class="reminder-pill status-muted">Paused</span>
+                      {% elif reminder.status == "overdue" %}
+                        <span class="reminder-pill status-warning">Overdue</span>
+                      {% else %}
+                        <span class="reminder-pill status-ok">Upcoming</span>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <div class="reminder-meta">
+                    <span><i class="bi bi-repeat"></i> {{ reminder.repeat_label }}</span>
+                    <span><i class="bi bi-bell"></i> {{ reminder.channels_label }}</span>
+                    <span><i class="bi bi-globe"></i> {{ reminder.timezone_name }}</span>
+                  </div>
+
+                  {% if reminder.notes %}
+                    <p class="reminder-notes">{{ reminder.notes }}</p>
+                  {% endif %}
+
+                  <div class="reminder-actions-row">
+                    <button class="btn btn-outline-secondary btn-sm edit-toggle" type="button" data-edit-target="edit-reminder-{{ reminder.id }}" aria-label="Edit reminder">
+                      <i class="bi bi-pencil"></i>
+                      Edit
+                    </button>
+                    <form method="post" action="{{ url_for('toggle_reminder', reminder_id=reminder.id) }}">
+                      <input type="hidden" name="is_active" value="{% if reminder.is_active %}0{% else %}1{% endif %}" />
+                      <button class="btn btn-outline-primary btn-sm" type="submit">
+                        <i class="bi bi-power"></i>
+                        {% if reminder.is_active %}Pause{% else %}Resume{% endif %}
+                      </button>
+                    </form>
+                    <form method="post" action="{{ url_for('delete_reminder', reminder_id=reminder.id) }}">
+                      <button class="btn btn-outline-danger btn-sm delete" type="submit">
+                        <i class="bi bi-trash"></i>
+                        Delete
+                      </button>
+                    </form>
+                  </div>
+
+                  <form id="edit-reminder-{{ reminder.id }}" class="edit-form reminder-edit-form" method="post" action="{{ url_for('update_reminder', reminder_id=reminder.id) }}">
+                    <div class="reminder-form-grid">
+                      <label class="reminder-field">
+                        Title
+                        <input type="text" name="title" value="{{ reminder.title }}" required />
+                      </label>
+                      <label class="reminder-field">
+                        Date
+                        <input type="date" name="remind_date" value="{{ reminder.remind_date or today }}" required />
+                      </label>
+                      <label class="reminder-field">
+                        Time
+                        <input type="time" name="remind_time" value="{{ reminder.remind_time or '09:00' }}" required />
+                      </label>
+                      <label class="reminder-field">
+                        Repeat
+                        <select name="repeat_interval" data-repeat-select>
+                          <option value="none" {% if reminder.repeat_interval == "none" %}selected{% endif %}>One-time</option>
+                          <option value="daily" {% if reminder.repeat_interval == "daily" %}selected{% endif %}>Daily</option>
+                          <option value="weekly" {% if reminder.repeat_interval == "weekly" %}selected{% endif %}>Weekly</option>
+                          <option value="monthly" {% if reminder.repeat_interval == "monthly" %}selected{% endif %}>Monthly</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <div class="repeat-group">
+                      <div class="repeat-days" data-repeat-days>
+                        {% for day in weekday_options %}
+                          <label class="day-chip">
+                            <input
+                              type="checkbox"
+                              name="repeat_days"
+                              value="{{ day.value }}"
+                              {% if day.value in reminder.repeat_days_list %}checked{% endif %}
+                            />
+                            <span>{{ day.label }}</span>
+                          </label>
+                        {% endfor %}
+                      </div>
+                    </div>
+
+                    <div class="reminder-form-grid">
+                      <label class="reminder-field">
+                        Priority
+                        <select name="priority">
+                          <option value="low" {% if reminder.priority == "low" %}selected{% endif %}>Low</option>
+                          <option value="normal" {% if reminder.priority == "normal" %}selected{% endif %}>Normal</option>
+                          <option value="high" {% if reminder.priority == "high" %}selected{% endif %}>High</option>
+                        </select>
+                      </label>
+                      <label class="reminder-field">
+                        Notes
+                        <textarea name="notes" rows="3">{{ reminder.notes or '' }}</textarea>
+                      </label>
+                    </div>
+
+                    <div class="reminder-options">
+                      <div class="reminder-switch">
+                        <input type="checkbox" name="is_active" id="reminder-active-{{ reminder.id }}" {% if reminder.is_active %}checked{% endif %} />
+                        <label for="reminder-active-{{ reminder.id }}">Active</label>
+                      </div>
+                      <div class="reminder-switch">
+                        <input type="checkbox" name="channel_toast" id="reminder-toast-{{ reminder.id }}" {% if reminder.channel_toast %}checked{% endif %} />
+                        <label for="reminder-toast-{{ reminder.id }}">In-app popup</label>
+                      </div>
+                      <div class="reminder-switch">
+                        <input type="checkbox" name="channel_system" id="reminder-system-{{ reminder.id }}" {% if reminder.channel_system %}checked{% endif %} />
+                        <label for="reminder-system-{{ reminder.id }}">System notification</label>
+                      </div>
+                      <div class="reminder-switch">
+                        <input type="checkbox" name="play_sound" id="reminder-sound-{{ reminder.id }}" {% if reminder.play_sound %}checked{% endif %} />
+                        <label for="reminder-sound-{{ reminder.id }}">Play sound</label>
+                      </div>
+                    </div>
+
+                    <div class="reminder-actions">
+                      <button class="btn btn-outline-primary btn-sm" type="submit">
+                        <i class="bi bi-check2"></i>
+                        Save changes
+                      </button>
+                    </div>
+                  </form>
+                </article>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="reminder-empty">
+              <p>No reminders yet. Create one to keep yourself on track.</p>
+            </div>
+          {% endif %}
+        </section>
+      </div>
+
+      <aside class="reminders-side">
+        <section class="card reminders-card reminders-settings">
+          <div class="reminders-card-header">
+            <div>
+              <p class="goals-label">Focus nudges</p>
+              <h2 class="goals-title">Tracking reminder</h2>
+            </div>
+          </div>
+          <form method="post" action="{{ url_for('update_notifications') }}">
+            <div class="form-check form-switch mb-3">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                name="notifications_enabled"
+                id="notifications-enabled"
+                {% if notification_settings.enabled %}checked{% endif %}
+              />
+              <label class="form-check-label" for="notifications-enabled">
+                Remind me when Pomodoro is off
+              </label>
+            </div>
+            <label class="d-block mb-3">
+              Reminder interval (minutes)
+              <select class="form-select mt-2" name="notifications_interval_minutes">
+                {% for minutes in [1, 5, 10, 15, 20] %}
+                  <option value="{{ minutes }}" {% if minutes == notification_settings.interval_minutes %}selected{% endif %}>
+                    {{ minutes }} minute{% if minutes != 1 %}s{% endif %}
+                  </option>
+                {% endfor %}
+              </select>
+            </label>
+            <div class="d-flex gap-3 flex-wrap mb-3">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  name="notifications_show_toast"
+                  id="notifications-show-toast"
+                  {% if notification_settings.show_toast %}checked{% endif %}
+                />
+                <label class="form-check-label" for="notifications-show-toast">
+                  In-app popup
+                </label>
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  name="notifications_show_system"
+                  id="notifications-show-system"
+                  {% if notification_settings.show_system %}checked{% endif %}
+                />
+                <label class="form-check-label" for="notifications-show-system">
+                  System notification
+                </label>
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  name="notifications_play_sound"
+                  id="notifications-play-sound"
+                  {% if notification_settings.play_sound %}checked{% endif %}
+                />
+                <label class="form-check-label" for="notifications-play-sound">
+                  Play sound
+                </label>
+              </div>
+            </div>
+            <label class="d-block mb-3">
+              Popup title
+              <input
+                class="form-control mt-2"
+                type="text"
+                name="notifications_title"
+                value="{{ notification_settings.title }}"
+              />
+            </label>
+            <label class="d-block mb-3">
+              Popup message
+              <textarea
+                class="form-control mt-2"
+                name="notifications_message"
+                rows="3"
+              >{{ notification_settings.message }}</textarea>
+            </label>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn btn-outline-primary btn-sm" type="submit">
+                <i class="bi bi-check2-circle"></i>
+                Save settings
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" type="button" id="notifications-test">
+                <i class="bi bi-bell"></i>
+                Test notification
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="card reminders-card reminders-guide">
+          <div class="reminders-card-header">
+            <div>
+              <p class="goals-label">Tips</p>
+              <h2 class="goals-title">Make reminders stick</h2>
+            </div>
+          </div>
+          <ul class="reminder-guide-list">
+            <li>Use short verbs like "Review", "Call", "Submit".</li>
+            <li>Keep weekly reminders to 2-3 time blocks.</li>
+            <li>Pair sound alerts with system notifications for critical items.</li>
+          </ul>
+        </section>
+      </aside>
+    </section>
+  </main>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const updateRepeatDays = (select) => {
+        const form = select.closest("form");
+        const daysPanel = form?.querySelector("[data-repeat-days]");
+        if (!daysPanel) {
+          return;
+        }
+        const isWeekly = select.value === "weekly";
+        daysPanel.classList.toggle("is-hidden", !isWeekly);
+      };
+
+      document.querySelectorAll("[data-repeat-select]").forEach((select) => {
+        updateRepeatDays(select);
+        select.addEventListener("change", () => updateRepeatDays(select));
+      });
+
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+        const editButton = target.closest("[data-edit-target]");
+        if (editButton) {
+          event.preventDefault();
+          const form = document.getElementById(editButton.dataset.editTarget);
+          if (!form) {
+            return;
+          }
+          const isOpen = form.classList.contains("is-open");
+          document.querySelectorAll(".reminder-edit-form.is-open").forEach((openForm) => {
+            if (openForm !== form) {
+              openForm.classList.remove("is-open");
+            }
+          });
+          form.classList.toggle("is-open", !isOpen);
+          if (!isOpen) {
+            const input = form.querySelector('input[type="text"]');
+            if (input) {
+              input.focus();
+              input.select();
+            }
+          }
+        } else if (!target.closest(".reminder-edit-form")) {
+          document.querySelectorAll(".reminder-edit-form.is-open").forEach((openForm) => {
+            openForm.classList.remove("is-open");
+          });
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") {
+          return;
+        }
+        document.querySelectorAll(".reminder-edit-form.is-open").forEach((openForm) => {
+          openForm.classList.remove("is-open");
+        });
+      });
+    });
+  </script>
+{% endblock %}

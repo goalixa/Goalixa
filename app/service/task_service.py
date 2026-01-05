@@ -1,3 +1,4 @@
+import calendar
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -50,6 +51,99 @@ class TaskService:
         if isinstance(value, bool):
             return value
         return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+    def _parse_date(self, value):
+        if not value:
+            return None
+        try:
+            return datetime.fromisoformat(value).date()
+        except ValueError:
+            return None
+
+    def _parse_time(self, value):
+        if not value:
+            return None
+        try:
+            return datetime.strptime(value, "%H:%M").time()
+        except ValueError:
+            return None
+
+    def _format_occurrence_label(self, dt, now):
+        if not dt:
+            return "Not scheduled"
+        date_value = dt.date()
+        if date_value == now.date():
+            return f"Today · {dt.strftime('%H:%M')}"
+        if date_value == (now.date() + timedelta(days=1)):
+            return f"Tomorrow · {dt.strftime('%H:%M')}"
+        return dt.strftime("%a %d %b · %H:%M")
+
+    def _weekday_label(self, index):
+        labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        return labels[index % 7]
+
+    def _next_month_date(self, base_date, target_day):
+        month = base_date.month + 1
+        year = base_date.year
+        if month > 12:
+            month = 1
+            year += 1
+        last_day = calendar.monthrange(year, month)[1]
+        return base_date.replace(year=year, month=month, day=min(target_day, last_day))
+
+    def _compute_next_occurrence(self, reminder, now, tz):
+        if not reminder.get("is_active"):
+            return None, "paused"
+        interval = (reminder.get("repeat_interval") or "none").lower()
+        remind_date = self._parse_date(reminder.get("remind_date"))
+        remind_time = self._parse_time(reminder.get("remind_time"))
+        if not remind_time:
+            return None, "unscheduled"
+
+        if interval == "none":
+            if not remind_date:
+                return None, "unscheduled"
+            candidate = datetime.combine(remind_date, remind_time, tzinfo=tz)
+            if candidate < now:
+                return candidate, "overdue"
+            return candidate, "upcoming"
+
+        if interval == "daily":
+            base_date = remind_date if remind_date and remind_date > now.date() else now.date()
+            candidate = datetime.combine(base_date, remind_time, tzinfo=tz)
+            if candidate < now:
+                candidate = datetime.combine(base_date + timedelta(days=1), remind_time, tzinfo=tz)
+            return candidate, "upcoming"
+
+        if interval == "weekly":
+            repeat_days = reminder.get("repeat_days") or ""
+            day_indices = [
+                int(day) for day in repeat_days.split(",") if day.strip().isdigit()
+            ]
+            if not day_indices:
+                day_indices = [remind_date.weekday()] if remind_date else [now.weekday()]
+            start_date = remind_date if remind_date and remind_date > now.date() else now.date()
+            for offset in range(0, 14):
+                candidate_date = start_date + timedelta(days=offset)
+                if candidate_date.weekday() not in day_indices:
+                    continue
+                candidate = datetime.combine(candidate_date, remind_time, tzinfo=tz)
+                if candidate >= now:
+                    return candidate, "upcoming"
+            return None, "unscheduled"
+
+        if interval == "monthly":
+            base_date = remind_date if remind_date and remind_date > now.date() else now.date()
+            target_day = (remind_date.day if remind_date else now.day)
+            last_day = calendar.monthrange(base_date.year, base_date.month)[1]
+            candidate_date = base_date.replace(day=min(target_day, last_day))
+            candidate = datetime.combine(candidate_date, remind_time, tzinfo=tz)
+            if candidate < now:
+                next_date = self._next_month_date(base_date, target_day)
+                candidate = datetime.combine(next_date, remind_time, tzinfo=tz)
+            return candidate, "upcoming"
+
+        return None, "unscheduled"
 
     def get_notification_settings(self):
         enabled = self._parse_bool_setting(
@@ -138,6 +232,139 @@ class TaskService:
     def current_local_date(self):
         _, tz = self._get_timezone()
         return datetime.now(tz).date()
+
+    def list_reminders(self):
+        tz_name, tz = self._get_timezone()
+        now = datetime.now(tz)
+        reminders = self.repository.fetch_reminders()
+        reminder_list = []
+        for reminder in reminders:
+            reminder_dict = dict(reminder)
+            next_dt, status = self._compute_next_occurrence(reminder_dict, now, tz)
+            repeat_interval = (reminder_dict.get("repeat_interval") or "none").lower()
+            repeat_days = reminder_dict.get("repeat_days") or ""
+            day_indices = [
+                int(day) for day in repeat_days.split(",") if day.strip().isdigit()
+            ]
+            repeat_label = "One-time"
+            if repeat_interval == "daily":
+                repeat_label = "Daily"
+            elif repeat_interval == "weekly":
+                if day_indices:
+                    days_label = ", ".join(self._weekday_label(day) for day in day_indices)
+                    repeat_label = f"Weekly · {days_label}"
+                else:
+                    repeat_label = "Weekly"
+            elif repeat_interval == "monthly":
+                repeat_label = "Monthly"
+            channels = []
+            if reminder_dict.get("channel_toast"):
+                channels.append("In-app")
+            if reminder_dict.get("channel_system"):
+                channels.append("System")
+            if reminder_dict.get("play_sound"):
+                channels.append("Sound")
+            reminder_list.append(
+                {
+                    **reminder_dict,
+                    "next_at": next_dt,
+                    "next_label": self._format_occurrence_label(next_dt, now),
+                    "status": status,
+                    "repeat_label": repeat_label,
+                    "repeat_days_list": day_indices,
+                    "channels_label": " · ".join(channels) if channels else "No alerts",
+                    "timezone_name": tz_name,
+                }
+            )
+        return reminder_list
+
+    def reminders_summary(self, reminders):
+        tz_name, tz = self._get_timezone()
+        now = datetime.now(tz)
+        active = [reminder for reminder in reminders if reminder.get("is_active")]
+        overdue = [reminder for reminder in reminders if reminder.get("status") == "overdue"]
+        next_candidates = [
+            reminder.get("next_at")
+            for reminder in active
+            if reminder.get("next_at")
+        ]
+        next_up = min(next_candidates) if next_candidates else None
+        return {
+            "total": len(reminders),
+            "active": len(active),
+            "overdue": len(overdue),
+            "next_label": self._format_occurrence_label(next_up, now),
+        }
+
+    def add_reminder(self, form_data):
+        title = (form_data.get("title") or "").strip()
+        if not title:
+            return
+        notes = (form_data.get("notes") or "").strip() or None
+        remind_date = (form_data.get("remind_date") or "").strip() or None
+        remind_time = (form_data.get("remind_time") or "").strip() or None
+        repeat_interval = (form_data.get("repeat_interval") or "none").strip().lower()
+        repeat_days = form_data.getlist("repeat_days")
+        repeat_days_clean = ",".join(
+            str(int(day)) for day in repeat_days if str(day).isdigit()
+        )
+        priority = (form_data.get("priority") or "normal").strip().lower()
+        channel_toast = self._parse_bool_setting(form_data.get("channel_toast"), False)
+        channel_system = self._parse_bool_setting(form_data.get("channel_system"), False)
+        play_sound = self._parse_bool_setting(form_data.get("play_sound"), False)
+        is_active = self._parse_bool_setting(form_data.get("is_active"), False)
+        self.repository.create_reminder(
+            title,
+            notes,
+            remind_date,
+            remind_time,
+            repeat_interval,
+            repeat_days_clean or None,
+            priority,
+            1 if channel_toast else 0,
+            1 if channel_system else 0,
+            1 if play_sound else 0,
+            1 if is_active else 0,
+            datetime.utcnow().isoformat(),
+        )
+
+    def update_reminder(self, reminder_id, form_data):
+        title = (form_data.get("title") or "").strip()
+        if not title:
+            return
+        notes = (form_data.get("notes") or "").strip() or None
+        remind_date = (form_data.get("remind_date") or "").strip() or None
+        remind_time = (form_data.get("remind_time") or "").strip() or None
+        repeat_interval = (form_data.get("repeat_interval") or "none").strip().lower()
+        repeat_days = form_data.getlist("repeat_days")
+        repeat_days_clean = ",".join(
+            str(int(day)) for day in repeat_days if str(day).isdigit()
+        )
+        priority = (form_data.get("priority") or "normal").strip().lower()
+        channel_toast = self._parse_bool_setting(form_data.get("channel_toast"), False)
+        channel_system = self._parse_bool_setting(form_data.get("channel_system"), False)
+        play_sound = self._parse_bool_setting(form_data.get("play_sound"), False)
+        is_active = self._parse_bool_setting(form_data.get("is_active"), False)
+        self.repository.update_reminder(
+            int(reminder_id),
+            title,
+            notes,
+            remind_date,
+            remind_time,
+            repeat_interval,
+            repeat_days_clean or None,
+            priority,
+            1 if channel_toast else 0,
+            1 if channel_system else 0,
+            1 if play_sound else 0,
+            1 if is_active else 0,
+        )
+
+    def set_reminder_active(self, reminder_id, is_active):
+        self.repository.set_reminder_active(int(reminder_id), bool(is_active))
+
+    def delete_reminder(self, reminder_id):
+        self.repository.delete_reminder(int(reminder_id))
 
     def _local_day_bounds(self, day):
         _, tz = self._get_timezone()
