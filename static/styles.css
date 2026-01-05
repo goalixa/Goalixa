@@ -1920,6 +1920,60 @@ body {
   color: var(--muted);
 }
 
+.reports-metrics {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.reports-metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="dark"] .reports-metric-card {
+  background: #1b1f27;
+  border-color: #2a3342;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.4);
+}
+
+.reports-metric-card h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.reports-metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.reports-metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.reports-metric-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.reports-metric-foot {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .filter-group {
   display: flex;
   align-items: center;

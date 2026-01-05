@@ -563,6 +563,66 @@ class TaskService:
         project_list.sort(key=lambda item: item["total_seconds"], reverse=True)
         return project_list
 
+    def report_entities_by_range(self, start_date, end_date):
+        start_day, _ = self._local_day_bounds(start_date)
+        _, end_day = self._local_day_bounds(end_date)
+        start_iso = start_day.isoformat()
+        end_iso = end_day.isoformat()
+
+        goals_created = self.repository.fetch_goals_created_count(start_iso, end_iso)
+        goal_status_counts = self.repository.fetch_goal_status_counts(start_iso, end_iso)
+        goals_due = self.repository.fetch_goal_due_count(
+            start_date.isoformat(), end_date.isoformat()
+        )
+
+        habits_created = self.repository.fetch_habits_created_count(start_iso, end_iso)
+        total_habits = self.repository.fetch_total_habits_count()
+        habit_logs = self.repository.fetch_habit_log_stats(
+            start_date.isoformat(), end_date.isoformat()
+        )
+
+        projects_created = self.repository.fetch_projects_created_count(start_iso, end_iso)
+        project_totals = self.project_totals_by_range(start_date, end_date)
+        active_projects = len(project_totals)
+
+        tasks_created = self.repository.fetch_tasks_created_count(start_iso, end_iso)
+        tasks_completed = self.repository.fetch_tasks_completed_count(start_iso, end_iso)
+        active_task_ids = {
+            task["id"]
+            for project in project_totals
+            for task in project.get("tasks", [])
+        }
+
+        days = max((end_date - start_date).days + 1, 1)
+        habit_avg_per_day = habit_logs["total_logs"] / days
+
+        return {
+            "goals": {
+                "created": goals_created,
+                "active": int(goal_status_counts.get("active", 0))
+                + int(goal_status_counts.get("at_risk", 0)),
+                "completed": int(goal_status_counts.get("completed", 0)),
+                "due": goals_due,
+            },
+            "habits": {
+                "created": habits_created,
+                "total": total_habits,
+                "active": habit_logs["active_habits"],
+                "logs": habit_logs["total_logs"],
+                "active_days": habit_logs["active_days"],
+                "avg_per_day": habit_avg_per_day,
+            },
+            "projects": {
+                "created": projects_created,
+                "active": active_projects,
+            },
+            "tasks": {
+                "created": tasks_created,
+                "completed": tasks_completed,
+                "active": len(active_task_ids),
+            },
+        }
+
     def list_time_entries_by_range(self, start_date, end_date):
         self._rollover_running_entries()
         start_day, _ = self._local_day_bounds(start_date)

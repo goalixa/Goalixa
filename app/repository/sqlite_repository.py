@@ -1076,6 +1076,131 @@ class SQLiteTaskRepository:
         ).fetchall()
         return {row["log_date"]: row["total"] for row in rows}
 
+    def fetch_goals_created_count(self, start_iso, end_iso):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        row = db.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM goals
+            WHERE user_id = ? AND created_at BETWEEN ? AND ?
+            """,
+            (user_id, start_iso, end_iso),
+        ).fetchone()
+        return int(row["total"] or 0)
+
+    def fetch_goal_status_counts(self, start_iso, end_iso):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        rows = db.execute(
+            """
+            SELECT status, COUNT(*) AS total
+            FROM goals
+            WHERE user_id = ? AND created_at BETWEEN ? AND ?
+            GROUP BY status
+            """,
+            (user_id, start_iso, end_iso),
+        ).fetchall()
+        return {row["status"]: int(row["total"] or 0) for row in rows}
+
+    def fetch_goal_due_count(self, start_date, end_date):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        row = db.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM goals
+            WHERE user_id = ?
+              AND target_date IS NOT NULL
+              AND target_date BETWEEN ? AND ?
+            """,
+            (user_id, start_date, end_date),
+        ).fetchone()
+        return int(row["total"] or 0)
+
+    def fetch_habits_created_count(self, start_iso, end_iso):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        row = db.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM habits
+            WHERE user_id = ? AND created_at BETWEEN ? AND ?
+            """,
+            (user_id, start_iso, end_iso),
+        ).fetchone()
+        return int(row["total"] or 0)
+
+    def fetch_total_habits_count(self):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        row = db.execute(
+            "SELECT COUNT(*) AS total FROM habits WHERE user_id = ?",
+            (user_id,),
+        ).fetchone()
+        return int(row["total"] or 0)
+
+    def fetch_habit_log_stats(self, start_date, end_date):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        row = db.execute(
+            """
+            SELECT COUNT(*) AS total_logs,
+                   COUNT(DISTINCT habit_id) AS active_habits,
+                   COUNT(DISTINCT log_date) AS active_days
+            FROM habit_logs
+            WHERE habit_id IN (SELECT id FROM habits WHERE user_id = ?)
+              AND log_date BETWEEN ? AND ?
+            """,
+            (user_id, start_date, end_date),
+        ).fetchone()
+        return {
+            "total_logs": int(row["total_logs"] or 0),
+            "active_habits": int(row["active_habits"] or 0),
+            "active_days": int(row["active_days"] or 0),
+        }
+
+    def fetch_projects_created_count(self, start_iso, end_iso):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        row = db.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM projects
+            WHERE user_id = ? AND created_at BETWEEN ? AND ?
+            """,
+            (user_id, start_iso, end_iso),
+        ).fetchone()
+        return int(row["total"] or 0)
+
+    def fetch_tasks_created_count(self, start_iso, end_iso):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        row = db.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM tasks
+            WHERE user_id = ? AND created_at BETWEEN ? AND ?
+            """,
+            (user_id, start_iso, end_iso),
+        ).fetchone()
+        return int(row["total"] or 0)
+
+    def fetch_tasks_completed_count(self, start_iso, end_iso):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        row = db.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM tasks
+            WHERE user_id = ?
+              AND completed_at IS NOT NULL
+              AND completed_at BETWEEN ? AND ?
+            """,
+            (user_id, start_iso, end_iso),
+        ).fetchone()
+        return int(row["total"] or 0)
+
     def fetch_task_labels_map(self, task_ids):
         if not task_ids:
             return {}

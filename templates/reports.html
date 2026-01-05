@@ -85,6 +85,74 @@
         </div>
       </section>
 
+      <section class="reports-metrics">
+        <div class="card reports-metric-card">
+          <div class="reports-metric-header">
+            <div>
+              <p class="goals-label">Goals</p>
+              <h3>Goal progress</h3>
+            </div>
+          </div>
+          <div class="reports-metric-value" id="reports-goals-created">{{ report_entities["goals"]["created"] if report_entities else 0 }}</div>
+          <div class="reports-metric-meta">
+            <span id="reports-goals-active">{{ report_entities["goals"]["active"] if report_entities else 0 }} active</span>
+            <span id="reports-goals-completed">{{ report_entities["goals"]["completed"] if report_entities else 0 }} completed</span>
+          </div>
+          <div class="reports-metric-foot">
+            Targets due: <span id="reports-goals-due">{{ report_entities["goals"]["due"] if report_entities else 0 }}</span>
+          </div>
+        </div>
+        <div class="card reports-metric-card">
+          <div class="reports-metric-header">
+            <div>
+              <p class="goals-label">Habits</p>
+              <h3>Habit consistency</h3>
+            </div>
+          </div>
+          <div class="reports-metric-value" id="reports-habits-logs">{{ report_entities["habits"]["logs"] if report_entities else 0 }}</div>
+          <div class="reports-metric-meta">
+            <span id="reports-habits-active">{{ report_entities["habits"]["active"] if report_entities else 0 }} active</span>
+            <span id="reports-habits-days">{{ report_entities["habits"]["active_days"] if report_entities else 0 }} days logged</span>
+          </div>
+          <div class="reports-metric-foot">
+            Avg per day: <span id="reports-habits-avg">
+              {{ "%.1f"|format(report_entities["habits"]["avg_per_day"]) if report_entities else "0.0" }}
+            </span>
+          </div>
+        </div>
+        <div class="card reports-metric-card">
+          <div class="reports-metric-header">
+            <div>
+              <p class="goals-label">Projects</p>
+              <h3>Project activity</h3>
+            </div>
+          </div>
+          <div class="reports-metric-value" id="reports-projects-created">{{ report_entities["projects"]["created"] if report_entities else 0 }}</div>
+          <div class="reports-metric-meta">
+            <span id="reports-projects-active">{{ report_entities["projects"]["active"] if report_entities else 0 }} active</span>
+          </div>
+          <div class="reports-metric-foot">
+            Focus time: <span id="reports-projects-time">00:00:00</span>
+          </div>
+        </div>
+        <div class="card reports-metric-card">
+          <div class="reports-metric-header">
+            <div>
+              <p class="goals-label">Tasks</p>
+              <h3>Task velocity</h3>
+            </div>
+          </div>
+          <div class="reports-metric-value" id="reports-tasks-created">{{ report_entities["tasks"]["created"] if report_entities else 0 }}</div>
+          <div class="reports-metric-meta">
+            <span id="reports-tasks-active">{{ report_entities["tasks"]["active"] if report_entities else 0 }} active</span>
+            <span id="reports-tasks-completed">{{ report_entities["tasks"]["completed"] if report_entities else 0 }} completed</span>
+          </div>
+          <div class="reports-metric-foot">
+            Completion rate: <span id="reports-tasks-rate">0%</span>
+          </div>
+        </div>
+      </section>
+
       <section class="reports-duo">
         <div class="card reports-chart">
           <div class="reports-card-header">
@@ -93,9 +161,9 @@
               <h2 class="goals-title">Time overview</h2>
             </div>
             <div class="chart-controls">
-              <div class="mode-switch">
-                <button class="btn btn-outline-primary btn-sm mode-button active" type="button" data-mode="bar">Bar</button>
-                <button class="btn btn-outline-primary btn-sm mode-button" type="button" data-mode="line">Line</button>
+            <div class="mode-switch">
+                <button class="btn btn-outline-primary btn-sm mode-button" type="button" data-mode="bar">Bar</button>
+                <button class="btn btn-outline-primary btn-sm mode-button active" type="button" data-mode="line">Line</button>
               </div>
             </div>
           </div>
@@ -111,9 +179,9 @@
           <div class="donut-header">
             <h3>Project distribution</h3>
             <select class="donut-select" id="distribution-group">
-              <option value="projects" selected>Projects</option>
+              <option value="projects">Projects</option>
               <option value="labels">Labels</option>
-              <option value="tasks">Tasks</option>
+              <option value="tasks" selected>Tasks</option>
             </select>
           </div>
           <div class="donut-wrap">
@@ -216,7 +284,7 @@
     let labels = summary.map((item) => item.label);
     let values = summary.map((item) => item.seconds);
     const ctx = document.getElementById("reports-chart");
-    let chartType = "bar";
+    let chartType = "line";
     let chartInstance = null;
     let distributionChart = null;
 
@@ -558,6 +626,86 @@
       }
     };
 
+    const updateEntityMetrics = (entities, totalSeconds) => {
+      const payload = entities || {};
+      const goals = payload.goals || {};
+      const habits = payload.habits || {};
+      const projects = payload.projects || {};
+      const tasks = payload.tasks || {};
+
+      const goalsCreated = document.getElementById("reports-goals-created");
+      const goalsActive = document.getElementById("reports-goals-active");
+      const goalsCompleted = document.getElementById("reports-goals-completed");
+      const goalsDue = document.getElementById("reports-goals-due");
+
+      if (goalsCreated) {
+        goalsCreated.textContent = String(goals.created || 0);
+      }
+      if (goalsActive) {
+        goalsActive.textContent = `${goals.active || 0} active`;
+      }
+      if (goalsCompleted) {
+        goalsCompleted.textContent = `${goals.completed || 0} completed`;
+      }
+      if (goalsDue) {
+        goalsDue.textContent = String(goals.due || 0);
+      }
+
+      const habitsLogs = document.getElementById("reports-habits-logs");
+      const habitsActive = document.getElementById("reports-habits-active");
+      const habitsDays = document.getElementById("reports-habits-days");
+      const habitsAvg = document.getElementById("reports-habits-avg");
+
+      if (habitsLogs) {
+        habitsLogs.textContent = String(habits.logs || 0);
+      }
+      if (habitsActive) {
+        habitsActive.textContent = `${habits.active || 0} active`;
+      }
+      if (habitsDays) {
+        habitsDays.textContent = `${habits.active_days || 0} days logged`;
+      }
+      if (habitsAvg) {
+        const avg = Number(habits.avg_per_day || 0);
+        habitsAvg.textContent = avg.toFixed(1);
+      }
+
+      const projectsCreated = document.getElementById("reports-projects-created");
+      const projectsActive = document.getElementById("reports-projects-active");
+      const projectsTime = document.getElementById("reports-projects-time");
+
+      if (projectsCreated) {
+        projectsCreated.textContent = String(projects.created || 0);
+      }
+      if (projectsActive) {
+        projectsActive.textContent = `${projects.active || 0} active`;
+      }
+      if (projectsTime) {
+        projectsTime.textContent = formatSeconds(totalSeconds || 0);
+      }
+
+      const tasksCreated = document.getElementById("reports-tasks-created");
+      const tasksActive = document.getElementById("reports-tasks-active");
+      const tasksCompleted = document.getElementById("reports-tasks-completed");
+      const tasksRate = document.getElementById("reports-tasks-rate");
+
+      if (tasksCreated) {
+        tasksCreated.textContent = String(tasks.created || 0);
+      }
+      if (tasksActive) {
+        tasksActive.textContent = `${tasks.active || 0} active`;
+      }
+      if (tasksCompleted) {
+        tasksCompleted.textContent = `${tasks.completed || 0} completed`;
+      }
+      if (tasksRate) {
+        const created = Number(tasks.created || 0);
+        const completed = Number(tasks.completed || 0);
+        const rate = created ? (completed / created) * 100 : 0;
+        tasksRate.textContent = `${rate.toFixed(0)}%`;
+      }
+    };
+
     buildChart(chartType);
 
     bindProjectToggles(document);
@@ -675,6 +823,7 @@
             );
             updateProjectSummary(payload.project_totals || []);
             renderProjectTotals(payload.project_totals || []);
+            updateEntityMetrics(payload.entities || {}, payload.total_seconds || 0);
           })
           .catch(() => {});
       };

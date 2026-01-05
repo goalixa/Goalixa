@@ -296,11 +296,13 @@ def register_routes(app, service):
         summary = service.summary_by_range(start_date, end_date)
         project_totals = service.project_totals_by_range(start_date, end_date)
         top_project = project_totals[0] if project_totals else None
+        report_entities = service.report_entities_by_range(start_date, end_date)
         return render_template(
             "reports.html",
             summary=summary,
             project_totals=project_totals,
             top_project=top_project,
+            report_entities=report_entities,
             allowed_ranges=[7],
         )
 
@@ -319,6 +321,7 @@ def register_routes(app, service):
                     "project_totals": [],
                     "active_projects": 0,
                     "top_project": None,
+                    "entities": {},
                 }
             )
 
@@ -335,6 +338,7 @@ def register_routes(app, service):
                     "project_totals": [],
                     "active_projects": 0,
                     "top_project": None,
+                    "entities": {},
                 }
             )
 
@@ -350,6 +354,7 @@ def register_routes(app, service):
         )
         project_totals = service.project_totals_by_range(start_date, end_date)
         top_project = project_totals[0] if project_totals else None
+        entities = service.report_entities_by_range(start_date, end_date)
         days = max((end_date - start_date).days + 1, 1)
         avg_daily_hours = total_seconds / 3600 / days
         return jsonify(
@@ -361,6 +366,7 @@ def register_routes(app, service):
                 "project_totals": project_totals,
                 "active_projects": len(project_totals),
                 "top_project": top_project,
+                "entities": entities,
             }
         )
 
