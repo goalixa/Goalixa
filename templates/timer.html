@@ -474,6 +474,7 @@
         let mode = state.mode;
         let completedWork = state.completedWork;
         let secondsLeft = elapsedSeconds;
+        let completedAny = false;
 
         while (secondsLeft > 0) {
           if (remaining > secondsLeft) {
@@ -487,6 +488,7 @@
             }
             mode = mode === "work" ? (completedWork % 4 === 0 ? "long" : "short") : "work";
             remaining = presets[mode];
+            completedAny = true;
           }
         }
 
@@ -497,6 +499,10 @@
           state.isRunning = false;
           state.lastTick = null;
           state.taskRunning = false;
+        }
+        if (completedAny && state.mode !== "work") {
+          state.isRunning = true;
+          state.lastTick = Date.now();
         }
       };
 
@@ -559,6 +565,11 @@
             state.remaining = nextState.remaining;
             state.lastTick = null;
             stopInterval();
+            if (nextMode !== "work") {
+              state.isRunning = true;
+              state.lastTick = Date.now();
+              startInterval(state);
+            }
           }
           saveState(state);
           updatePomodoroUI(state);

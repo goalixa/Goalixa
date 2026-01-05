@@ -55,6 +55,15 @@
         </div>
       </aside>
       <main class="app-main col-12 col-lg-10 px-0">
+        <div class="global-timer" id="global-timer" aria-live="polite">
+          <a class="global-timer-link" href="{{ url_for('timer') }}">
+            <span class="global-timer-label">Timer</span>
+            <span class="global-timer-value" data-global-timer-value>25:00</span>
+            <span class="global-timer-meta" data-global-timer-meta>Focus</span>
+            <span class="global-timer-task" data-global-timer-task></span>
+          </a>
+          <button class="global-timer-dismiss" type="button" data-global-timer-dismiss aria-label="Hide timer">×</button>
+        </div>
         <div class="page-content">
           {% block content %}{% endblock %}
         </div>
@@ -96,6 +105,7 @@
   </div>
   <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
   <script src="{{ url_for('static', filename='theme.js') }}"></script>
+  <script src="{{ url_for('static', filename='global_timer.js') }}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
