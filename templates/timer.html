@@ -70,11 +70,26 @@
     <section class="timer-range-section">
       <div class="card pomodoro-card">
         <div class="pomodoro-header">
-          <div>
+          <div class="pomodoro-copy">
             <p class="pomodoro-label">Pomodoro</p>
             <h2 class="pomodoro-mode" id="pomodoro-mode">Focus</h2>
+            <div class="pomodoro-status">
+              <p class="pomodoro-task" id="pomodoro-task">No task selected</p>
+              <p class="pomodoro-meta" id="pomodoro-meta">Session 1 of 4</p>
+            </div>
+            <div class="pomodoro-dots" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
           </div>
-          <div class="pomodoro-dial" id="pomodoro-display">25:00</div>
+          <div class="pomodoro-clock">
+            <div class="pomodoro-ring">
+              <div class="pomodoro-dial" id="pomodoro-display">25:00</div>
+              <span class="pomodoro-caption">Remaining</span>
+            </div>
+          </div>
         </div>
         <div class="pomodoro-controls">
           <button class="btn btn-primary btn-sm" type="button" id="pomodoro-start">
@@ -99,8 +114,6 @@
           <button class="btn btn-light btn-sm" type="button" data-pomodoro-mode="short">Break 5</button>
           <button class="btn btn-light btn-sm" type="button" data-pomodoro-mode="long">Break 15</button>
         </div>
-        <p class="pomodoro-task" id="pomodoro-task">No task selected</p>
-        <p class="pomodoro-meta" id="pomodoro-meta">Session 1 of 4</p>
       </div>
     </section>
     <section class="timer-calendar-section timer-view-panel is-active" data-view-panel="calendar">
