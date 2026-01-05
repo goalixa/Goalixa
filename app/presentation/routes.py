@@ -172,9 +172,11 @@ def register_routes(app, service):
         goal = service.get_goal(goal_id)
         if not goal:
             return redirect(url_for("goals"))
+        projects = service.list_projects()
         return render_template(
             "goal_detail.html",
             goal=goal,
+            projects=projects,
         )
 
     @app.route("/goals/new", methods=["GET"])
@@ -215,7 +217,7 @@ def register_routes(app, service):
             request.form.get("priority", "medium"),
             request.form.get("target_date", ""),
             request.form.get("target_hours", 0),
-            request.form.get("subgoals", ""),
+            request.form.get("subgoals"),
             request.form.getlist("project_ids"),
             request.form.getlist("task_ids"),
         )
@@ -231,7 +233,13 @@ def register_routes(app, service):
     @app.route("/goals/<int:goal_id>/subgoals", methods=["POST"])
     @auth_required()
     def add_goal_subgoal(goal_id):
-        service.add_goal_subgoal(goal_id, request.form.get("title", ""))
+        service.add_goal_subgoal(
+            goal_id,
+            request.form.get("title", ""),
+            request.form.get("label", ""),
+            request.form.get("target_date", ""),
+            request.form.get("project_id", ""),
+        )
         return redirect(request.referrer or url_for("goals"))
 
     @app.route("/goals/<int:goal_id>/delete", methods=["POST"])

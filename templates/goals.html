@@ -181,10 +181,6 @@
                   Description
                   <textarea rows="2" name="description">{{ goal['description'] or '' }}</textarea>
                 </label>
-                <label>
-                  Sub-goals (one per line)
-                  <textarea rows="3" name="subgoals">{% for subgoal in goal['subgoals'] %}{{ subgoal['title'] }}{% if not loop.last %}&#10;{% endif %}{% endfor %}</textarea>
-                </label>
                 <div class="goal-form-actions">
                   <button class="btn btn-outline-secondary btn-sm" type="submit">Save changes</button>
                 </div>
@@ -229,6 +225,14 @@
                 <div class="subgoal-list">
                   <form class="subgoal-add-form" method="post" action="{{ url_for('add_goal_subgoal', goal_id=goal['id']) }}">
                     <input type="text" name="title" placeholder="Add a sub-goal" required />
+                    <input type="text" name="label" placeholder="Label" />
+                    <input type="date" name="target_date" />
+                    <select name="project_id">
+                      <option value="">Project</option>
+                      {% for project in projects %}
+                        <option value="{{ project['id'] }}">{{ project['name'] }}</option>
+                      {% endfor %}
+                    </select>
                     <button class="btn btn-primary btn-sm" type="submit">
                       <i class="bi bi-plus-lg"></i>
                       Add
@@ -242,7 +246,18 @@
                           <span class="subgoal-title">{{ subgoal['title'] }}</span>
                         </label>
                       </form>
-                      <span class="subgoal-meta">{{ subgoal['created_at'][:10] }}</span>
+                      <div class="subgoal-meta">
+                        {% if subgoal['label'] %}
+                          <span class="subgoal-tag">{{ subgoal['label'] }}</span>
+                        {% endif %}
+                        {% if subgoal['target_date'] %}
+                          <span class="subgoal-date">{{ subgoal['target_date'] }}</span>
+                        {% endif %}
+                        {% if subgoal['project_name'] %}
+                          <span class="subgoal-project">{{ subgoal['project_name'] }}</span>
+                        {% endif %}
+                        <span>{{ subgoal['created_at'][:10] }}</span>
+                      </div>
                     </div>
                   {% endfor %}
                 </div>

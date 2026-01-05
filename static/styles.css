@@ -2385,13 +2385,15 @@ body {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px dashed var(--border);
   background: var(--soft);
 }
 
-.subgoal-add-form input {
+.subgoal-add-form input,
+.subgoal-add-form select {
   flex: 1;
   border-radius: 10px;
   border: 1px solid var(--border);
@@ -2399,6 +2401,7 @@ body {
   font-size: 0.9rem;
   background: var(--card);
   color: var(--text);
+  min-width: 140px;
 }
 
 [data-theme="dark"] .subgoal-add-form {
@@ -2406,7 +2409,8 @@ body {
   border-color: #2a3342;
 }
 
-[data-theme="dark"] .subgoal-add-form input {
+[data-theme="dark"] .subgoal-add-form input,
+[data-theme="dark"] .subgoal-add-form select {
   background: #121723;
   border-color: #2a3342;
   color: var(--text);
@@ -2458,6 +2462,22 @@ body {
 .subgoal-meta {
   color: var(--muted);
   font-size: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.subgoal-tag,
+.subgoal-date,
+.subgoal-project {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .goal-tags {

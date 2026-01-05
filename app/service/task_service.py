@@ -674,6 +674,19 @@ class TaskService:
 
         task_totals = self.repository.fetch_task_total_seconds(task_ids)
 
+        subgoal_project_ids = sorted(
+            {
+                subgoal["project_id"]
+                for subgoals in goal_subgoals_map.values()
+                for subgoal in subgoals
+                if subgoal.get("project_id")
+            }
+        )
+        subgoal_projects = self.repository.fetch_projects_by_ids(subgoal_project_ids)
+        subgoal_projects_by_id = {
+            project["id"]: dict(project) for project in subgoal_projects
+        }
+
         goal_list = []
         today = self.current_local_date()
         for goal in goals:
@@ -706,7 +719,18 @@ class TaskService:
                     deadline_total_days = total_days
                     deadline_remaining_days = remaining_days
                     deadline_percent = min(100, max(0, int((remaining_days / total_days) * 100)))
-            subgoals = goal_subgoals_map.get(goal_id, [])
+            subgoals = []
+            for subgoal in goal_subgoals_map.get(goal_id, []):
+                project_id = subgoal.get("project_id")
+                project = (
+                    subgoal_projects_by_id.get(project_id) if project_id else None
+                )
+                subgoals.append(
+                    {
+                        **subgoal,
+                        "project_name": project["name"] if project else None,
+                    }
+                )
             subgoals_total = len(subgoals)
             subgoals_done = sum(1 for subgoal in subgoals if subgoal["status"] == "completed")
             if subgoals_total:
@@ -805,7 +829,6 @@ class TaskService:
         priority = (priority or "medium").strip()
         target_date = (target_date or "").strip() or None
         target_seconds = int(float(target_hours or 0) * 3600)
-        subgoals = self._parse_subgoals(subgoals_text)
         if not name:
             return
         self.repository.update_goal(
@@ -821,7 +844,11 @@ class TaskService:
         filtered_task_ids = [int(tid) for tid in task_ids or [] if str(tid).strip()]
         self.repository.set_goal_projects(int(goal_id), filtered_project_ids)
         self.repository.set_goal_tasks(int(goal_id), filtered_task_ids)
-        self.repository.set_goal_subgoals(int(goal_id), subgoals, datetime.utcnow().isoformat())
+        if subgoals_text is not None:
+            subgoals = self._parse_subgoals(subgoals_text)
+            self.repository.set_goal_subgoals(
+                int(goal_id), subgoals, datetime.utcnow().isoformat()
+            )
 
     def delete_goal(self, goal_id):
         self.repository.delete_goal(goal_id)
@@ -851,12 +878,20 @@ class TaskService:
             int(goal["target_seconds"] or 0),
         )
 
-    def add_goal_subgoal(self, goal_id, title):
+    def add_goal_subgoal(self, goal_id, title, label, target_date, project_id):
         title = (title or "").strip()
         if not title:
             return
+        label = (label or "").strip() or None
+        target_date = (target_date or "").strip() or None
+        project_id = int(project_id) if str(project_id).strip() else None
         self.repository.add_goal_subgoal(
-            int(goal_id), title, datetime.utcnow().isoformat()
+            int(goal_id),
+            title,
+            label,
+            target_date,
+            project_id,
+            datetime.utcnow().isoformat(),
         )
 
     def start_task(self, task_id):

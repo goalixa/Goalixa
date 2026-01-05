@@ -128,9 +128,13 @@ class SQLiteTaskRepository:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 goal_id INTEGER NOT NULL,
                 title TEXT NOT NULL,
+                label TEXT,
+                target_date TEXT,
+                project_id INTEGER,
                 status TEXT NOT NULL DEFAULT 'pending',
                 created_at TEXT NOT NULL,
-                FOREIGN KEY (goal_id) REFERENCES goals (id) ON DELETE CASCADE
+                FOREIGN KEY (goal_id) REFERENCES goals (id) ON DELETE CASCADE,
+                FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE SET NULL
             );
 
             CREATE TABLE IF NOT EXISTS habits (
@@ -190,6 +194,14 @@ class SQLiteTaskRepository:
         goal_names = {column["name"] for column in goal_columns}
         if "user_id" not in goal_names:
             db.execute("ALTER TABLE goals ADD COLUMN user_id INTEGER")
+        subgoal_columns = db.execute("PRAGMA table_info(goal_subgoals)").fetchall()
+        subgoal_names = {column["name"] for column in subgoal_columns}
+        if "label" not in subgoal_names:
+            db.execute("ALTER TABLE goal_subgoals ADD COLUMN label TEXT")
+        if "target_date" not in subgoal_names:
+            db.execute("ALTER TABLE goal_subgoals ADD COLUMN target_date TEXT")
+        if "project_id" not in subgoal_names:
+            db.execute("ALTER TABLE goal_subgoals ADD COLUMN project_id INTEGER")
         habit_columns = db.execute("PRAGMA table_info(habits)").fetchall()
         habit_names = {column["name"] for column in habit_columns}
         if "user_id" not in habit_names:
@@ -782,7 +794,8 @@ class SQLiteTaskRepository:
         placeholders = ",".join(["?"] * len(goal_ids))
         rows = db.execute(
             f"""
-            SELECT gs.id, gs.goal_id, gs.title, gs.status, gs.created_at
+            SELECT gs.id, gs.goal_id, gs.title, gs.label, gs.target_date, gs.project_id,
+                   gs.status, gs.created_at
             FROM goal_subgoals gs
             JOIN goals g ON g.id = gs.goal_id
             WHERE g.user_id = ? AND gs.goal_id IN ({placeholders})
@@ -796,6 +809,9 @@ class SQLiteTaskRepository:
                 {
                     "id": row["id"],
                     "title": row["title"],
+                    "label": row["label"],
+                    "target_date": row["target_date"],
+                    "project_id": row["project_id"],
                     "status": row["status"],
                     "created_at": row["created_at"],
                 }
@@ -849,10 +865,10 @@ class SQLiteTaskRepository:
         for title in subgoal_titles:
             db.execute(
                 """
-                INSERT INTO goal_subgoals (goal_id, title, status, created_at)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO goal_subgoals (goal_id, title, label, target_date, project_id, status, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
-                (goal_id, title, "pending", created_at),
+                (goal_id, title, None, None, None, "pending", created_at),
             )
         db.commit()
 
@@ -861,7 +877,8 @@ class SQLiteTaskRepository:
         user_id = self._require_user_id()
         return db.execute(
             """
-            SELECT gs.id, gs.goal_id, gs.title, gs.status, gs.created_at
+            SELECT gs.id, gs.goal_id, gs.title, gs.label, gs.target_date, gs.project_id,
+                   gs.status, gs.created_at
             FROM goal_subgoals gs
             JOIN goals g ON g.id = gs.goal_id
             WHERE gs.id = ? AND g.user_id = ?
@@ -883,7 +900,7 @@ class SQLiteTaskRepository:
         )
         db.commit()
 
-    def add_goal_subgoal(self, goal_id, title, created_at):
+    def add_goal_subgoal(self, goal_id, title, label, target_date, project_id, created_at):
         db = self._get_db()
         user_id = self._require_user_id()
         owns_goal = db.execute(
@@ -894,10 +911,10 @@ class SQLiteTaskRepository:
             return
         db.execute(
             """
-            INSERT INTO goal_subgoals (goal_id, title, status, created_at)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO goal_subgoals (goal_id, title, label, target_date, project_id, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-            (goal_id, title, "pending", created_at),
+            (goal_id, title, label, target_date, project_id, "pending", created_at),
         )
         db.commit()
 
