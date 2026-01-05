@@ -3,57 +3,146 @@
 {% set active_page = "labels" %}
 
 {% block content %}
-  <main class="container py-4">
-    <header class="header">
-      <h1>Labels</h1>
-      <p>Create and manage labels</p>
+  {% set newest_label = labels[0] if labels else None %}
+  <main class="container py-4 labels-page">
+    <header class="header labels-header">
+      <div>
+        <h1>Labels</h1>
+        <p>Design a tidy palette and keep every task easy to scan.</p>
+      </div>
+      <div class="labels-header-actions">
+        <a class="btn btn-outline-secondary btn-sm" href="#label-create">
+          <i class="bi bi-plus-lg"></i>
+          Create label
+        </a>
+        <a class="btn btn-outline-secondary btn-sm" href="#label-list">
+          <i class="bi bi-tags"></i>
+          Browse list
+        </a>
+      </div>
     </header>
 
-    <section class="card">
-      <form class="task-form" method="post" action="{{ url_for('create_label') }}">
-        <input type="text" name="name" placeholder="Label name" required />
-        <div class="color-picker" role="radiogroup" aria-label="Label colors">
-          <label class="color-option">
-            <input type="radio" name="color" value="#e85d75" checked />
-            <span class="color-dot" style="background-color: #e85d75"></span>
-          </label>
-          <label class="color-option">
-            <input type="radio" name="color" value="#1f6feb" />
-            <span class="color-dot" style="background-color: #1f6feb"></span>
-          </label>
-          <label class="color-option">
-            <input type="radio" name="color" value="#f2a900" />
-            <span class="color-dot" style="background-color: #f2a900"></span>
-          </label>
-          <label class="color-option">
-            <input type="radio" name="color" value="#22c55e" />
-            <span class="color-dot" style="background-color: #22c55e"></span>
-          </label>
-          <label class="color-option">
-            <input type="radio" name="color" value="#a855f7" />
-            <span class="color-dot" style="background-color: #a855f7"></span>
-          </label>
+    <section class="labels-hero">
+      <div class="label-stat-card">
+        <span class="label-stat-label">Total labels</span>
+        <span class="label-stat-value">{{ labels | length }}</span>
+        <span class="label-stat-meta">Ready to tag</span>
+      </div>
+      <div class="label-stat-card">
+        <span class="label-stat-label">Newest label</span>
+        <span class="label-stat-value">{{ newest_label['name'] if newest_label else "N/A" }}</span>
+        <span class="label-stat-meta">
+          {% if newest_label %}Just added{% else %}Create your first label{% endif %}
+        </span>
+      </div>
+      <div class="label-stat-card">
+        <span class="label-stat-label">Palette preview</span>
+        <div class="label-palette">
+          {% if labels %}
+            {% for label in labels[:6] %}
+              <span class="label-swatch" style="background-color: {{ label['color'] }}" title="{{ label['name'] }}"></span>
+            {% endfor %}
+          {% else %}
+            <span class="label-palette-empty">Add colors</span>
+          {% endif %}
         </div>
-        <button class="btn btn-primary btn-sm" type="submit">
-          <i class="bi bi-plus-lg"></i>
-          Add
-        </button>
+        <span class="label-stat-meta">Keep tones consistent</span>
+      </div>
+    </section>
+
+    <section class="card labels-card" id="label-create">
+      <div class="labels-card-header">
+        <div>
+          <p class="goals-label">Create</p>
+          <h2 class="goals-title">New label</h2>
+        </div>
+        <span class="labels-tip">Pick a name, then choose a color for fast scanning.</span>
+      </div>
+      <form class="label-create-form" method="post" action="{{ url_for('create_label') }}">
+        <label class="label-field">
+          <span>Label name</span>
+          <input type="text" name="name" placeholder="Design, Admin, Urgent..." required />
+        </label>
+        <div class="label-color-group">
+          <span class="label-field-title">Color</span>
+          <div class="color-picker label-color-picker" role="radiogroup" aria-label="Label colors">
+            <label class="color-option">
+              <input type="radio" name="color" value="#e85d75" checked />
+              <span class="color-dot" style="background-color: #e85d75"></span>
+            </label>
+            <label class="color-option">
+              <input type="radio" name="color" value="#1f6feb" />
+              <span class="color-dot" style="background-color: #1f6feb"></span>
+            </label>
+            <label class="color-option">
+              <input type="radio" name="color" value="#f2a900" />
+              <span class="color-dot" style="background-color: #f2a900"></span>
+            </label>
+            <label class="color-option">
+              <input type="radio" name="color" value="#22c55e" />
+              <span class="color-dot" style="background-color: #22c55e"></span>
+            </label>
+            <label class="color-option">
+              <input type="radio" name="color" value="#a855f7" />
+              <span class="color-dot" style="background-color: #a855f7"></span>
+            </label>
+            <label class="color-option color-option-custom">
+              <input type="radio" name="color" value="#0ea5e9" data-custom-radio />
+              <span class="color-dot" style="background-color: #0ea5e9"></span>
+              <span class="color-custom">
+                <input type="color" value="#0ea5e9" aria-label="Custom color" data-custom-color />
+                <span>Custom</span>
+              </span>
+            </label>
+          </div>
+        </div>
+        <div class="label-actions">
+          <button class="btn btn-primary btn-sm" type="submit">
+            <i class="bi bi-plus-lg"></i>
+            Add label
+          </button>
+        </div>
       </form>
     </section>
 
-    <section class="card">
-      <h2>Labels</h2>
+    <section class="card labels-card" id="label-list">
+      <div class="labels-card-header">
+        <div>
+          <p class="goals-label">Library</p>
+          <h2 class="goals-title">Label list</h2>
+          <span class="labels-count" data-label-count>
+            Showing {{ labels | length }} label{% if labels | length != 1 %}s{% endif %}
+          </span>
+        </div>
+        <div class="labels-controls">
+          <div class="labels-search">
+            <i class="bi bi-search"></i>
+            <input type="search" placeholder="Search labels" aria-label="Search labels" data-label-search />
+            <button class="icon-button labels-clear" type="button" aria-label="Clear search" data-label-clear hidden>
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="labels-sort">
+            <select aria-label="Sort labels" data-label-sort>
+              <option value="newest">Newest first</option>
+              <option value="name-asc">Name A-Z</option>
+              <option value="name-desc">Name Z-A</option>
+            </select>
+          </div>
+        </div>
+      </div>
       {% if labels %}
-        <ul class="task-list">
+        <ul class="task-list label-listing" data-label-list>
           {% for label in labels %}
-            <li class="task-item">
-              <div class="task-info">
+            <li class="task-item label-item" data-label-item data-label-name="{{ label['name'] }}" data-label-created="{{ label['created_at'] }}">
+              <div class="task-info label-info">
                 <div class="editable-label">
                   <span class="name-badge" style="background: {{ label['color'] }}">{{ label['name'] }}</span>
                   <button class="edit-toggle icon-button" type="button" aria-label="Edit label" data-edit-target="edit-label-{{ label['id'] }}">
                     <i class="bi bi-pencil"></i>
                   </button>
                 </div>
+                <span class="label-hex">{{ label['color'] }}</span>
                 <form id="edit-label-{{ label['id'] }}" class="edit-form" method="post" action="{{ url_for('edit_label', label_id=label['id']) }}">
                   <input type="text" name="name" value="{{ label['name'] }}" required />
                   <input type="color" name="color" value="{{ label['color'] }}" aria-label="Label color" />
@@ -74,6 +163,7 @@
             </li>
           {% endfor %}
         </ul>
+        <p class="empty" data-label-empty hidden>No labels match your search.</p>
       {% else %}
         <p class="empty">No labels yet.</p>
       {% endif %}

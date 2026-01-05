@@ -539,4 +539,87 @@ document.addEventListener("DOMContentLoaded", () => {
       formEl.classList.remove("is-open");
     });
   });
+
+  const customColorInput = document.querySelector("[data-custom-color]");
+  const customColorRadio = document.querySelector("[data-custom-radio]");
+  if (customColorInput && customColorRadio) {
+    const customOption = customColorRadio.closest(".color-option");
+    const customDot = customOption
+      ? customOption.querySelector(".color-dot")
+      : null;
+    const syncCustomColor = () => {
+      const value = customColorInput.value || "#0ea5e9";
+      customColorRadio.value = value;
+      if (customDot) {
+        customDot.style.backgroundColor = value;
+      }
+      customColorRadio.checked = true;
+    };
+    customColorInput.addEventListener("change", syncCustomColor);
+    customColorInput.addEventListener("input", syncCustomColor);
+  }
+
+  const labelList = document.querySelector("[data-label-list]");
+  const labelSearch = document.querySelector("[data-label-search]");
+  const labelSort = document.querySelector("[data-label-sort]");
+  const labelCount = document.querySelector("[data-label-count]");
+  const labelEmpty = document.querySelector("[data-label-empty]");
+  const labelClear = document.querySelector("[data-label-clear]");
+  if (labelList && (labelSearch || labelSort)) {
+    const labelItems = Array.from(
+      labelList.querySelectorAll("[data-label-item]"),
+    );
+    const totalCount = labelItems.length;
+    const getName = (item) => (item.dataset.labelName || "").toLowerCase();
+    const getCreated = (item) =>
+      Date.parse(item.dataset.labelCreated || "") || 0;
+    const sortItems = () => {
+      const sortValue = labelSort ? labelSort.value : "newest";
+      labelItems.sort((a, b) => {
+        if (sortValue === "name-asc") {
+          return getName(a).localeCompare(getName(b));
+        }
+        if (sortValue === "name-desc") {
+          return getName(b).localeCompare(getName(a));
+        }
+        return getCreated(b) - getCreated(a);
+      });
+      labelItems.forEach((item) => labelList.appendChild(item));
+    };
+    const updateLabelList = () => {
+      const query = labelSearch ? labelSearch.value.trim().toLowerCase() : "";
+      sortItems();
+      let visibleCount = 0;
+      labelItems.forEach((item) => {
+        const matches = !query || getName(item).includes(query);
+        item.hidden = !matches;
+        if (matches) {
+          visibleCount += 1;
+        }
+      });
+      if (labelCount) {
+        labelCount.textContent = `Showing ${visibleCount} of ${totalCount}`;
+      }
+      if (labelEmpty) {
+        labelEmpty.hidden = visibleCount !== 0;
+      }
+      if (labelClear) {
+        labelClear.hidden = query.length === 0;
+      }
+    };
+    if (labelSearch) {
+      labelSearch.addEventListener("input", updateLabelList);
+    }
+    if (labelSort) {
+      labelSort.addEventListener("change", updateLabelList);
+    }
+    if (labelClear && labelSearch) {
+      labelClear.addEventListener("click", () => {
+        labelSearch.value = "";
+        updateLabelList();
+        labelSearch.focus();
+      });
+    }
+    updateLabelList();
+  }
 });
