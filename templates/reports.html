@@ -7,76 +7,107 @@
 {% endblock %}
 
 {% block content %}
-    <main class="reports-page">
-      <header class="reports-hero">
-        <div class="reports-top">
-          <nav class="reports-tabs">
-            <button class="btn btn-outline-primary btn-sm reports-tab active" type="button">Summary</button>
-            <button class="btn btn-outline-primary btn-sm reports-tab" type="button">Detailed</button>
-            <button class="btn btn-outline-primary btn-sm reports-tab" type="button">Workload</button>
-          </nav>
-          <div class="reports-actions">
-            <button class="btn btn-light btn-sm icon-button ghost" type="button" aria-label="Settings">
-              <i class="bi bi-gear"></i>
-            </button>
-            <button class="btn btn-light btn-sm icon-button ghost" type="button" aria-label="Download">
-              <i class="bi bi-download"></i>
-            </button>
-          </div>
+    {% set top_project = project_totals[0] if project_totals else None %}
+    <main class="container py-4 reports-page">
+      <header class="header reports-header">
+        <div>
+          <h1>Reports</h1>
+          <p>Track time, focus, and project momentum at a glance.</p>
         </div>
-      </header>
-      <section class="reports-filters">
-        <div class="filter-group">
-          <div class="calendar-row">
-            <input class="calendar-input" id="report-range" type="text" readonly />
-          </div>
-        </div>
-        <div class="filter-actions">
-          <button class="btn btn-outline-secondary btn-sm chip" type="button">Projects</button>
-          <button class="btn btn-outline-secondary btn-sm chip" type="button">Labels</button>
-          <button class="btn btn-outline-secondary btn-sm chip ghost" type="button">
-            <i class="bi bi-plus-lg"></i>
-            Add filter
+        <div class="reports-actions">
+          <button class="btn btn-light btn-sm icon-button ghost" type="button" aria-label="Settings">
+            <i class="bi bi-gear"></i>
+          </button>
+          <button class="btn btn-light btn-sm icon-button ghost" type="button" aria-label="Download">
+            <i class="bi bi-download"></i>
           </button>
         </div>
+      </header>
+
+      <section class="reports-tabs-row">
+        <nav class="reports-tabs">
+          <button class="btn btn-outline-primary btn-sm reports-tab active" type="button">Summary</button>
+          <button class="btn btn-outline-primary btn-sm reports-tab" type="button">Detailed</button>
+          <button class="btn btn-outline-primary btn-sm reports-tab" type="button">Workload</button>
+        </nav>
       </section>
-      <section class="reports-summary-bar">
+
+      <section class="card reports-filters-card">
+        <div class="reports-filters">
+          <div class="filter-group">
+            <div class="calendar-row">
+              <input class="calendar-input" id="report-range" type="text" readonly />
+            </div>
+          </div>
+          <div class="filter-actions">
+            <button class="btn btn-outline-secondary btn-sm chip" type="button">Projects</button>
+            <button class="btn btn-outline-secondary btn-sm chip" type="button">Labels</button>
+            <button class="btn btn-outline-secondary btn-sm chip ghost" type="button">
+              <i class="bi bi-plus-lg"></i>
+              Add filter
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="reports-summary-grid">
         <div class="summary-item">
           <span class="summary-label">Total hours</span>
           <span class="summary-value" id="summary-total">00:00:00</span>
-        </div>
-        <div class="summary-item">
-          <span class="summary-label">Billable hours</span>
-          <span class="summary-value">-</span>
-        </div>
-        <div class="summary-item">
-          <span class="summary-label">Amount</span>
-          <span class="summary-value">-</span>
+          <span class="summary-meta">Time tracked in range</span>
         </div>
         <div class="summary-item">
           <span class="summary-label">Average daily hours</span>
           <span class="summary-value" id="summary-average">0.00 Hours</span>
+          <span class="summary-meta">Based on selected range</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Active projects</span>
+          <span class="summary-value">{{ project_totals | length }}</span>
+          <span class="summary-meta">Projects with activity</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Top project</span>
+          <span class="summary-value">
+            {% if top_project %}
+              {{ top_project["name"] }}
+            {% else %}
+              None yet
+            {% endif %}
+          </span>
+          <span class="summary-meta">
+            {% if top_project %}
+              {{ top_project["total_seconds"] | format_seconds }}
+            {% else %}
+              Add time to see ranking
+            {% endif %}
+          </span>
         </div>
       </section>
-      <div class="reports-wide">
-        <div class="reports-duo">
-          <section class="card reports-chart">
-            <h2>Time summary</h2>
+
+      <section class="reports-duo">
+        <div class="card reports-chart">
+          <div class="reports-card-header">
+            <div>
+              <p class="goals-label">Summary</p>
+              <h2 class="goals-title">Time overview</h2>
+            </div>
             <div class="chart-controls">
               <div class="mode-switch">
                 <button class="btn btn-outline-primary btn-sm mode-button active" type="button" data-mode="bar">Bar</button>
                 <button class="btn btn-outline-primary btn-sm mode-button" type="button" data-mode="line">Line</button>
               </div>
             </div>
-            {% if summary %}
-              <div class="chart-panel is-active">
-                <canvas id="reports-chart" height="160"></canvas>
-              </div>
-            {% else %}
-              <p class="empty">No activity yet.</p>
-            {% endif %}
-          </section>
-        <section class="card donut-panel">
+          </div>
+          {% if summary %}
+            <div class="chart-panel is-active">
+              <canvas id="reports-chart" height="160"></canvas>
+            </div>
+          {% else %}
+            <p class="empty">No activity yet.</p>
+          {% endif %}
+        </div>
+        <div class="card donut-panel">
           <div class="donut-header">
             <h3>Project distribution</h3>
             <select class="donut-select" id="distribution-group">
@@ -89,14 +120,42 @@
             <canvas id="distribution-chart" height="160"></canvas>
             <div class="donut-center" id="distribution-total">00:00:00</div>
           </div>
-        </section>
         </div>
-      </div>
+      </section>
 
-      <div class="reports-body reports-body-wide">
+      <section class="reports-insights">
+        <div class="card reports-insight-card">
+          <h3>Focus notes</h3>
+          <p class="reports-insight-text">
+            Compare weeks, keep tags consistent, and focus on your top 2 projects for clearer momentum.
+          </p>
+          <div class="reports-insight-actions">
+            <button class="btn btn-outline-secondary btn-sm" type="button">Save view</button>
+            <button class="btn btn-outline-secondary btn-sm" type="button">Share link</button>
+          </div>
+        </div>
+        <div class="card reports-insight-card">
+          <h3>Categories tracked</h3>
+          <p class="reports-insight-metric">{{ summary | length }}</p>
+          <p class="reports-insight-text">Charts update automatically with the range picker.</p>
+        </div>
+        <div class="card reports-insight-card">
+          <h3>Weekly rhythm</h3>
+          <ul class="reports-insight-list">
+            <li>Lock a 2-hour deep focus block.</li>
+            <li>Use labels for recurring themes.</li>
+            <li>Review the top project each Friday.</li>
+          </ul>
+        </div>
+      </section>
 
       <section class="card projects-total-card">
-        <h2>Projects Total</h2>
+        <div class="reports-card-header">
+          <div>
+            <p class="goals-label">Projects</p>
+            <h2 class="goals-title">Project totals</h2>
+          </div>
+        </div>
         {% if project_totals %}
           <div class="projects-total-list">
             {% for project in project_totals %}
@@ -147,7 +206,6 @@
           <p class="empty">No projects yet.</p>
         {% endif %}
       </section>
-      </div>
     </main>
 {% endblock %}
 
