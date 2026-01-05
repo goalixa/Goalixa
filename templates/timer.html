@@ -291,6 +291,7 @@
       const resetButton = document.getElementById("pomodoro-reset");
       const skipButton = document.getElementById("pomodoro-skip");
       const presetButtons = document.querySelectorAll("[data-pomodoro-mode]");
+      const baseTitle = document.title;
 
       const presets = {
         work: 25 * 60,
@@ -349,6 +350,17 @@
         return "Focus";
       };
 
+      const updatePageTitle = (state) => {
+        if (!state.isRunning) {
+          document.title = baseTitle;
+          return;
+        }
+        const time = formatClock(state.remaining);
+        const mode = modeLabel(state.mode);
+        const taskLabel = state.taskName ? ` - ${state.taskName}` : "";
+        document.title = `${time} · ${mode}${taskLabel}`;
+      };
+
       const updatePomodoroUI = (state) => {
         if (!pomodoroDisplay || !pomodoroMode || !pomodoroMeta) {
           return;
@@ -368,6 +380,7 @@
         if (pauseButton) {
           pauseButton.disabled = !state.isRunning;
         }
+        updatePageTitle(state);
       };
 
       const getNextMode = (state) => {
