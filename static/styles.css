@@ -1104,6 +1104,276 @@ body {
   font-weight: 600;
 }
 
+.labels-page {
+  display: grid;
+  gap: 24px;
+}
+
+.labels-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.labels-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.labels-hero {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.label-stat-card {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="dark"] .label-stat-card {
+  background: #161c25;
+  border-color: #2a3342;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.45);
+}
+
+.label-stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.label-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.label-stat-meta {
+  color: var(--muted);
+}
+
+.label-palette {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.label-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="dark"] .label-swatch {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+.label-palette-empty {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.labels-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.labels-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.labels-tip {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.labels-count {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.label-create-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.label-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
+  flex: 1;
+  font-weight: 600;
+}
+
+.label-field input {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  font-size: 0.95rem;
+}
+
+.label-color-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label-field-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.label-color-picker {
+  flex-wrap: wrap;
+}
+
+.color-option-custom {
+  gap: 8px;
+}
+
+.color-custom {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.color-custom input[type="color"] {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.label-actions {
+  display: flex;
+  align-items: center;
+}
+
+.labels-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.labels-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.labels-search i {
+  position: absolute;
+  left: 10px;
+  color: var(--muted);
+}
+
+.labels-search input {
+  padding: 8px 34px 8px 32px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-size: 0.9rem;
+  background: var(--card);
+}
+
+.labels-clear {
+  position: absolute;
+  right: 6px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 2px;
+}
+
+.labels-clear:hover {
+  color: var(--text);
+}
+
+.labels-sort select {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 0.9rem;
+}
+
+.label-listing {
+  margin-top: 4px;
+}
+
+.label-item {
+  align-items: center;
+}
+
+.label-info {
+  gap: 8px 12px;
+}
+
+.label-hex {
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .labels-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .labels-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .label-create-form {
+    align-items: stretch;
+  }
+
+  .labels-controls,
+  .labels-search,
+  .labels-sort {
+    width: 100%;
+  }
+
+  .labels-search input,
+  .labels-sort select {
+    width: 100%;
+  }
+}
+
 .task-list {
   list-style: none;
   padding: 0;
