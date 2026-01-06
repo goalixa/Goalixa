@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 fsqla.FsModels.set_db_info(db)
+user_datastore = None
 
 
 class Role(db.Model, fsqla.FsRoleMixin):
@@ -34,6 +35,7 @@ class User(db.Model, fsqla.FsUserMixin):
 
 
 def init_security(app):
+    global user_datastore
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
     security = Security(app, user_datastore)
 

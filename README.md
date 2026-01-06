@@ -41,6 +41,17 @@ python3 main.py
 
 Open `http://localhost:5000`.
 
+## Google OAuth (optional)
+To enable "Continue with Google" sign-in, set these environment variables before starting the app:
+
+```bash
+export GOOGLE_CLIENT_ID="your-client-id"
+export GOOGLE_CLIENT_SECRET="your-client-secret"
+```
+
+Make sure your Google OAuth consent screen has the redirect URI:
+`http://localhost:5000/login/google/callback`
+
 ## Docker
 Build and run:
 ```bash

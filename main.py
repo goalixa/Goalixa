@@ -1,8 +1,11 @@
 import os
 
+from dotenv import load_dotenv
+
 from flask import Flask
 
 from app.auth.models import db, init_security
+from app.auth.oauth import init_oauth
 
 from app.presentation.filters import register_filters
 from app.presentation.routes import register_routes
@@ -14,6 +17,7 @@ DB_PATH = os.path.join(BASE_DIR, "data", "data.db")
 
 
 def create_app():
+    load_dotenv()
     app = Flask(__name__)
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret")
     app.config["SECURITY_PASSWORD_SALT"] = os.getenv("SECURITY_PASSWORD_SALT", "dev-salt")
@@ -38,6 +42,7 @@ def create_app():
 
     db.init_app(app)
     init_security(app)
+    init_oauth(app)
 
     repository = SQLiteTaskRepository(DB_PATH)
     service = TaskService(repository)
@@ -45,6 +50,9 @@ def create_app():
     register_routes(app, service)
     register_filters(app)
     app.teardown_appcontext(repository.close_db)
+    app.context_processor(lambda: {
+        "google_oauth_enabled": app.config.get("GOOGLE_OAUTH_ENABLED", False),
+    })
 
     with app.app_context():
         service.init_db()

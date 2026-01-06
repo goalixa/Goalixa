@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title or "Error" }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.min.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <style>
+    body {
+      background: var(--page-bg);
+    }
+  </style>
+</head>
+<body>
+  <main class="container py-5 error-page">
+    <section class="card error-card">
+      <div class="error-hero">
+        <div class="error-icon">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <div>
+          <p class="error-code">Error {{ status_code }}</p>
+          <h1 class="error-title">{{ title }}</h1>
+          <p class="error-message">{{ message }}</p>
+        </div>
+      </div>
+      {% if details %}
+        <div class="error-details">
+          {{ details }}
+        </div>
+      {% endif %}
+      <div class="error-actions">
+        {% if action_url %}
+          <a class="btn btn-primary btn-sm" href="{{ action_url }}">
+            {{ action_label or "Continue" }}
+          </a>
+        {% endif %}
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('overview') }}">
+          Back to overview
+        </a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

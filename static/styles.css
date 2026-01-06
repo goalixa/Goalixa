@@ -2687,6 +2687,72 @@ body {
   border-radius: 12px;
 }
 
+.error-page {
+  display: grid;
+  place-items: center;
+}
+
+.error-card {
+  max-width: 680px;
+  width: 100%;
+  display: grid;
+  gap: 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(31, 111, 235, 0.08), rgba(242, 169, 0, 0.08));
+}
+
+.error-hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+.error-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: rgba(31, 111, 235, 0.12);
+  color: var(--accent);
+  font-size: 1.4rem;
+}
+
+.error-code {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.error-title {
+  margin: 4px 0;
+  font-size: 1.6rem;
+}
+
+.error-message {
+  margin: 0;
+  color: var(--muted);
+}
+
+.error-details {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px dashed var(--border);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .timer-page {
   flex: 1;
 }

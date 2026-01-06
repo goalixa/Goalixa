@@ -9,6 +9,15 @@
     <div class="alert alert-info py-2">{{ error }}</div>
   {% endif %}
 
+  {% if google_oauth_enabled %}
+    <div class="mb-3">
+      <a class="btn btn-outline-secondary w-100" href="{{ url_for('google_login') }}">
+        Continue with Google
+      </a>
+    </div>
+    <div class="text-center text-muted small mb-3">or</div>
+  {% endif %}
+
   <form method="post" action="{{ url_for_security('login') }}">
     {{ login_user_form.hidden_tag() }}
     {{ render_field(login_user_form.email, "you@example.com") }}
