@@ -75,6 +75,16 @@ body {
   transition: width 0.2s ease, padding 0.2s ease;
 }
 
+.app-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.page-content {
+  flex: 1 1 auto;
+}
+
 .sidebar-header {
   display: flex;
   align-items: center;
@@ -126,8 +136,7 @@ body {
 
 .sidebar-footer {
   margin-top: auto;
-  position: sticky;
-  bottom: 16px;
+  position: static;
 }
 
 .theme-toggle {
@@ -310,6 +319,11 @@ body {
     flex: 0 0 var(--sidebar-width);
     max-width: var(--sidebar-width);
     width: var(--sidebar-width);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    align-self: flex-start;
   }
 
   .app-shell .app-main {

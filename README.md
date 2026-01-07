@@ -1,4 +1,4 @@
-# Focus (StudyTimer)
+# Goalixa
 
 Simple Flask app to track tasks and time spent per task. Uses SQLite for storage and follows a 3-layer structure (presentation, service, repository) to demonstrate basic dependency injection.
 

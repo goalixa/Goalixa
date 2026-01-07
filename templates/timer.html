@@ -80,7 +80,7 @@
         </div>
         <div class="timer-range-right">
           <div class="timer-view-box">
-            <button class="btn btn-outline-primary btn-sm timer-view-btn is-active" type="button" data-view-button="calendar">
+            <button class="btn btn-outline-primary btn-sm timer-view-btn" type="button" data-view-button="calendar">
               <i class="bi bi-calendar-week"></i>
               Calendar
             </button>
@@ -88,7 +88,7 @@
               <i class="bi bi-list-check"></i>
               View List
             </button>
-            <button class="btn btn-outline-primary btn-sm timer-view-btn" type="button" data-view-button="timesheet">
+            <button class="btn btn-outline-primary btn-sm timer-view-btn is-active" type="button" data-view-button="timesheet">
               <i class="bi bi-clock-history"></i>
               Timesheet
             </button>
@@ -145,7 +145,7 @@
         </div>
       </div>
     </section>
-    <section class="timer-calendar-section timer-view-panel is-active" data-view-panel="calendar">
+    <section class="timer-calendar-section timer-view-panel" data-view-panel="calendar">
       <div class="card timer-calendar-card">
         <div id="timer-calendar"></div>
       </div>
@@ -153,7 +153,7 @@
     <section class="timer-calendar-section timer-view-panel" data-view-panel="list">
       <div class="card timer-list-card">
         {% if timer_list_groups %}
-          {% for group in timer_list_groups %}
+          {% for group in timer_list_groups | reverse %}
             <div class="timer-list-group">
               <div class="timer-list-header">
                 <span class="timer-list-day">{{ group["label"] }}</span>
@@ -200,7 +200,7 @@
         {% endif %}
       </div>
     </section>
-    <section class="timer-calendar-section timer-view-panel" data-view-panel="timesheet">
+    <section class="timer-calendar-section timer-view-panel is-active" data-view-panel="timesheet">
       <div class="card timer-timesheet-card">
         {% if timer_list_groups %}
           <div class="timesheet-header">
@@ -210,7 +210,7 @@
             </div>
           </div>
           <div class="timesheet-table">
-            {% for group in timer_list_groups %}
+            {% for group in timer_list_groups | reverse %}
               <div class="timesheet-row">
                 <div class="timesheet-day">
                   <div class="timesheet-day-label">{{ group["label"] }}</div>
