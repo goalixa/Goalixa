@@ -10,57 +10,35 @@
 {% block content %}
   <div class="timer-page">
     <header class="timer-hero">
-      <div class="timer-controls">
-        <div class="timer-select">
-          <label class="timer-input-label" for="task-picker">Current task</label>
-          <div class="timer-input-group">
-            <input
-              id="task-picker"
-              type="text"
-              placeholder="What are you working on?"
-              autocomplete="off"
-              aria-expanded="false"
-              aria-controls="task-dropdown"
-            />
-            <button class="timer-clear" id="task-clear" type="button" aria-label="Clear selected task" disabled>
-              <i class="bi bi-x"></i>
-            </button>
-          </div>
-          <div class="timer-dropdown" id="task-dropdown">
-            <input class="timer-search" type="text" placeholder="Search tasks..." />
-            <div class="timer-list">
-              <button type="button">Recent: Design VPC Architecture</button>
-              <button type="button">Recent: Build ETL Jobs</button>
-              <button type="button">Recent: Refactor Navigation</button>
-              <button type="button">Inventory Legacy Services</button>
-              <button type="button">Accessibility QA</button>
+        <div class="timer-controls">
+          <div class="timer-select">
+            <label class="timer-input-label" for="task-picker">Current task</label>
+            <div class="timer-input-group">
+              <input
+                id="task-picker"
+                type="text"
+                placeholder="What are you working on?"
+                autocomplete="off"
+                aria-expanded="false"
+                aria-controls="task-dropdown"
+              />
+              <button class="timer-clear" id="task-clear" type="button" aria-label="Clear selected task" disabled>
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+            <div class="timer-dropdown" id="task-dropdown">
+              <input class="timer-search" type="text" placeholder="Search tasks..." />
+              <div class="timer-list">
+                <button type="button">Recent: Design VPC Architecture</button>
+                <button type="button">Recent: Build ETL Jobs</button>
+                <button type="button">Recent: Refactor Navigation</button>
+                <button type="button">Inventory Legacy Services</button>
+                <button type="button">Accessibility QA</button>
+              </div>
             </div>
           </div>
         </div>
-        <div class="timer-actions">
-          <button class="btn btn-primary btn-sm timer-btn primary" type="button" aria-label="Start or Pause" data-timer-toggle>
-            <span class="timer-btn-icon timer-btn-icon--start">
-              <i class="bi bi-play-fill"></i>
-            </span>
-            <span class="timer-btn-icon timer-btn-icon--pause">
-              <i class="bi bi-pause-fill"></i>
-            </span>
-            <span class="timer-btn-label">Start</span>
-          </button>
-          <button class="btn btn-outline-secondary btn-sm timer-btn ghost" type="button" data-timer-reset>
-            Reset
-          </button>
-          <button class="btn btn-outline-secondary btn-sm timer-btn ghost" type="button" data-timer-skip>
-            Skip
-          </button>
-        </div>
-      </div>
-      <div class="timer-hero-meta">
-        <div class="timer-chip" id="pomodoro-chip-mode">Focus</div>
-        <div class="timer-chip timer-chip--accent" id="pomodoro-chip-remaining">25:00</div>
-        <div class="timer-chip" id="pomodoro-chip-session">Session 1/4</div>
-      </div>
-    </header>
+      </header>
     <section class="timer-range-section">
       <div class="timer-range-card">
         <div class="timer-range-left">
@@ -360,12 +338,6 @@
       const pomodoroMeta = document.getElementById("pomodoro-meta");
       const pomodoroRing = document.querySelector(".pomodoro-ring");
       const pomodoroDots = document.querySelectorAll("[data-session-dot]");
-      const heroMode = document.getElementById("pomodoro-chip-mode");
-      const heroRemaining = document.getElementById("pomodoro-chip-remaining");
-      const heroSession = document.getElementById("pomodoro-chip-session");
-      const heroToggle = document.querySelector("[data-timer-toggle]");
-      const heroReset = document.querySelector("[data-timer-reset]");
-      const heroSkip = document.querySelector("[data-timer-skip]");
       const taskClear = document.getElementById("task-clear");
       const startButton = document.getElementById("pomodoro-start");
       const pauseButton = document.getElementById("pomodoro-pause");
@@ -455,15 +427,6 @@
             ? `Task: ${state.taskName}`
             : "No task selected";
         }
-        if (heroMode) {
-          heroMode.textContent = modeLabel(state.mode);
-        }
-        if (heroRemaining) {
-          heroRemaining.textContent = formatClock(state.remaining);
-        }
-        if (heroSession) {
-          heroSession.textContent = `Session ${nextSession} / 4`;
-        }
         if (pomodoroDots.length) {
           const completed = state.completedWork % 4;
           pomodoroDots.forEach((dot, index) => {
@@ -483,16 +446,6 @@
         }
         if (pauseButton) {
           pauseButton.disabled = !state.isRunning;
-        }
-        if (heroToggle) {
-          heroToggle.classList.toggle("is-running", state.isRunning);
-          heroToggle.setAttribute("aria-pressed", state.isRunning ? "true" : "false");
-          const label = heroToggle.querySelector(".timer-btn-label");
-          if (label) {
-            label.textContent = state.isRunning ? "Pause" : "Start";
-          }
-          heroToggle.disabled = !state.isRunning && requiresTask;
-          heroToggle.title = requiresTask ? "Select a task to start focus." : "";
         }
         if (taskClear) {
           taskClear.disabled = !state.taskId;
@@ -707,7 +660,7 @@
           startInterval(state);
         }
 
-        startButton?.addEventListener("click", () => {
+        const startPomodoro = () => {
           if (state.mode === "work" && !state.taskId) {
             alert("Select a task for this Pomodoro.");
             return;
@@ -721,7 +674,9 @@
           saveState(state);
           updatePomodoroUI(state);
           startInterval(state);
-        });
+        };
+
+        startButton?.addEventListener("click", startPomodoro);
 
         pauseButton?.addEventListener("click", () => {
           state.isRunning = false;
@@ -775,22 +730,6 @@
             updatePomodoroUI(state);
             stopInterval();
           });
-        });
-
-        heroToggle?.addEventListener("click", () => {
-          if (state.isRunning) {
-            pauseButton?.click();
-          } else {
-            startButton?.click();
-          }
-        });
-
-        heroReset?.addEventListener("click", () => {
-          resetButton?.click();
-        });
-
-        heroSkip?.addEventListener("click", () => {
-          skipButton?.click();
         });
 
         taskClear?.addEventListener("click", () => {
@@ -941,6 +880,9 @@
                     stopTaskTimer(state);
                   }
                   startTaskTimer(state);
+                }
+                if (!state.isRunning && state.mode === "work") {
+                  startPomodoro();
                 }
               });
 
