@@ -765,16 +765,20 @@
           return div.innerHTML;
         };
 
-        const renderTasks = (tasks, query) => {
-          if (!taskList) {
-            return;
-          }
-          const term = (query || "").toLowerCase();
-          const filtered = tasks.filter((task) => {
+        const filterTasks = (tasks, query) => {
+          const term = (query || "").toLowerCase().trim();
+          return tasks.filter((task) => {
             const name = (task.name || "").toLowerCase();
             const project = (task.project_name || "").toLowerCase();
             return !term || name.includes(term) || project.includes(term);
           });
+        };
+
+        const renderTasks = (tasks, query) => {
+          if (!taskList) {
+            return;
+          }
+          const filtered = filterTasks(tasks, query);
           if (!filtered.length) {
             taskList.innerHTML = "<div class=\"timer-empty-state\">No tasks found.</div>";
             return;
@@ -788,6 +792,35 @@
               return `<button type="button" data-task-id="${task.id}">${name}${project} · ${total}</button>`;
             })
             .join("");
+        };
+
+        const selectTask = (selected) => {
+          if (!selected) {
+            return;
+          }
+          const previousTaskId = state.taskId;
+          state.taskId = selected.id;
+          state.taskName = selected.name;
+          if (taskPicker) {
+            taskPicker.value = selected.name;
+          }
+          if (taskSearch) {
+            taskSearch.value = "";
+          }
+          renderTasks(cachedTasks, "");
+          closeDropdown();
+          saveState(state);
+          updatePomodoroUI(state);
+
+          if (state.isRunning && state.mode === "work") {
+            if (previousTaskId && previousTaskId !== state.taskId) {
+              stopTaskTimer(state);
+            }
+            startTaskTimer(state);
+          }
+          if (!state.isRunning && state.mode === "work") {
+            startPomodoro();
+          }
         };
 
         const openDropdown = () => {
@@ -827,11 +860,26 @@
                 openDropdown();
               });
 
+              taskPicker.addEventListener("input", () => {
+                openDropdown();
+                if (taskSearch) {
+                  taskSearch.value = taskPicker.value;
+                }
+                renderTasks(cachedTasks, taskPicker.value);
+              });
+
               taskPicker.addEventListener("keydown", (event) => {
                 if (event.key === "ArrowDown") {
                   event.preventDefault();
                   openDropdown();
                   taskSearch?.focus();
+                }
+                if (event.key === "Enter") {
+                  const candidates = filterTasks(cachedTasks, taskPicker.value);
+                  if (candidates.length) {
+                    event.preventDefault();
+                    selectTask(candidates[0]);
+                  }
                 }
                 if (event.key === "Escape") {
                   closeDropdown();
@@ -862,28 +910,7 @@
                 const selected = cachedTasks.find(
                   (task) => String(task.id) === String(taskId),
                 );
-                if (!selected) {
-                  return;
-                }
-                const previousTaskId = state.taskId;
-                state.taskId = selected.id;
-                state.taskName = selected.name;
-                taskPicker.value = selected.name;
-                taskSearch.value = "";
-                renderTasks(cachedTasks, "");
-                closeDropdown();
-                saveState(state);
-                updatePomodoroUI(state);
-
-                if (state.isRunning && state.mode === "work") {
-                  if (previousTaskId && previousTaskId !== state.taskId) {
-                    stopTaskTimer(state);
-                  }
-                  startTaskTimer(state);
-                }
-                if (!state.isRunning && state.mode === "work") {
-                  startPomodoro();
-                }
+                selectTask(selected);
               });
 
               document.addEventListener("click", (event) => {
