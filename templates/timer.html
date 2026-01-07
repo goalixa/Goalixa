@@ -115,6 +115,10 @@
             <i class="bi bi-skip-forward-fill"></i>
             Skip
           </button>
+          <button class="btn btn-outline-success btn-sm" type="button" id="pomodoro-done">
+            <i class="bi bi-check2-circle"></i>
+            Done today
+          </button>
         </div>
         <div class="pomodoro-presets">
           <button class="btn btn-light btn-sm" type="button" data-pomodoro-mode="work">Focus 25</button>
@@ -343,6 +347,7 @@
       const pauseButton = document.getElementById("pomodoro-pause");
       const resetButton = document.getElementById("pomodoro-reset");
       const skipButton = document.getElementById("pomodoro-skip");
+      const doneButton = document.getElementById("pomodoro-done");
       const presetButtons = document.querySelectorAll("[data-pomodoro-mode]");
       const baseTitle = document.title;
 
@@ -446,6 +451,9 @@
         }
         if (pauseButton) {
           pauseButton.disabled = !state.isRunning;
+        }
+        if (doneButton) {
+          doneButton.disabled = !state.taskId;
         }
         if (taskClear) {
           taskClear.disabled = !state.taskId;
@@ -713,6 +721,21 @@
           saveState(state);
           updatePomodoroUI(state);
           stopInterval();
+        });
+
+        doneButton?.addEventListener("click", async () => {
+          if (!state.taskId) {
+            alert("Select a task to mark it done today.");
+            return;
+          }
+          try {
+            await fetch(`/api/tasks/${state.taskId}/daily-check`, { method: "POST" });
+            if (typeof window.showPomodoroToast === "function") {
+              window.showPomodoroToast("Marked done", "Task checked off for today.");
+            }
+          } catch (error) {
+            console.error(error);
+          }
         });
 
         presetButtons.forEach((button) => {
