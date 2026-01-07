@@ -145,15 +145,13 @@ def register_routes(app, service):
         today = service.current_local_date().isoformat()
         habits_list = service.list_habits(today)
         summary = service.habits_summary(habits_list)
-        task_view = service.list_tasks_for_today()
-        projects = service.list_projects()
+        todo_view = service.list_todos_for_today()
         return render_template(
             "planner.html",
             habits=habits_list,
             habits_summary=summary,
-            tasks=task_view["tasks"],
-            done_today_tasks=task_view["done_today_tasks"],
-            projects=projects,
+            todos=todo_view["todos"],
+            done_todos=todo_view["done_todos"],
             today=today,
         )
 
@@ -313,6 +311,25 @@ def register_routes(app, service):
     def delete_habit(habit_id):
         service.delete_habit(habit_id)
         return redirect(request.referrer or url_for("habits"))
+
+    @app.route("/todos", methods=["POST"])
+    @auth_required()
+    def create_todo():
+        service.add_todo(request.form.get("name", ""))
+        return redirect(request.referrer or url_for("planner"))
+
+    @app.route("/todos/<int:todo_id>/toggle", methods=["POST"])
+    @auth_required()
+    def toggle_todo(todo_id):
+        done = request.form.get("done") in {"1", "on", "true"}
+        service.set_todo_done(todo_id, done)
+        return redirect(request.referrer or url_for("planner"))
+
+    @app.route("/todos/<int:todo_id>/delete", methods=["POST"])
+    @auth_required()
+    def delete_todo(todo_id):
+        service.delete_todo(todo_id)
+        return redirect(request.referrer or url_for("planner"))
 
     @app.route("/goals", methods=["GET"])
     @auth_required()

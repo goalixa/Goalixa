@@ -366,6 +366,32 @@ class TaskService:
     def delete_reminder(self, reminder_id):
         self.repository.delete_reminder(int(reminder_id))
 
+    def list_todos_for_today(self):
+        today = self.current_local_date().isoformat()
+        todos = [dict(row) for row in self.repository.fetch_todos_for_date(today)]
+        open_todos = []
+        done_todos = []
+        for todo in todos:
+            if todo.get("completed_at"):
+                done_todos.append(todo)
+            else:
+                open_todos.append(todo)
+        return {"todos": open_todos, "done_todos": done_todos}
+
+    def add_todo(self, name):
+        name = (name or "").strip()
+        if not name:
+            return
+        today = self.current_local_date().isoformat()
+        self.repository.create_todo(name, today, datetime.utcnow().isoformat())
+
+    def set_todo_done(self, todo_id, done):
+        completed_at = datetime.utcnow().isoformat() if done else None
+        self.repository.set_todo_completed(int(todo_id), completed_at)
+
+    def delete_todo(self, todo_id):
+        self.repository.delete_todo(int(todo_id))
+
     def _local_day_bounds(self, day):
         _, tz = self._get_timezone()
         start_local = datetime.combine(day, datetime.min.time(), tzinfo=tz)
@@ -471,9 +497,10 @@ class TaskService:
 
     def add_task(self, name, project_id, label_ids=None):
         name = (name or "").strip()
-        if name and project_id:
+        if name:
+            project_value = int(project_id) if project_id else None
             task_id = self.repository.create_task(
-                name, datetime.utcnow().isoformat(), int(project_id)
+                name, datetime.utcnow().isoformat(), project_value
             )
             for label_id in label_ids or []:
                 self.repository.add_label_to_task(task_id, int(label_id))
