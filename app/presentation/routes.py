@@ -305,6 +305,11 @@ def register_routes(app, service):
         active_goals = [goal for goal in goals_list if goal.get("status") in {"active", "at_risk"}]
         total_goal_seconds = sum(goal.get("total_seconds", 0) for goal in goals_list)
         targets_set = len([goal for goal in goals_list if goal.get("target_date")])
+        week_start, week_end = service.current_week_range()
+        weekly_goals = service.list_weekly_goals(
+            week_start=week_start.isoformat(),
+            week_end=week_end.isoformat(),
+        )
         return render_template(
             "goals.html",
             goals=goals_list,
@@ -313,6 +318,10 @@ def register_routes(app, service):
             active_goals_count=len(active_goals),
             total_goal_seconds=total_goal_seconds,
             targets_set=targets_set,
+            weekly_goals=weekly_goals,
+            weekly_range_label=f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}",
+            week_start=week_start.isoformat(),
+            week_end=week_end.isoformat(),
         )
 
     @app.route("/goals/<int:goal_id>", methods=["GET"])
@@ -396,6 +405,54 @@ def register_routes(app, service):
     def delete_goal(goal_id):
         service.delete_goal(goal_id)
         return redirect(url_for("goals"))
+
+    @app.route("/weekly-goals", methods=["GET"])
+    @auth_required()
+    def weekly_goals():
+        week_start, week_end = service.current_week_range()
+        weekly_current = service.list_weekly_goals(
+            week_start=week_start.isoformat(),
+            week_end=week_end.isoformat(),
+        )
+        weekly_all = service.list_weekly_goals()
+        return render_template(
+            "weekly_goals.html",
+            weekly_goals_current=weekly_current,
+            weekly_goals_all=weekly_all,
+            weekly_range_label=f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}",
+            week_start=week_start.isoformat(),
+            week_end=week_end.isoformat(),
+        )
+
+    @app.route("/weekly-goals", methods=["POST"])
+    @auth_required()
+    def create_weekly_goal():
+        week_start = request.form.get("week_start")
+        week_end = request.form.get("week_end")
+        if not week_start or not week_end:
+            start_date, end_date = service.current_week_range()
+            week_start = start_date.isoformat()
+            week_end = end_date.isoformat()
+        service.add_weekly_goal(
+            request.form.get("title", ""),
+            request.form.get("target_hours", 0),
+            week_start,
+            week_end,
+        )
+        return redirect(request.referrer or url_for("weekly_goals"))
+
+    @app.route("/weekly-goals/<int:goal_id>/toggle", methods=["POST"])
+    @auth_required()
+    def toggle_weekly_goal(goal_id):
+        status = request.form.get("status", "active")
+        service.toggle_weekly_goal_status(goal_id, status)
+        return redirect(request.referrer or url_for("weekly_goals"))
+
+    @app.route("/weekly-goals/<int:goal_id>/delete", methods=["POST"])
+    @auth_required()
+    def delete_weekly_goal(goal_id):
+        service.delete_weekly_goal(goal_id)
+        return redirect(request.referrer or url_for("weekly_goals"))
 
     @app.route("/account", methods=["GET"])
     @auth_required()

@@ -178,6 +178,18 @@ class SQLiteTaskRepository:
                 FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS weekly_goals (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                target_seconds INTEGER NOT NULL DEFAULT 0,
+                week_start TEXT NOT NULL,
+                week_end TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'active',
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
+            );
+
             CREATE TABLE IF NOT EXISTS app_settings (
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
@@ -228,6 +240,10 @@ class SQLiteTaskRepository:
             db.execute("ALTER TABLE habits ADD COLUMN goal_name TEXT")
         if "subgoal_name" not in habit_names:
             db.execute("ALTER TABLE habits ADD COLUMN subgoal_name TEXT")
+        weekly_goal_columns = db.execute("PRAGMA table_info(weekly_goals)").fetchall()
+        weekly_goal_names = {column["name"] for column in weekly_goal_columns}
+        if weekly_goal_columns and "user_id" not in weekly_goal_names:
+            db.execute("ALTER TABLE weekly_goals ADD COLUMN user_id INTEGER")
         default_user = db.execute(
             "SELECT id FROM user ORDER BY id ASC LIMIT 1"
         ).fetchone()
@@ -257,6 +273,81 @@ class SQLiteTaskRepository:
                 "UPDATE habits SET user_id = ? WHERE user_id IS NULL",
                 (default_user_id,),
             )
+            db.execute(
+                "UPDATE weekly_goals SET user_id = ? WHERE user_id IS NULL",
+                (default_user_id,),
+            )
+        db.commit()
+
+    def fetch_weekly_goals(self, week_start=None, week_end=None):
+        user_id = self._require_user_id()
+        db = self._get_db()
+        if week_start and week_end:
+            rows = db.execute(
+                """
+                SELECT id, title, target_seconds, week_start, week_end, status, created_at
+                FROM weekly_goals
+                WHERE user_id = ? AND week_start = ? AND week_end = ?
+                ORDER BY created_at DESC
+                """,
+                (user_id, week_start, week_end),
+            ).fetchall()
+        else:
+            rows = db.execute(
+                """
+                SELECT id, title, target_seconds, week_start, week_end, status, created_at
+                FROM weekly_goals
+                WHERE user_id = ?
+                ORDER BY week_start DESC, created_at DESC
+                """,
+                (user_id,),
+            ).fetchall()
+        return rows
+
+    def create_weekly_goal(
+        self, title, target_seconds, week_start, week_end, status, created_at
+    ):
+        user_id = self._require_user_id()
+        db = self._get_db()
+        cursor = db.execute(
+            """
+            INSERT INTO weekly_goals
+                (user_id, title, target_seconds, week_start, week_end, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                title,
+                int(target_seconds or 0),
+                week_start,
+                week_end,
+                status,
+                created_at,
+            ),
+        )
+        db.commit()
+        return cursor.lastrowid
+
+    def update_weekly_goal(self, goal_id, title, target_seconds, status):
+        user_id = self._require_user_id()
+        db = self._get_db()
+        db.execute(
+            """
+            UPDATE weekly_goals
+            SET title = ?, target_seconds = ?, status = ?
+            WHERE id = ? AND user_id = ?
+            """,
+            (title, int(target_seconds or 0), status, int(goal_id), user_id),
+        )
+        db.commit()
+
+    def delete_weekly_goal(self, goal_id):
+        user_id = self._require_user_id()
+        db = self._get_db()
+        db.execute(
+            "DELETE FROM weekly_goals WHERE id = ? AND user_id = ?",
+            (int(goal_id), user_id),
+        )
         db.commit()
 
     def ensure_default_project(self, name, created_at):

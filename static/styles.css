@@ -3074,6 +3074,140 @@ body {
   gap: 18px;
 }
 
+.weekly-goals-card,
+.weekly-goals-history {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.weekly-goals-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.weekly-goals-range {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.weekly-goal-form {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  align-items: end;
+}
+
+.weekly-goal-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.weekly-goal-form input[type="text"],
+.weekly-goal-form input[type="number"] {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  background: var(--card);
+  color: var(--text);
+}
+
+.weekly-goals-list {
+  display: grid;
+  gap: 12px;
+}
+
+.weekly-goal-item {
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--soft);
+  display: grid;
+  gap: 12px;
+}
+
+.weekly-goal-info {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.weekly-goal-info h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.weekly-goal-info p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.weekly-goal-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.weekly-goal-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.weekly-goal-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(31, 111, 235, 0.12);
+  overflow: hidden;
+}
+
+.weekly-goal-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #1f6feb, #60a5fa);
+}
+
+.weekly-history-list {
+  display: grid;
+  gap: 16px;
+}
+
+.weekly-history-group {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.weekly-history-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.weekly-history-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.weekly-history-header span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
 .goals-header {
   display: flex;
   justify-content: space-between;
@@ -4627,6 +4761,10 @@ body {
 
   .timesheet-entry {
     grid-template-columns: 1fr;
+  }
+
+  .weekly-goal-info {
+    flex-direction: column;
   }
 }
 

@@ -932,6 +932,102 @@ class TaskService:
 
         return result
 
+    def _sum_time_entries_between(self, start_date, end_date):
+        start_day, _ = self._local_day_bounds(start_date)
+        _, end_day = self._local_day_bounds(end_date)
+        entries = self.repository.fetch_time_entries_with_task_details_between(
+            start_day.isoformat(), end_day.isoformat()
+        )
+        now = datetime.utcnow()
+        total_seconds = 0
+        for entry in entries:
+            entry_start = datetime.fromisoformat(entry["started_at"])
+            entry_end = (
+                datetime.fromisoformat(entry["ended_at"])
+                if entry["ended_at"]
+                else now
+            )
+            overlap_start = max(entry_start, start_day)
+            overlap_end = min(entry_end, end_day)
+            if overlap_end <= overlap_start:
+                continue
+            total_seconds += int((overlap_end - overlap_start).total_seconds())
+        return total_seconds
+
+    def current_week_range(self):
+        today = self.current_local_date()
+        start_date = today - timedelta(days=today.weekday())
+        end_date = start_date + timedelta(days=6)
+        return start_date, end_date
+
+    def list_weekly_goals(self, week_start=None, week_end=None):
+        goals = self.repository.fetch_weekly_goals(
+            week_start=week_start, week_end=week_end
+        )
+        if not goals:
+            return []
+        totals_map = {}
+        goal_list = []
+        for goal in goals:
+            try:
+                start_date = datetime.fromisoformat(goal["week_start"]).date()
+                end_date = datetime.fromisoformat(goal["week_end"]).date()
+            except ValueError:
+                continue
+            key = (start_date, end_date)
+            if key not in totals_map:
+                totals_map[key] = self._sum_time_entries_between(start_date, end_date)
+            total_seconds = totals_map[key]
+            target_seconds = int(goal["target_seconds"] or 0)
+            progress = int((total_seconds / target_seconds) * 100) if target_seconds else 0
+            progress = min(progress, 100)
+            week_label = f"{start_date.strftime('%b %d')} - {end_date.strftime('%b %d')}"
+            goal_list.append(
+                {
+                    **dict(goal),
+                    "progress_seconds": total_seconds,
+                    "progress_percent": progress,
+                    "week_label": week_label,
+                }
+            )
+        return goal_list
+
+    def add_weekly_goal(self, title, target_hours, week_start, week_end):
+        title = (title or "").strip()
+        if not title:
+            return
+        target_seconds = int(float(target_hours or 0) * 3600)
+        created_at = datetime.utcnow().isoformat()
+        self.repository.create_weekly_goal(
+            title,
+            target_seconds,
+            week_start,
+            week_end,
+            "active",
+            created_at,
+        )
+
+    def update_weekly_goal(self, goal_id, title, target_hours, status):
+        title = (title or "").strip()
+        status = (status or "active").strip()
+        target_seconds = int(float(target_hours or 0) * 3600)
+        if not title:
+            return
+        self.repository.update_weekly_goal(goal_id, title, target_seconds, status)
+
+    def toggle_weekly_goal_status(self, goal_id, status):
+        status = (status or "active").strip()
+        current = self.repository.fetch_weekly_goals()
+        match = next((item for item in current if item["id"] == int(goal_id)), None)
+        if not match:
+            return
+        self.repository.update_weekly_goal(
+            goal_id, match["title"], match["target_seconds"], status
+        )
+
+    def delete_weekly_goal(self, goal_id):
+        self.repository.delete_weekly_goal(goal_id)
+
     def list_time_entries_for_calendar(self, start_dt, end_dt):
         self._rollover_running_entries()
         entries = self.repository.fetch_time_entries_with_task_details_between(
