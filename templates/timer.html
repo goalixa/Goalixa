@@ -201,8 +201,42 @@
       </div>
     </section>
     <section class="timer-calendar-section timer-view-panel" data-view-panel="timesheet">
-      <div class="card timer-list-card">
-        <div class="timer-empty-state">No timesheet data yet.</div>
+      <div class="card timer-timesheet-card">
+        {% if timer_list_groups %}
+          <div class="timesheet-header">
+            <div>
+              <h3 class="timesheet-title">Timesheet</h3>
+              <p class="timesheet-subtitle">Grouped by day for the selected range.</p>
+            </div>
+          </div>
+          <div class="timesheet-table">
+            {% for group in timer_list_groups %}
+              <div class="timesheet-row">
+                <div class="timesheet-day">
+                  <div class="timesheet-day-label">{{ group["label"] }}</div>
+                  <div class="timesheet-day-total">{{ group["total_seconds"] | format_seconds }}</div>
+                </div>
+                <div class="timesheet-entries">
+                  {% if group["entries"] %}
+                    {% for entry in group["entries"] %}
+                      <div class="timesheet-entry">
+                        <div>
+                          <div class="timesheet-entry-title">{{ entry["task_name"] }}</div>
+                          <div class="timesheet-entry-meta">{{ entry["start_time"] }} - {{ entry["end_time"] }}</div>
+                        </div>
+                        <div class="timesheet-entry-duration">{{ entry["duration_seconds"] | format_seconds }}</div>
+                      </div>
+                    {% endfor %}
+                  {% else %}
+                    <div class="timer-empty-state">No entries for this day.</div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="timer-empty-state">No timesheet data yet.</div>
+        {% endif %}
       </div>
     </section>
   </div>

@@ -2755,6 +2755,9 @@ body {
 
 .timer-page {
   flex: 1;
+  --timer-accent: var(--accent, #1f6feb);
+  --timer-accent-soft: rgba(31, 111, 235, 0.12);
+  --timer-accent-strong: rgba(31, 111, 235, 0.75);
 }
 
 .calendar-page {
@@ -2902,11 +2905,11 @@ body {
 }
 
 .pomodoro-dots span.is-active {
-  background: rgba(31, 111, 235, 0.75);
+  background: var(--timer-accent-strong);
 }
 
 .pomodoro-dots span.is-current {
-  background: rgba(31, 111, 235, 0.25);
+  background: var(--timer-accent-soft);
   box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.35);
 }
 
@@ -2943,6 +2946,7 @@ body {
     var(--pomodoro-ring-fill) var(--pomodoro-progress),
     var(--pomodoro-ring-track) 0
   );
+  transition: background 0.6s ease;
   -webkit-mask: radial-gradient(
     farthest-side,
     transparent calc(100% - 6px),
@@ -2981,7 +2985,7 @@ body {
   font-size: 2.4rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #1f6feb;
+  color: var(--timer-accent);
   font-variant-numeric: tabular-nums;
 }
 
@@ -3865,6 +3869,7 @@ body {
   font-size: 1.1rem;
   font-weight: 500;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .timer-view-box {
@@ -3890,9 +3895,9 @@ body {
 }
 
 .timer-view-btn.is-active {
-  background: #1f6feb;
+  background: var(--timer-accent);
   color: #fff;
-  border-color: var(--accent);
+  border-color: var(--timer-accent);
 }
 
 .timer-calendar-section {
@@ -3913,6 +3918,14 @@ body {
 
 #timer-calendar {
   min-height: 520px;
+}
+
+.timer-range-card,
+.pomodoro-card,
+.timer-calendar-card,
+.timer-list-card,
+.timer-timesheet-card {
+  animation: timer-fade-up 0.45s ease both;
 }
 
 .timer-list-card {
@@ -3958,6 +3971,7 @@ body {
 
 .timer-list-item.is-highlight {
   box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.35);
+  animation: timer-pulse 1.4s ease;
 }
 
 .timer-list-row {
@@ -4005,8 +4019,8 @@ body {
   position: relative;
   padding-left: 14px;
   font-size: 0.85rem;
-  color: var(--accent);
-  background: rgba(31, 111, 235, 0.12);
+  color: var(--timer-accent);
+  background: var(--timer-accent-soft);
   border-radius: 999px;
   padding-right: 10px;
   padding-top: 2px;
@@ -4021,7 +4035,7 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--timer-accent);
   transform: translateY(-50%);
 }
 
@@ -4036,12 +4050,14 @@ body {
 
 .timer-list-duration {
   font-weight: 400;
+  font-variant-numeric: tabular-nums;
 }
 
 .timer-list-time {
   white-space: nowrap;
   font-size: 0.85rem;
   color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .timer-list-actions {
@@ -4064,8 +4080,8 @@ body {
 }
 
 .timer-list-action.resume {
-  border-color: #1f6feb;
-  color: #1f6feb;
+  border-color: var(--timer-accent);
+  color: var(--timer-accent);
 }
 
 .timer-list-action.pause {
@@ -4194,6 +4210,128 @@ body {
   font-weight: 500;
 }
 
+.timer-timesheet-card {
+  padding: 18px;
+  display: grid;
+  gap: 16px;
+}
+
+.timesheet-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.timesheet-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.timesheet-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.timesheet-table {
+  display: grid;
+  gap: 12px;
+}
+
+.timesheet-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) 1fr;
+  gap: 16px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--soft);
+}
+
+.timesheet-day {
+  display: grid;
+  gap: 6px;
+}
+
+.timesheet-day-label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.timesheet-day-total {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.timesheet-entries {
+  display: grid;
+  gap: 8px;
+}
+
+.timesheet-entry {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+
+.timesheet-entry-title {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.timesheet-entry-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.timesheet-entry-duration {
+  font-weight: 600;
+  color: var(--timer-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes timer-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes timer-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(31, 111, 235, 0.35);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(31, 111, 235, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(31, 111, 235, 0);
+  }
+}
+
+@keyframes timer-dropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .timer-calendar-card .fc .fc-daygrid-more-link {
   color: var(--muted);
   font-size: 0.75rem;
@@ -4290,6 +4428,7 @@ body {
 
 .timer-dropdown.is-open {
   display: block;
+  animation: timer-dropdown 0.2s ease;
 }
 
 .timer-search {
@@ -4350,9 +4489,9 @@ body {
 }
 
 .timer-btn.primary {
-  background: #1f6feb;
+  background: var(--timer-accent);
   color: #fff;
-  border-color: #1f6feb;
+  border-color: var(--timer-accent);
 }
 
 .timer-btn.ghost {
@@ -4402,8 +4541,8 @@ body {
 }
 
 .timer-chip--accent {
-  background: rgba(31, 111, 235, 0.12);
-  color: #1f6feb;
+  background: var(--timer-accent-soft);
+  color: var(--timer-accent);
   border-color: rgba(31, 111, 235, 0.2);
   font-variant-numeric: tabular-nums;
 }
@@ -4467,12 +4606,37 @@ body {
     flex-wrap: wrap;
     justify-content: flex-start;
   }
+
+  .timesheet-row {
+    grid-template-columns: 1fr;
+  }
+
+  .timesheet-entry {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .pomodoro-controls .btn,
-  .timer-list-item {
+  .timer-list-item,
+  .timer-view-panel {
     transition: none;
+  }
+
+  .timer-range-card,
+  .pomodoro-card,
+  .timer-calendar-card,
+  .timer-list-card,
+  .timer-timesheet-card {
+    animation: none;
+  }
+
+  .timer-list-item.is-highlight {
+    animation: none;
+  }
+
+  .timer-dropdown.is-open {
+    animation: none;
   }
 }
 .donut-panel {
