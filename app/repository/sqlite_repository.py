@@ -178,6 +178,16 @@ class SQLiteTaskRepository:
                 FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS daily_todos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                log_date TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                completed_at TEXT,
+                FOREIGN KEY (user_id) REFERENCES user (id) ON DELETE CASCADE
+            );
+
             CREATE TABLE IF NOT EXISTS weekly_goals (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
@@ -1268,6 +1278,50 @@ class SQLiteTaskRepository:
         db.execute(
             "DELETE FROM reminders WHERE id = ? AND user_id = ?",
             (reminder_id, user_id),
+        )
+        db.commit()
+
+    def fetch_todos_for_date(self, log_date):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        return db.execute(
+            """
+            SELECT id, name, log_date, created_at, completed_at
+            FROM daily_todos
+            WHERE user_id = ? AND log_date = ?
+            ORDER BY created_at DESC
+            """,
+            (user_id, log_date),
+        ).fetchall()
+
+    def create_todo(self, name, log_date, created_at):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        cursor = db.execute(
+            """
+            INSERT INTO daily_todos (user_id, name, log_date, created_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (user_id, name, log_date, created_at),
+        )
+        db.commit()
+        return cursor.lastrowid
+
+    def set_todo_completed(self, todo_id, completed_at):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        db.execute(
+            "UPDATE daily_todos SET completed_at = ? WHERE id = ? AND user_id = ?",
+            (completed_at, todo_id, user_id),
+        )
+        db.commit()
+
+    def delete_todo(self, todo_id):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        db.execute(
+            "DELETE FROM daily_todos WHERE id = ? AND user_id = ?",
+            (todo_id, user_id),
         )
         db.commit()
 

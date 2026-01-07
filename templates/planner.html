@@ -19,8 +19,8 @@
       </div>
       <div class="planner-stat-card">
         <span class="planner-stat-label">To-do items</span>
-        <span class="planner-stat-value">{{ tasks | length }}</span>
-        <span class="planner-stat-meta">{{ done_today_tasks | length }} done today</span>
+        <span class="planner-stat-value">{{ todos | length }}</span>
+        <span class="planner-stat-meta">{{ done_todos | length }} done today</span>
       </div>
       <div class="planner-stat-card">
         <span class="planner-stat-label">Best habit streak</span>
@@ -91,51 +91,36 @@
             <p class="goals-label">To-do</p>
             <h2 class="goals-title">Daily execution list</h2>
           </div>
-          <span class="planner-panel-meta">{{ done_today_tasks | length }} done today</span>
+          <span class="planner-panel-meta">{{ done_todos | length }} done today</span>
         </div>
-        {% if projects %}
-          <form class="task-form planner-task-form" method="post" action="{{ url_for('create_task') }}">
-            <input type="text" name="name" placeholder="New task" required />
-            <select name="project_id" required>
-              <option value="" disabled {% if not projects %}selected{% endif %}>Select project</option>
-              {% for project in projects %}
-                <option value="{{ project['id'] }}" {% if loop.first %}selected{% endif %}>{{ project['name'] }}</option>
-              {% endfor %}
-            </select>
-            <button class="btn btn-primary btn-sm" type="submit">
-              <i class="bi bi-plus-lg"></i>
-              Add task
-            </button>
-          </form>
-        {% else %}
-          <div class="planner-empty-panel">
-            <p class="empty">Create a project first to start your to-do list.</p>
-            <a class="btn btn-outline-primary btn-sm" href="{{ url_for('projects') }}">
-              <i class="bi bi-folder-plus"></i>
-              Add project
-            </a>
-          </div>
-        {% endif %}
+        <form class="task-form planner-task-form" method="post" action="{{ url_for('create_todo') }}">
+          <input type="text" name="name" placeholder="New to-do" required />
+          <button class="btn btn-primary btn-sm" type="submit">
+            <i class="bi bi-plus-lg"></i>
+            Add
+          </button>
+        </form>
 
         <div class="planner-todo">
           <h4>To do now</h4>
-          {% if tasks %}
+          {% if todos %}
             <ul class="planner-task-list">
-              {% for task in tasks %}
+              {% for todo in todos %}
                 <li class="planner-task-item">
                   <div class="planner-task-info">
-                    <span class="planner-task-title">{{ task['name'] }}</span>
-                    <span class="planner-task-meta">{{ task['project_name'] or 'Unassigned' }}</span>
+                    <span class="planner-task-title">{{ todo['name'] }}</span>
+                    <span class="planner-task-meta">Today</span>
                   </div>
                   <div class="planner-task-actions">
-                    <form method="post" action="{{ url_for('daily_check_task', task_id=task['id']) }}">
-                      <button class="btn btn-outline-success btn-sm" type="submit" aria-label="Done today">
+                    <form method="post" action="{{ url_for('toggle_todo', todo_id=todo['id']) }}">
+                      <input type="hidden" name="done" value="1" />
+                      <button class="btn btn-outline-success btn-sm" type="submit" aria-label="Mark done">
                         <i class="bi bi-check2-circle"></i>
                       </button>
                     </form>
-                    <form method="post" action="{{ url_for('complete_task', task_id=task['id']) }}">
-                      <button class="btn btn-outline-secondary btn-sm" type="submit" aria-label="Complete task">
-                        <i class="bi bi-check2-square"></i>
+                    <form method="post" action="{{ url_for('delete_todo', todo_id=todo['id']) }}">
+                      <button class="btn btn-outline-danger btn-sm" type="submit" aria-label="Delete to-do">
+                        <i class="bi bi-trash"></i>
                       </button>
                     </form>
                   </div>
@@ -143,25 +128,31 @@
               {% endfor %}
             </ul>
           {% else %}
-            <p class="empty">All clear. Add a task or plan tomorrow.</p>
+            <p class="empty">All clear. Add a to-do or plan tomorrow.</p>
           {% endif %}
         </div>
 
         <div class="planner-todo planner-todo-done">
           <h4>Done today</h4>
-          {% if done_today_tasks %}
+          {% if done_todos %}
             <ul class="planner-task-list">
-              {% for task in done_today_tasks %}
+              {% for todo in done_todos %}
                 <li class="planner-task-item is-done">
                   <div class="planner-task-info">
-                    <span class="planner-task-title">{{ task['name'] }}</span>
-                    <span class="planner-task-meta">{{ task['project_name'] or 'Unassigned' }}</span>
+                    <span class="planner-task-title">{{ todo['name'] }}</span>
+                    <span class="planner-task-meta">Done</span>
                   </div>
                   <div class="planner-task-actions">
-                    <form method="post" action="{{ url_for('complete_task', task_id=task['id']) }}">
+                    <form method="post" action="{{ url_for('toggle_todo', todo_id=todo['id']) }}">
+                      <input type="hidden" name="done" value="0" />
                       <button class="btn btn-outline-secondary btn-sm" type="submit">
-                        <i class="bi bi-check2-square"></i>
-                        Complete
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        Reopen
+                      </button>
+                    </form>
+                    <form method="post" action="{{ url_for('delete_todo', todo_id=todo['id']) }}">
+                      <button class="btn btn-outline-danger btn-sm" type="submit" aria-label="Delete to-do">
+                        <i class="bi bi-trash"></i>
                       </button>
                     </form>
                   </div>
