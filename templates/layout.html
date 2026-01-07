@@ -30,7 +30,8 @@
             <a class="sidebar-link {% if active_page == 'calendar' %}active{% endif %}" href="{{ url_for('calendar') }}"><i class="bi bi-calendar-week"></i><span class="sidebar-link-label">Calendar</span></a>
             <a class="sidebar-link {% if active_page == 'habits' %}active{% endif %}" href="{{ url_for('habits') }}"><i class="bi bi-check2-circle"></i><span class="sidebar-link-label">Habits</span></a>
             <a class="sidebar-link {% if active_page == 'reminders' %}active{% endif %}" href="{{ url_for('reminders') }}"><i class="bi bi-bell"></i><span class="sidebar-link-label">Reminders</span></a>
-            <a class="sidebar-link {% if active_page == 'goals' %}active{% endif %}" href="{{ url_for('goals') }}"><i class="bi bi-bullseye"></i><span class="sidebar-link-label">Goals</span></a>
+            <a class="sidebar-link {% if active_page == 'goals' %}active{% endif %}" href="{{ url_for('goals') }}"><i class="bi bi-graph-up-arrow"></i><span class="sidebar-link-label">Goals overview</span></a>
+            <a class="sidebar-link {% if active_page == 'long_term_goals' %}active{% endif %}" href="{{ url_for('long_term_goals') }}"><i class="bi bi-bullseye"></i><span class="sidebar-link-label">Long-term goals</span></a>
             <a class="sidebar-link {% if active_page == 'weekly_goals' %}active{% endif %}" href="{{ url_for('weekly_goals') }}"><i class="bi bi-calendar2-week"></i><span class="sidebar-link-label">Weekly Goals</span></a>
           </nav>
         </div>

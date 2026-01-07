@@ -300,8 +300,6 @@ def register_routes(app, service):
     @auth_required()
     def goals():
         goals_list = service.list_goals()
-        projects = service.list_projects()
-        tasks = service.list_tasks()
         active_goals = [goal for goal in goals_list if goal.get("status") in {"active", "at_risk"}]
         total_goal_seconds = sum(goal.get("total_seconds", 0) for goal in goals_list)
         targets_set = len([goal for goal in goals_list if goal.get("target_date")])
@@ -313,15 +311,26 @@ def register_routes(app, service):
         return render_template(
             "goals.html",
             goals=goals_list,
-            projects=projects,
-            tasks=tasks,
             active_goals_count=len(active_goals),
             total_goal_seconds=total_goal_seconds,
             targets_set=targets_set,
             weekly_goals=weekly_goals,
             weekly_range_label=f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}",
-            week_start=week_start.isoformat(),
-            week_end=week_end.isoformat(),
+        )
+
+    @app.route("/long-term-goals", methods=["GET"])
+    @auth_required()
+    def long_term_goals():
+        goals_list = service.list_goals()
+        projects = service.list_projects()
+        tasks = service.list_tasks()
+        active_goals = [goal for goal in goals_list if goal.get("status") in {"active", "at_risk"}]
+        return render_template(
+            "long_term_goals.html",
+            goals=goals_list,
+            projects=projects,
+            tasks=tasks,
+            active_goals_count=len(active_goals),
         )
 
     @app.route("/goals/<int:goal_id>", methods=["GET"])
