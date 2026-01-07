@@ -9,16 +9,6 @@
         <h1>Daily Planner</h1>
         <p>Habits and a to-do list in one focused view.</p>
       </div>
-      <div class="planner-header-actions">
-        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('habits') }}">
-          <i class="bi bi-check2-circle"></i>
-          Manage habits
-        </a>
-        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index') }}">
-          <i class="bi bi-list-check"></i>
-          Task board
-        </a>
-      </div>
     </header>
 
     <section class="planner-hero">
@@ -44,9 +34,9 @@
         <div class="planner-card-header">
           <div>
             <p class="goals-label">Habits</p>
-            <h2 class="goals-title">Daily rituals</h2>
+            <h2 class="goals-title">Always-on routines</h2>
           </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('habits') }}">View all</a>
+          <span class="planner-panel-meta">{{ habits_summary["completed"] or 0 }} / {{ habits_summary["total"] or 0 }}</span>
         </div>
         <form class="planner-form" method="post" action="{{ url_for('create_habit') }}">
           <input type="text" name="name" placeholder="New habit" required />
@@ -99,9 +89,9 @@
         <div class="planner-card-header">
           <div>
             <p class="goals-label">To-do</p>
-            <h2 class="goals-title">Focus list</h2>
+            <h2 class="goals-title">Daily execution list</h2>
           </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index') }}">View all</a>
+          <span class="planner-panel-meta">{{ done_today_tasks | length }} done today</span>
         </div>
         {% if projects %}
           <form class="task-form planner-task-form" method="post" action="{{ url_for('create_task') }}">
@@ -128,7 +118,7 @@
         {% endif %}
 
         <div class="planner-todo">
-          <h3>To do now</h3>
+          <h4>To do now</h4>
           {% if tasks %}
             <ul class="planner-task-list">
               {% for task in tasks %}
@@ -158,7 +148,7 @@
         </div>
 
         <div class="planner-todo planner-todo-done">
-          <h3>Done today</h3>
+          <h4>Done today</h4>
           {% if done_today_tasks %}
             <ul class="planner-task-list">
               {% for task in done_today_tasks %}

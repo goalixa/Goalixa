@@ -724,6 +724,11 @@ body {
   flex-wrap: wrap;
 }
 
+.planner-panel-meta {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .planner-form {
   display: flex;
   flex-wrap: wrap;
@@ -787,9 +792,9 @@ body {
   gap: 12px;
 }
 
-.planner-todo h3 {
+.planner-todo h4 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
 }
 
