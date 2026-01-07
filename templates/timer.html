@@ -799,6 +799,9 @@
             return;
           }
           const previousTaskId = state.taskId;
+          if (state.isRunning) {
+            pauseButton?.click();
+          }
           state.taskId = selected.id;
           state.taskName = selected.name;
           if (taskPicker) {
@@ -807,18 +810,21 @@
           if (taskSearch) {
             taskSearch.value = "";
           }
+          if (state.mode !== "work" || state.remaining !== presets.work) {
+            state.mode = "work";
+            state.remaining = presets.work;
+            state.isRunning = false;
+            state.lastTick = null;
+          }
           renderTasks(cachedTasks, "");
           closeDropdown();
           saveState(state);
           updatePomodoroUI(state);
 
-          if (state.isRunning && state.mode === "work") {
-            if (previousTaskId && previousTaskId !== state.taskId) {
-              stopTaskTimer(state);
-            }
-            startTaskTimer(state);
+          if (previousTaskId && previousTaskId !== state.taskId) {
+            stopTaskTimer(state);
           }
-          if (!state.isRunning && state.mode === "work") {
+          if (!state.isRunning) {
             startPomodoro();
           }
         };
