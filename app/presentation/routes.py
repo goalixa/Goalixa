@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
+import os
 import uuid
 
 from flask import abort, current_app, jsonify, redirect, render_template, request, url_for
@@ -63,7 +64,7 @@ def register_routes(app, service):
     def google_login():
         if not current_app.config.get("GOOGLE_OAUTH_ENABLED"):
             return abort(404)
-        redirect_uri = url_for("google_callback", _external=True)
+        redirect_uri = os.getenv("GOOGLE_REDIRECT_URI") or url_for("google_callback", _external=True)
         return oauth.google.authorize_redirect(redirect_uri)
 
     @app.route("/login/google/callback", methods=["GET"])
