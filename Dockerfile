@@ -14,4 +14,4 @@ COPY . .
 
 EXPOSE 80
 
-CMD ["python", "main.py"]
+CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:80", "main:app"]
