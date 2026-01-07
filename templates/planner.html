@@ -1,0 +1,188 @@
+{% extends "layout.html" %}
+{% set title = "Planner" %}
+{% set active_page = "planner" %}
+
+{% block content %}
+  <div class="container py-4 planner-page">
+    <header class="header planner-header">
+      <div>
+        <h1>Daily Planner</h1>
+        <p>Habits and a to-do list in one focused view.</p>
+      </div>
+      <div class="planner-header-actions">
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('habits') }}">
+          <i class="bi bi-check2-circle"></i>
+          Manage habits
+        </a>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index') }}">
+          <i class="bi bi-list-check"></i>
+          Task board
+        </a>
+      </div>
+    </header>
+
+    <section class="planner-hero">
+      <div class="planner-stat-card">
+        <span class="planner-stat-label">Habits done</span>
+        <span class="planner-stat-value">{{ habits_summary["completed"] or 0 }}</span>
+        <span class="planner-stat-meta">Out of {{ habits_summary["total"] or 0 }}</span>
+      </div>
+      <div class="planner-stat-card">
+        <span class="planner-stat-label">To-do items</span>
+        <span class="planner-stat-value">{{ tasks | length }}</span>
+        <span class="planner-stat-meta">{{ done_today_tasks | length }} done today</span>
+      </div>
+      <div class="planner-stat-card">
+        <span class="planner-stat-label">Best habit streak</span>
+        <span class="planner-stat-value">{{ habits_summary["best_streak"] or 0 }} days</span>
+        <span class="planner-stat-meta">Keep the chain strong</span>
+      </div>
+    </section>
+
+    <section class="planner-grid">
+      <article class="card planner-card">
+        <div class="planner-card-header">
+          <div>
+            <p class="goals-label">Habits</p>
+            <h2 class="goals-title">Daily rituals</h2>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('habits') }}">View all</a>
+        </div>
+        <form class="planner-form" method="post" action="{{ url_for('create_habit') }}">
+          <input type="text" name="name" placeholder="New habit" required />
+          <select name="frequency">
+            <option value="Daily">Daily</option>
+            <option value="Weekdays">Weekdays</option>
+            <option value="Weekends">Weekends</option>
+          </select>
+          <select name="time_of_day">
+            <option value="">Anytime</option>
+            <option value="Morning">Morning</option>
+            <option value="Afternoon">Afternoon</option>
+            <option value="Evening">Evening</option>
+          </select>
+          <button class="btn btn-primary btn-sm" type="submit">
+            <i class="bi bi-plus-lg"></i>
+            Add habit
+          </button>
+        </form>
+        <div class="habit-list planner-habit-list">
+          {% if habits %}
+            {% for habit in habits %}
+              <div class="habit-row {% if habit['done'] %}is-done{% endif %}">
+                <form class="habit-toggle" method="post" action="{{ url_for('toggle_habit', habit_id=habit['id']) }}">
+                  <input type="hidden" name="date" value="{{ today }}" />
+                  <label class="habit-left">
+                    <span class="habit-checkbox">
+                      <input type="checkbox" name="done" {% if habit['done'] %}checked{% endif %} onchange="this.form.submit()" />
+                      <span class="habit-checkmark"></span>
+                    </span>
+                    <span class="habit-text">
+                      <span class="habit-name">{{ habit['name'] }}</span>
+                      <span class="habit-meta">{{ habit['meta'] }}</span>
+                    </span>
+                  </label>
+                </form>
+                <span class="planner-badge">
+                  <i class="bi bi-fire"></i>
+                  {{ habit['streak'] }}d
+                </span>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="empty">No habits yet. Add one to build your rhythm.</p>
+          {% endif %}
+        </div>
+      </article>
+
+      <article class="card planner-card">
+        <div class="planner-card-header">
+          <div>
+            <p class="goals-label">To-do</p>
+            <h2 class="goals-title">Focus list</h2>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index') }}">View all</a>
+        </div>
+        {% if projects %}
+          <form class="task-form planner-task-form" method="post" action="{{ url_for('create_task') }}">
+            <input type="text" name="name" placeholder="New task" required />
+            <select name="project_id" required>
+              <option value="" disabled {% if not projects %}selected{% endif %}>Select project</option>
+              {% for project in projects %}
+                <option value="{{ project['id'] }}" {% if loop.first %}selected{% endif %}>{{ project['name'] }}</option>
+              {% endfor %}
+            </select>
+            <button class="btn btn-primary btn-sm" type="submit">
+              <i class="bi bi-plus-lg"></i>
+              Add task
+            </button>
+          </form>
+        {% else %}
+          <div class="planner-empty-panel">
+            <p class="empty">Create a project first to start your to-do list.</p>
+            <a class="btn btn-outline-primary btn-sm" href="{{ url_for('projects') }}">
+              <i class="bi bi-folder-plus"></i>
+              Add project
+            </a>
+          </div>
+        {% endif %}
+
+        <div class="planner-todo">
+          <h3>To do now</h3>
+          {% if tasks %}
+            <ul class="planner-task-list">
+              {% for task in tasks %}
+                <li class="planner-task-item">
+                  <div class="planner-task-info">
+                    <span class="planner-task-title">{{ task['name'] }}</span>
+                    <span class="planner-task-meta">{{ task['project_name'] or 'Unassigned' }}</span>
+                  </div>
+                  <div class="planner-task-actions">
+                    <form method="post" action="{{ url_for('daily_check_task', task_id=task['id']) }}">
+                      <button class="btn btn-outline-success btn-sm" type="submit" aria-label="Done today">
+                        <i class="bi bi-check2-circle"></i>
+                      </button>
+                    </form>
+                    <form method="post" action="{{ url_for('complete_task', task_id=task['id']) }}">
+                      <button class="btn btn-outline-secondary btn-sm" type="submit" aria-label="Complete task">
+                        <i class="bi bi-check2-square"></i>
+                      </button>
+                    </form>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="empty">All clear. Add a task or plan tomorrow.</p>
+          {% endif %}
+        </div>
+
+        <div class="planner-todo planner-todo-done">
+          <h3>Done today</h3>
+          {% if done_today_tasks %}
+            <ul class="planner-task-list">
+              {% for task in done_today_tasks %}
+                <li class="planner-task-item is-done">
+                  <div class="planner-task-info">
+                    <span class="planner-task-title">{{ task['name'] }}</span>
+                    <span class="planner-task-meta">{{ task['project_name'] or 'Unassigned' }}</span>
+                  </div>
+                  <div class="planner-task-actions">
+                    <form method="post" action="{{ url_for('complete_task', task_id=task['id']) }}">
+                      <button class="btn btn-outline-secondary btn-sm" type="submit">
+                        <i class="bi bi-check2-square"></i>
+                        Complete
+                      </button>
+                    </form>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="empty">Nothing checked off yet.</p>
+          {% endif %}
+        </div>
+      </article>
+    </section>
+  </div>
+{% endblock %}
