@@ -139,6 +139,24 @@ def register_routes(app, service):
             habit_series=series,
         )
 
+    @app.route("/planner", methods=["GET"])
+    @auth_required()
+    def planner():
+        today = service.current_local_date().isoformat()
+        habits_list = service.list_habits(today)
+        summary = service.habits_summary(habits_list)
+        task_view = service.list_tasks_for_today()
+        projects = service.list_projects()
+        return render_template(
+            "planner.html",
+            habits=habits_list,
+            habits_summary=summary,
+            tasks=task_view["tasks"],
+            done_today_tasks=task_view["done_today_tasks"],
+            projects=projects,
+            today=today,
+        )
+
     @app.route("/reminders", methods=["GET"])
     @auth_required()
     def reminders():
@@ -265,7 +283,7 @@ def register_routes(app, service):
             request.form.get("goal_name", ""),
             request.form.get("subgoal_name", ""),
         )
-        return redirect(url_for("habits"))
+        return redirect(request.referrer or url_for("habits"))
 
     @app.route("/habits/<int:habit_id>/toggle", methods=["POST"])
     @auth_required()
@@ -273,7 +291,7 @@ def register_routes(app, service):
         log_date = request.form.get("date") or service.current_local_date().isoformat()
         done = request.form.get("done") in {"1", "on", "true"}
         service.set_habit_done(habit_id, log_date, done)
-        return redirect(url_for("habits"))
+        return redirect(request.referrer or url_for("habits"))
 
     @app.route("/habits/<int:habit_id>/update", methods=["POST"])
     @auth_required()
@@ -288,13 +306,13 @@ def register_routes(app, service):
             request.form.get("goal_name", ""),
             request.form.get("subgoal_name", ""),
         )
-        return redirect(url_for("habits"))
+        return redirect(request.referrer or url_for("habits"))
 
     @app.route("/habits/<int:habit_id>/delete", methods=["POST"])
     @auth_required()
     def delete_habit(habit_id):
         service.delete_habit(habit_id)
-        return redirect(url_for("habits"))
+        return redirect(request.referrer or url_for("habits"))
 
     @app.route("/goals", methods=["GET"])
     @auth_required()
@@ -622,7 +640,7 @@ def register_routes(app, service):
             request.form.get("project_id"),
             request.form.getlist("label_ids"),
         )
-        return redirect(url_for("index"))
+        return redirect(request.referrer or url_for("index"))
 
     @app.route("/api/tasks", methods=["GET"])
     @auth_required()
