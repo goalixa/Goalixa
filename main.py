@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.auth.models import db, init_security
 from app.auth.oauth import init_oauth
@@ -40,6 +41,9 @@ def create_app():
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+    # Respect Cloudflare/forwarded headers for scheme/host resolution.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
     db.init_app(app)
     init_security(app)
     init_oauth(app)
@@ -60,7 +64,9 @@ def create_app():
     return app
 
 
+app = create_app()
+
 if __name__ == "__main__":
-    app = create_app()
     port = int(os.getenv("PORT", "80"))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    debug = os.getenv("FLASK_DEBUG", "0") == "1"
+    app.run(host="0.0.0.0", port=port, debug=debug, use_reloader=debug)
