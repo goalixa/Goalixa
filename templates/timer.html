@@ -12,8 +12,21 @@
     <header class="timer-hero">
       <div class="timer-controls">
         <div class="timer-select">
-          <input id="task-picker" type="text" placeholder="What are you working on?" />
-          <div class="timer-dropdown">
+          <label class="timer-input-label" for="task-picker">Current task</label>
+          <div class="timer-input-group">
+            <input
+              id="task-picker"
+              type="text"
+              placeholder="What are you working on?"
+              autocomplete="off"
+              aria-expanded="false"
+              aria-controls="task-dropdown"
+            />
+            <button class="timer-clear" id="task-clear" type="button" aria-label="Clear selected task" disabled>
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+          <div class="timer-dropdown" id="task-dropdown">
             <input class="timer-search" type="text" placeholder="Search tasks..." />
             <div class="timer-list">
               <button type="button">Recent: Design VPC Architecture</button>
@@ -25,11 +38,27 @@
           </div>
         </div>
         <div class="timer-actions">
-          <button class="btn btn-primary btn-sm timer-btn primary" type="button" aria-label="Start or Pause">
-            <i class="bi bi-play-fill"></i>
-            <i class="bi bi-pause-fill"></i>
+          <button class="btn btn-primary btn-sm timer-btn primary" type="button" aria-label="Start or Pause" data-timer-toggle>
+            <span class="timer-btn-icon timer-btn-icon--start">
+              <i class="bi bi-play-fill"></i>
+            </span>
+            <span class="timer-btn-icon timer-btn-icon--pause">
+              <i class="bi bi-pause-fill"></i>
+            </span>
+            <span class="timer-btn-label">Start</span>
+          </button>
+          <button class="btn btn-outline-secondary btn-sm timer-btn ghost" type="button" data-timer-reset>
+            Reset
+          </button>
+          <button class="btn btn-outline-secondary btn-sm timer-btn ghost" type="button" data-timer-skip>
+            Skip
           </button>
         </div>
+      </div>
+      <div class="timer-hero-meta">
+        <div class="timer-chip" id="pomodoro-chip-mode">Focus</div>
+        <div class="timer-chip timer-chip--accent" id="pomodoro-chip-remaining">25:00</div>
+        <div class="timer-chip" id="pomodoro-chip-session">Session 1/4</div>
       </div>
     </header>
     <section class="timer-range-section">
@@ -75,18 +104,18 @@
             <h2 class="pomodoro-mode" id="pomodoro-mode">Focus</h2>
             <div class="pomodoro-status">
               <p class="pomodoro-task" id="pomodoro-task">No task selected</p>
-              <p class="pomodoro-meta" id="pomodoro-meta">Session 1 of 4</p>
+              <p class="pomodoro-meta" id="pomodoro-meta" aria-live="polite">Session 1 of 4</p>
             </div>
             <div class="pomodoro-dots" aria-hidden="true">
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
+              <span data-session-dot="1"></span>
+              <span data-session-dot="2"></span>
+              <span data-session-dot="3"></span>
+              <span data-session-dot="4"></span>
             </div>
           </div>
           <div class="pomodoro-clock">
             <div class="pomodoro-ring">
-              <div class="pomodoro-dial" id="pomodoro-display">25:00</div>
+              <div class="pomodoro-dial" id="pomodoro-display" role="timer" aria-live="polite">25:00</div>
               <span class="pomodoro-caption">Remaining</span>
             </div>
           </div>
@@ -148,13 +177,13 @@
                         <div class="timer-list-actions">
                           {% if entry["is_running"] %}
                             <form method="post" action="{{ url_for('stop_task', task_id=entry['task_id']) }}" data-action="stop" data-task-id="{{ entry['task_id'] }}" data-task-name="{{ entry['task_name'] }}">
-                              <button class="btn btn-outline-warning btn-sm timer-list-action pause" type="submit">
+                              <button class="btn btn-outline-warning btn-sm timer-list-action pause" type="submit" aria-label="Pause task timer">
                                 <i class="bi bi-pause-fill"></i>
                               </button>
                             </form>
                           {% else %}
                             <form method="post" action="{{ url_for('start_task', task_id=entry['task_id']) }}" data-action="start" data-task-id="{{ entry['task_id'] }}" data-task-name="{{ entry['task_name'] }}">
-                              <button class="btn btn-outline-primary btn-sm timer-list-action resume" type="submit">
+                              <button class="btn btn-outline-primary btn-sm timer-list-action resume" type="submit" aria-label="Start task timer">
                                 <i class="bi bi-play-fill"></i>
                               </button>
                             </form>
@@ -176,11 +205,6 @@
         <div class="timer-empty-state">No timesheet data yet.</div>
       </div>
     </section>
-    <main class="container">
-      <section class="card">
-        <div class="chart-placeholder">Timer UI placeholder</div>
-      </section>
-    </main>
   </div>
 {% endblock %}
 
@@ -229,6 +253,7 @@
       const taskDropdown = document.querySelector(".timer-dropdown");
       const taskSearch = document.querySelector(".timer-search");
       const taskList = document.querySelector(".timer-list");
+      let cachedTasks = [];
       const calendar =
         calendarEl && typeof FullCalendar !== "undefined"
           ? new FullCalendar.Calendar(calendarEl, {
@@ -300,6 +325,14 @@
       const pomodoroTask = document.getElementById("pomodoro-task");
       const pomodoroMeta = document.getElementById("pomodoro-meta");
       const pomodoroRing = document.querySelector(".pomodoro-ring");
+      const pomodoroDots = document.querySelectorAll("[data-session-dot]");
+      const heroMode = document.getElementById("pomodoro-chip-mode");
+      const heroRemaining = document.getElementById("pomodoro-chip-remaining");
+      const heroSession = document.getElementById("pomodoro-chip-session");
+      const heroToggle = document.querySelector("[data-timer-toggle]");
+      const heroReset = document.querySelector("[data-timer-reset]");
+      const heroSkip = document.querySelector("[data-timer-skip]");
+      const taskClear = document.getElementById("task-clear");
       const startButton = document.getElementById("pomodoro-start");
       const pauseButton = document.getElementById("pomodoro-pause");
       const resetButton = document.getElementById("pomodoro-reset");
@@ -388,17 +421,47 @@
             ? `Task: ${state.taskName}`
             : "No task selected";
         }
+        if (heroMode) {
+          heroMode.textContent = modeLabel(state.mode);
+        }
+        if (heroRemaining) {
+          heroRemaining.textContent = formatClock(state.remaining);
+        }
+        if (heroSession) {
+          heroSession.textContent = `Session ${nextSession} / 4`;
+        }
+        if (pomodoroDots.length) {
+          const completed = state.completedWork % 4;
+          pomodoroDots.forEach((dot, index) => {
+            dot.classList.toggle("is-active", index < completed);
+            dot.classList.toggle("is-current", index === completed);
+          });
+        }
         if (pomodoroRing) {
           const total = presets[state.mode] || 0;
           const progress =
             total > 0 ? Math.min(1, Math.max(0, state.remaining / total)) : 0;
           pomodoroRing.style.setProperty("--pomodoro-progress", `${progress * 360}deg`);
         }
+        const requiresTask = state.mode === "work" && !state.taskId;
         if (startButton) {
-          startButton.disabled = state.isRunning;
+          startButton.disabled = state.isRunning || requiresTask;
         }
         if (pauseButton) {
           pauseButton.disabled = !state.isRunning;
+        }
+        if (heroToggle) {
+          heroToggle.classList.toggle("is-running", state.isRunning);
+          heroToggle.setAttribute("aria-pressed", state.isRunning ? "true" : "false");
+          const label = heroToggle.querySelector(".timer-btn-label");
+          if (label) {
+            label.textContent = state.isRunning ? "Pause" : "Start";
+          }
+          heroToggle.disabled = !state.isRunning && requiresTask;
+          heroToggle.title = requiresTask ? "Select a task to start focus." : "";
+        }
+        if (taskClear) {
+          taskClear.disabled = !state.taskId;
         }
         updatePageTitle(state);
       };
@@ -680,6 +743,41 @@
           });
         });
 
+        heroToggle?.addEventListener("click", () => {
+          if (state.isRunning) {
+            pauseButton?.click();
+          } else {
+            startButton?.click();
+          }
+        });
+
+        heroReset?.addEventListener("click", () => {
+          resetButton?.click();
+        });
+
+        heroSkip?.addEventListener("click", () => {
+          skipButton?.click();
+        });
+
+        taskClear?.addEventListener("click", () => {
+          if (state.isRunning && state.mode === "work") {
+            pauseButton?.click();
+          }
+          state.taskId = null;
+          state.taskName = null;
+          if (taskPicker) {
+            taskPicker.value = "";
+          }
+          if (taskSearch) {
+            taskSearch.value = "";
+          }
+          if (cachedTasks.length) {
+            renderTasks(cachedTasks, "");
+          }
+          saveState(state);
+          updatePomodoroUI(state);
+        });
+
         const formatSeconds = (totalSeconds) => {
           const safe = Math.max(0, Math.floor(totalSeconds || 0));
           const hours = Math.floor(safe / 3600);
@@ -721,28 +819,32 @@
 
         const openDropdown = () => {
           taskDropdown?.classList.add("is-open");
+          taskPicker?.setAttribute("aria-expanded", "true");
         };
 
         const closeDropdown = () => {
           taskDropdown?.classList.remove("is-open");
+          taskPicker?.setAttribute("aria-expanded", "false");
         };
 
         if (taskPicker && taskDropdown && taskSearch && taskList) {
           fetch("/api/tasks")
             .then((response) => response.json())
             .then((payload) => {
-              const tasks = (payload.tasks || []).sort(
+              cachedTasks = (payload.tasks || []).sort(
                 (a, b) => (b.total_seconds || 0) - (a.total_seconds || 0),
               );
               if (state.taskId) {
-                const current = tasks.find((task) => String(task.id) === String(state.taskId));
+                const current = cachedTasks.find(
+                  (task) => String(task.id) === String(state.taskId),
+                );
                 if (current) {
                   taskPicker.value = current.name;
                   state.taskName = current.name;
                   updatePomodoroUI(state);
                 }
               }
-              renderTasks(tasks, taskSearch.value);
+              renderTasks(cachedTasks, taskSearch.value);
 
               taskPicker.addEventListener("focus", () => {
                 openDropdown();
@@ -752,8 +854,26 @@
                 openDropdown();
               });
 
+              taskPicker.addEventListener("keydown", (event) => {
+                if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  openDropdown();
+                  taskSearch?.focus();
+                }
+                if (event.key === "Escape") {
+                  closeDropdown();
+                }
+              });
+
               taskSearch.addEventListener("input", () => {
-                renderTasks(tasks, taskSearch.value);
+                renderTasks(cachedTasks, taskSearch.value);
+              });
+
+              taskSearch.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                  closeDropdown();
+                  taskPicker.focus();
+                }
               });
 
               taskList.addEventListener("click", (event) => {
@@ -766,7 +886,9 @@
                   return;
                 }
                 const taskId = button.dataset.taskId;
-                const selected = tasks.find((task) => String(task.id) === String(taskId));
+                const selected = cachedTasks.find(
+                  (task) => String(task.id) === String(taskId),
+                );
                 if (!selected) {
                   return;
                 }
@@ -775,7 +897,7 @@
                 state.taskName = selected.name;
                 taskPicker.value = selected.name;
                 taskSearch.value = "";
-                renderTasks(tasks, "");
+                renderTasks(cachedTasks, "");
                 closeDropdown();
                 saveState(state);
                 updatePomodoroUI(state);

@@ -2789,6 +2789,8 @@ body {
   padding: 12px 24px;
   background: var(--card);
   border-bottom: 1px solid var(--border);
+  display: grid;
+  gap: 12px;
 }
 
 .timer-range-section {
@@ -2899,8 +2901,13 @@ body {
   background: rgba(31, 111, 235, 0.18);
 }
 
-.pomodoro-dots span:first-child {
-  background: rgba(31, 111, 235, 0.8);
+.pomodoro-dots span.is-active {
+  background: rgba(31, 111, 235, 0.75);
+}
+
+.pomodoro-dots span.is-current {
+  background: rgba(31, 111, 235, 0.25);
+  box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.35);
 }
 
 .pomodoro-clock {
@@ -2959,6 +2966,15 @@ body {
   box-shadow: inset 0 0 0 10px rgba(90, 141, 255, 0.12), 0 16px 32px rgba(0, 0, 0, 0.45);
   --pomodoro-ring-fill: rgba(139, 179, 255, 0.95);
   --pomodoro-ring-track: rgba(139, 179, 255, 0.25);
+}
+
+[data-theme="dark"] .pomodoro-dots span.is-active {
+  background: rgba(139, 179, 255, 0.8);
+}
+
+[data-theme="dark"] .pomodoro-dots span.is-current {
+  background: rgba(139, 179, 255, 0.22);
+  box-shadow: 0 0 0 2px rgba(139, 179, 255, 0.35);
 }
 
 .pomodoro-dial {
@@ -4067,6 +4083,15 @@ body {
   pointer-events: auto;
 }
 
+.timer-list-item:focus-within {
+  box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.35);
+}
+
+.timer-list-item:focus-within .timer-list-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .timer-empty-state {
   text-align: center;
   padding: 24px 12px;
@@ -4176,9 +4201,10 @@ body {
 
 .timer-controls {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .timer-select {
@@ -4187,16 +4213,65 @@ body {
   gap: 8px;
   position: relative;
   flex: 1;
-  max-width: 520px;
+  max-width: 560px;
+  min-width: 240px;
+}
+
+.timer-input-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.timer-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .timer-select input[type="text"] {
   border-radius: 12px;
   border: 1px solid var(--border);
-  padding: 10px 12px;
+  padding: 10px 42px 10px 12px;
   font-size: 1rem;
   background: var(--card);
   color: var(--text);
+  width: 100%;
+}
+
+.timer-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.timer-clear:hover {
+  background: var(--soft);
+  color: var(--text);
+}
+
+.timer-clear:focus-visible {
+  outline: 2px solid rgba(31, 111, 235, 0.4);
+  outline-offset: 2px;
+}
+
+.timer-clear:disabled {
+  opacity: 0.45;
+  cursor: default;
+  background: transparent;
 }
 
 .timer-dropdown {
@@ -4223,6 +4298,8 @@ body {
   border: 1px solid var(--border);
   padding: 8px 10px;
   margin-bottom: 10px;
+  background: var(--soft);
+  color: var(--text);
 }
 
 .timer-list {
@@ -4247,9 +4324,16 @@ body {
   border-color: var(--border);
 }
 
+.timer-list button:focus-visible {
+  outline: 2px solid rgba(31, 111, 235, 0.4);
+  outline-offset: 2px;
+}
+
 .timer-actions {
   display: flex;
   gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .timer-btn {
@@ -4260,12 +4344,74 @@ body {
   color: var(--text);
   font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .timer-btn.primary {
   background: #1f6feb;
   color: #fff;
   border-color: #1f6feb;
+}
+
+.timer-btn.ghost {
+  background: var(--soft);
+  border-color: transparent;
+  color: var(--text);
+}
+
+.timer-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-btn-icon--pause {
+  display: none;
+}
+
+.timer-btn.is-running .timer-btn-icon--pause {
+  display: inline-flex;
+}
+
+.timer-btn.is-running .timer-btn-icon--start {
+  display: none;
+}
+
+.timer-btn-label {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.timer-hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.timer-chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.timer-chip--accent {
+  background: rgba(31, 111, 235, 0.12);
+  color: #1f6feb;
+  border-color: rgba(31, 111, 235, 0.2);
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-chip--ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
 }
 
 @media (max-width: 760px) {
@@ -4276,6 +4422,10 @@ body {
 
   .timer-actions {
     justify-content: flex-end;
+  }
+
+  .timer-hero-meta {
+    justify-content: flex-start;
   }
 
   .timer-range-section {
@@ -4292,6 +4442,37 @@ body {
     padding: 0;
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .timer-list-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .timer-list-center,
+  .timer-list-right {
+    width: 100%;
+  }
+
+  .timer-list-right {
+    justify-content: space-between;
+  }
+
+  .timer-list-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .timer-view-box {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pomodoro-controls .btn,
+  .timer-list-item {
+    transition: none;
   }
 }
 .donut-panel {
