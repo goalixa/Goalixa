@@ -5398,14 +5398,69 @@ body {
 
   .sidebar {
     width: 100%;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+    padding: 18px 16px;
+    gap: 16px;
   }
 
   .sidebar-nav {
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 6px;
+  }
+
+  .sidebar-section {
+    gap: 8px;
+  }
+
+  .sidebar-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+  }
+
+  .sidebar-link {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+
+  .theme-toggle {
+    width: auto;
+    justify-content: flex-start;
+  }
+
+  .container {
+    padding: 16px;
+  }
+
+  .header {
+    padding: 14px 16px;
+    margin-top: -16px;
+  }
+
+  .header h1 {
+    font-size: 1.6rem;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .planner-grid,
+  .overview-charts,
+  .overview-grid,
+  .overview-group-grid,
+  .projects-hero,
+  .labels-hero,
+  .planner-hero,
+  .reports-summary-grid,
+  .reports-metrics,
+  .reports-insights,
+  .overview-time-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-donut {
+    height: 220px;
   }
 
   .task-form {
