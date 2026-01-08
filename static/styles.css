@@ -3277,6 +3277,144 @@ body {
   gap: 18px;
 }
 
+.overview-page {
+  display: grid;
+  gap: 24px;
+}
+
+.overview-time-card {
+  display: grid;
+  gap: 16px;
+}
+
+.overview-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.overview-subtitle {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.overview-time-metrics {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.overview-metric {
+  background: var(--soft);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.overview-metric-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.overview-metric-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.overview-metric-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.overview-charts {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.overview-chart-card {
+  display: grid;
+  gap: 14px;
+}
+
+.overview-donut {
+  height: 260px;
+}
+
+.overview-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  align-items: start;
+}
+
+.overview-module {
+  display: grid;
+  gap: 12px;
+}
+
+.overview-module-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.overview-module h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.overview-inline-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.overview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.overview-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.overview-list-title {
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.overview-list-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.overview-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--dot-color, var(--accent));
+  display: inline-block;
+}
+
 .weekly-goals-card,
 .weekly-goals-history {
   display: flex;

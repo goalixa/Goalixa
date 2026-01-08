@@ -43,12 +43,82 @@ def register_routes(app, service):
     @app.route("/", methods=["GET"])
     @auth_required()
     def overview():
+        today = service.current_local_date()
+        start_date = today - timedelta(days=6)
         summary = service.summary_by_days(7)
         goals = service.list_goals()
         goals_in_progress = [
             goal for goal in goals if goal.get("status") in {"active", "at_risk"}
         ]
         total_goal_seconds = sum(goal.get("total_seconds", 0) for goal in goals)
+        goals_targets_set = len([goal for goal in goals if goal.get("target_date")])
+
+        habits_list = service.list_habits(today.isoformat())
+        habits_summary = service.habits_summary(habits_list)
+        habit_series = service.habit_completion_series(14)
+
+        todo_view = service.list_todos_for_today()
+
+        task_view = service.list_tasks_for_today()
+        active_tasks = task_view["tasks"]
+        done_today_tasks = task_view["done_today_tasks"]
+        completed_tasks = task_view["completed_tasks"]
+        running_tasks = sum(1 for task in active_tasks if task.get("is_running"))
+
+        reminders_list = service.list_reminders()
+        reminders_summary = service.reminders_summary(reminders_list)
+        upcoming_reminders = sorted(
+            [
+                reminder
+                for reminder in reminders_list
+                if reminder.get("is_active") and reminder.get("next_at")
+            ],
+            key=lambda reminder: reminder["next_at"],
+        )[:3]
+
+        project_distribution, project_distribution_total = (
+            service.project_distribution_by_range(start_date, today)
+        )
+        top_project = project_distribution[0] if project_distribution else None
+
+        calendar_entries = service.list_time_entries_by_range(start_date, today)
+        calendar_entry_count = sum(
+            len(bucket.get("entries", [])) for bucket in calendar_entries
+        )
+        calendar_active_days = len(calendar_entries)
+
+        projects = service.list_projects()
+        labels = service.list_labels()
+
+        week_start, week_end = service.current_week_range()
+        weekly_goals = service.list_weekly_goals(
+            week_start=week_start.isoformat(),
+            week_end=week_end.isoformat(),
+        )
+        weekly_active_goals = sum(
+            1 for goal in weekly_goals if goal.get("status") == "active"
+        )
+        weekly_completed_goals = sum(
+            1 for goal in weekly_goals if goal.get("status") == "completed"
+        )
+        weekly_avg_progress = (
+            int(
+                sum(goal.get("progress_percent", 0) for goal in weekly_goals)
+                / len(weekly_goals)
+            )
+            if weekly_goals
+            else 0
+        )
+
+        week_total_seconds = sum(bucket.get("seconds", 0) for bucket in summary)
+        today_seconds = summary[-1]["seconds"] if summary else 0
+        avg_daily_hours = week_total_seconds / 3600 / 7 if summary else 0
+
+        linked_projects_total = sum(goal.get("projects_count", 0) for goal in goals)
+        linked_tasks_total = sum(goal.get("tasks_count", 0) for goal in goals)
+
+        timezone_name = service.get_timezone_name()
+        notification_settings = service.get_notification_settings()
         return render_template(
             "overview.html",
             summary=summary,
@@ -56,8 +126,42 @@ def register_routes(app, service):
             goals_in_progress=goals_in_progress,
             active_goals_count=len(goals_in_progress),
             total_goal_seconds=total_goal_seconds,
+            goals_targets_set=goals_targets_set,
             selected_range=7,
             allowed_ranges=[7],
+            today_date=today.isoformat(),
+            habits=habits_list,
+            habits_summary=habits_summary,
+            habit_series=habit_series,
+            todos=todo_view["todos"],
+            done_todos=todo_view["done_todos"],
+            active_tasks=active_tasks,
+            done_today_tasks=done_today_tasks,
+            completed_tasks=completed_tasks,
+            running_tasks=running_tasks,
+            reminders=reminders_list,
+            reminders_summary=reminders_summary,
+            upcoming_reminders=upcoming_reminders,
+            project_distribution=project_distribution,
+            project_distribution_total=project_distribution_total,
+            top_project=top_project,
+            calendar_entry_count=calendar_entry_count,
+            calendar_active_days=calendar_active_days,
+            projects=projects,
+            labels=labels,
+            weekly_goals=weekly_goals,
+            weekly_active_goals=weekly_active_goals,
+            weekly_completed_goals=weekly_completed_goals,
+            weekly_avg_progress=weekly_avg_progress,
+            week_range_label=f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}",
+            week_total_seconds=week_total_seconds,
+            today_seconds=today_seconds,
+            avg_daily_hours=avg_daily_hours,
+            linked_projects_total=linked_projects_total,
+            linked_tasks_total=linked_tasks_total,
+            timezone_name=timezone_name,
+            notification_settings=notification_settings,
+            user_email=getattr(current_user, "email", ""),
         )
 
     @app.route("/login/google", methods=["GET"])

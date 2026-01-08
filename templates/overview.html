@@ -3,21 +3,28 @@
 {% set active_page = "overview" %}
 
 {% block content %}
-  <div class="container py-4">
+  <div class="container py-4 overview-page">
     <header class="header">
-      <h1>Overview</h1>
-      <p>High-level insights from your projects and tasks.</p>
+      <div>
+        <h1>Overview</h1>
+        <p>High-level insights from your projects and tasks.</p>
+      </div>
     </header>
 
-    <section class="card">
-      <h2>Time summary</h2>
-      <div class="chart-controls">
-        <div class="range-switch">
-          <span class="range-chip active">7d</span>
+    <section class="card overview-time-card">
+      <div class="overview-card-header">
+        <div>
+          <h2>Time summary</h2>
+          <p class="overview-subtitle">Last 7 days of focus tracking.</p>
         </div>
-        <div class="mode-switch">
-          <button class="btn btn-outline-primary btn-sm mode-button active" type="button" data-mode="bar">Bar</button>
-          <button class="btn btn-outline-primary btn-sm mode-button" type="button" data-mode="line">Line</button>
+        <div class="chart-controls">
+          <div class="range-switch">
+            <span class="range-chip active">7d</span>
+          </div>
+          <div class="mode-switch">
+            <button class="btn btn-outline-primary btn-sm mode-button active" type="button" data-mode="bar">Bar</button>
+            <button class="btn btn-outline-primary btn-sm mode-button" type="button" data-mode="line">Line</button>
+          </div>
         </div>
       </div>
       {% if summary %}
@@ -27,6 +34,23 @@
       {% else %}
         <p class="empty">No activity yet.</p>
       {% endif %}
+      <div class="overview-time-metrics">
+        <div class="overview-metric">
+          <span class="overview-metric-label">Total focus</span>
+          <span class="overview-metric-value">{{ week_total_seconds | format_seconds }}</span>
+          <span class="overview-metric-meta">Past 7 days</span>
+        </div>
+        <div class="overview-metric">
+          <span class="overview-metric-label">Today</span>
+          <span class="overview-metric-value">{{ today_seconds | format_seconds }}</span>
+          <span class="overview-metric-meta">Current day</span>
+        </div>
+        <div class="overview-metric">
+          <span class="overview-metric-label">Active days</span>
+          <span class="overview-metric-value">{{ calendar_active_days }}</span>
+          <span class="overview-metric-meta">{{ calendar_entry_count }} sessions</span>
+        </div>
+      </div>
     </section>
 
     <section class="card goals-card">
@@ -59,9 +83,7 @@
         </div>
         <div class="goal-stat-card">
           <span class="goal-stat-label">Upcoming deadlines</span>
-          <span class="goal-stat-value">
-            {{ goals | selectattr("target_date") | list | length }}
-          </span>
+          <span class="goal-stat-value">{{ goals_targets_set }}</span>
           <span class="goal-stat-meta">Targets set</span>
         </div>
       </div>
@@ -134,9 +156,452 @@
       </div>
     </section>
 
-    <section class="card">
-      <h2>Focus by Project</h2>
-      <div class="chart-placeholder">Chart placeholder</div>
+    <section class="overview-charts">
+      <article class="card overview-chart-card">
+        <div class="overview-card-header">
+          <div>
+            <p class="goals-label">Projects</p>
+            <h2 class="goals-title">Focus by project</h2>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('reports') }}">
+            <i class="bi bi-graph-up"></i>
+            Reports
+          </a>
+        </div>
+        {% if project_distribution %}
+          <div class="donut-wrap overview-donut">
+            <canvas id="project-distribution-chart" height="160"></canvas>
+            <div class="donut-center" id="project-distribution-total">{{ project_distribution_total | format_seconds }}</div>
+          </div>
+          <ul class="overview-list">
+            {% for project in project_distribution[:4] %}
+              <li class="overview-list-item">
+                <span class="overview-list-title">
+                  <span class="overview-dot" style="--dot-color: hsl({{ (loop.index0 * 47) % 360 }}, 78%, 45%);"></span>
+                  {{ project["project"] }}
+                </span>
+                <span class="overview-list-meta">{{ project["seconds"] | format_seconds }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">No tracked time yet.</p>
+        {% endif %}
+      </article>
+      <article class="card overview-chart-card">
+        <div class="overview-card-header">
+          <div>
+            <p class="goals-label">Habits</p>
+            <h2 class="goals-title">Completion momentum</h2>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('habits') }}">
+            <i class="bi bi-check2-circle"></i>
+            Habits
+          </a>
+        </div>
+        {% if habits_summary["total"] %}
+          <div class="chart-panel is-active">
+            <canvas id="habit-chart" height="160"></canvas>
+          </div>
+          <div class="overview-time-metrics">
+            <div class="overview-metric">
+              <span class="overview-metric-label">Completed today</span>
+              <span class="overview-metric-value">{{ habits_summary["completed"] }}</span>
+              <span class="overview-metric-meta">Out of {{ habits_summary["total"] }}</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">Best streak</span>
+              <span class="overview-metric-value">{{ habits_summary["best_streak"] }} days</span>
+              <span class="overview-metric-meta">Consistency peak</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">Focus window</span>
+              <span class="overview-metric-value">{{ habits_summary["focus_window"] }}</span>
+              <span class="overview-metric-meta">Most common</span>
+            </div>
+          </div>
+        {% else %}
+          <p class="empty">No habits yet.</p>
+        {% endif %}
+      </article>
+    </section>
+
+    <section class="overview-grid">
+      <article class="card overview-module">
+        <div class="overview-module-header">
+          <div>
+            <p class="goals-label">Planner</p>
+            <h3>Daily focus</h3>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('planner') }}">Open</a>
+        </div>
+        <div class="overview-time-metrics">
+          <div class="overview-metric">
+            <span class="overview-metric-label">Habits done</span>
+            <span class="overview-metric-value">{{ habits_summary["completed"] }}</span>
+            <span class="overview-metric-meta">Of {{ habits_summary["total"] }}</span>
+          </div>
+          <div class="overview-metric">
+            <span class="overview-metric-label">To-do items</span>
+            <span class="overview-metric-value">{{ todos | length }}</span>
+            <span class="overview-metric-meta">{{ done_todos | length }} done</span>
+          </div>
+        </div>
+        {% if todos %}
+          <ul class="overview-list">
+            {% for todo in todos[:3] %}
+              <li class="overview-list-item">
+                <span class="overview-list-title">{{ todo["name"] }}</span>
+                <span class="overview-list-meta">Today</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">No to-dos yet.</p>
+        {% endif %}
+      </article>
+
+      <article class="card overview-module">
+        <div class="overview-module-header">
+          <div>
+            <p class="goals-label">Tasks</p>
+            <h3>Execution tracker</h3>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index') }}">Open</a>
+        </div>
+        <div class="overview-time-metrics">
+          <div class="overview-metric">
+            <span class="overview-metric-label">Active tasks</span>
+            <span class="overview-metric-value">{{ active_tasks | length }}</span>
+            <span class="overview-metric-meta">{{ running_tasks }} running</span>
+          </div>
+          <div class="overview-metric">
+            <span class="overview-metric-label">Done today</span>
+            <span class="overview-metric-value">{{ done_today_tasks | length }}</span>
+            <span class="overview-metric-meta">{{ completed_tasks | length }} completed</span>
+          </div>
+        </div>
+        {% if active_tasks %}
+          <ul class="overview-list">
+            {% for task in active_tasks[:3] %}
+              <li class="overview-list-item">
+                <span class="overview-list-title">{{ task["name"] }}</span>
+                <span class="overview-list-meta">{{ task["today_seconds"] | format_seconds }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">No active tasks.</p>
+        {% endif %}
+      </article>
+
+      <article class="card overview-module">
+        <div class="overview-module-header">
+          <div>
+            <p class="goals-label">Timer</p>
+            <h3>Focus sessions</h3>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('timer') }}">Open</a>
+        </div>
+        <div class="overview-time-metrics">
+          <div class="overview-metric">
+            <span class="overview-metric-label">Focused today</span>
+            <span class="overview-metric-value">{{ today_seconds | format_seconds }}</span>
+            <span class="overview-metric-meta">Current day</span>
+          </div>
+          <div class="overview-metric">
+            <span class="overview-metric-label">Weekly total</span>
+            <span class="overview-metric-value">{{ week_total_seconds | format_seconds }}</span>
+            <span class="overview-metric-meta">{{ running_tasks }} running</span>
+          </div>
+        </div>
+        <p class="overview-inline-meta">Average daily focus: {{ avg_daily_hours | round(1) }}h</p>
+      </article>
+
+      <article class="card overview-module">
+        <div class="overview-module-header">
+          <div>
+            <p class="goals-label">Calendar</p>
+            <h3>Session timeline</h3>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('calendar') }}">Open</a>
+        </div>
+        <div class="overview-time-metrics">
+          <div class="overview-metric">
+            <span class="overview-metric-label">Sessions logged</span>
+            <span class="overview-metric-value">{{ calendar_entry_count }}</span>
+            <span class="overview-metric-meta">Past 7 days</span>
+          </div>
+          <div class="overview-metric">
+            <span class="overview-metric-label">Active days</span>
+            <span class="overview-metric-value">{{ calendar_active_days }}</span>
+            <span class="overview-metric-meta">Time logged</span>
+          </div>
+        </div>
+        <p class="overview-inline-meta">Review sessions and align blocks on the calendar.</p>
+      </article>
+
+      <article class="card overview-module">
+        <div class="overview-module-header">
+          <div>
+            <p class="goals-label">Habits</p>
+            <h3>Daily rituals</h3>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('habits') }}">Open</a>
+        </div>
+        <div class="overview-time-metrics">
+          <div class="overview-metric">
+            <span class="overview-metric-label">Completed</span>
+            <span class="overview-metric-value">{{ habits_summary["completed"] }}</span>
+            <span class="overview-metric-meta">Of {{ habits_summary["total"] }}</span>
+          </div>
+          <div class="overview-metric">
+            <span class="overview-metric-label">Best streak</span>
+            <span class="overview-metric-value">{{ habits_summary["best_streak"] }}d</span>
+            <span class="overview-metric-meta">{{ habits_summary["focus_window"] }}</span>
+          </div>
+        </div>
+        {% if habits %}
+          <ul class="overview-list">
+            {% for habit in habits[:3] %}
+              <li class="overview-list-item">
+                <span class="overview-list-title">{{ habit["name"] }}</span>
+                <span class="overview-list-meta">{{ habit["streak"] }}d</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">No habits yet.</p>
+        {% endif %}
+      </article>
+
+      <article class="card overview-module">
+        <div class="overview-module-header">
+          <div>
+            <p class="goals-label">Reminders</p>
+            <h3>Stay on schedule</h3>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('reminders') }}">Open</a>
+        </div>
+        <div class="overview-time-metrics">
+          <div class="overview-metric">
+            <span class="overview-metric-label">Active</span>
+            <span class="overview-metric-value">{{ reminders_summary.active }}</span>
+            <span class="overview-metric-meta">{{ reminders_summary.total }} total</span>
+          </div>
+          <div class="overview-metric">
+            <span class="overview-metric-label">Overdue</span>
+            <span class="overview-metric-value">{{ reminders_summary.overdue }}</span>
+            <span class="overview-metric-meta">Next: {{ reminders_summary.next_label }}</span>
+          </div>
+        </div>
+        {% if upcoming_reminders %}
+          <ul class="overview-list">
+            {% for reminder in upcoming_reminders %}
+              <li class="overview-list-item">
+                <span class="overview-list-title">{{ reminder["title"] }}</span>
+                <span class="overview-list-meta">{{ reminder["next_label"] }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">No upcoming reminders.</p>
+        {% endif %}
+      </article>
+
+      <article class="card overview-module">
+        <div class="overview-module-header">
+          <div>
+            <p class="goals-label">Goals</p>
+            <h3>Target review</h3>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('goals') }}">Open</a>
+        </div>
+        <div class="overview-time-metrics">
+          <div class="overview-metric">
+            <span class="overview-metric-label">Active goals</span>
+            <span class="overview-metric-value">{{ active_goals_count }}</span>
+            <span class="overview-metric-meta">{{ goals | length }} total</span>
+          </div>
+          <div class="overview-metric">
+            <span class="overview-metric-label">Targets set</span>
+            <span class="overview-metric-value">{{ goals_targets_set }}</span>
+            <span class="overview-metric-meta">{{ total_goal_seconds | format_seconds }}</span>
+          </div>
+        </div>
+        <p class="overview-inline-meta">Keep progress aligned with upcoming milestones.</p>
+      </article>
+
+      <article class="card overview-module">
+        <div class="overview-module-header">
+          <div>
+            <p class="goals-label">Long-term goals</p>
+            <h3>Strategic map</h3>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('long_term_goals') }}">Open</a>
+        </div>
+        <div class="overview-time-metrics">
+          <div class="overview-metric">
+            <span class="overview-metric-label">Total goals</span>
+            <span class="overview-metric-value">{{ goals | length }}</span>
+            <span class="overview-metric-meta">Long horizon</span>
+          </div>
+          <div class="overview-metric">
+            <span class="overview-metric-label">Linked work</span>
+            <span class="overview-metric-value">{{ linked_projects_total }}</span>
+            <span class="overview-metric-meta">{{ linked_tasks_total }} tasks</span>
+          </div>
+        </div>
+        <p class="overview-inline-meta">Align projects with the big outcomes.</p>
+      </article>
+
+      <article class="card overview-module">
+        <div class="overview-module-header">
+          <div>
+            <p class="goals-label">Weekly goals</p>
+            <h3>Current week</h3>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('weekly_goals') }}">Open</a>
+        </div>
+        <div class="overview-time-metrics">
+          <div class="overview-metric">
+            <span class="overview-metric-label">This week</span>
+            <span class="overview-metric-value">{{ weekly_goals | length }}</span>
+            <span class="overview-metric-meta">{{ week_range_label }}</span>
+          </div>
+          <div class="overview-metric">
+            <span class="overview-metric-label">Progress</span>
+            <span class="overview-metric-value">{{ weekly_avg_progress }}%</span>
+            <span class="overview-metric-meta">{{ weekly_active_goals }} active</span>
+          </div>
+        </div>
+        {% if weekly_goals %}
+          <ul class="overview-list">
+            {% for goal in weekly_goals[:2] %}
+              <li class="overview-list-item">
+                <span class="overview-list-title">{{ goal["title"] }}</span>
+                <span class="overview-list-meta">{{ goal["progress_percent"] }}%</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">No weekly goals yet.</p>
+        {% endif %}
+      </article>
+
+      <article class="card overview-module">
+        <div class="overview-module-header">
+          <div>
+            <p class="goals-label">Reports</p>
+            <h3>Performance insight</h3>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('reports') }}">Open</a>
+        </div>
+        <div class="overview-time-metrics">
+          <div class="overview-metric">
+            <span class="overview-metric-label">Total focus</span>
+            <span class="overview-metric-value">{{ week_total_seconds | format_seconds }}</span>
+            <span class="overview-metric-meta">Last 7 days</span>
+          </div>
+          <div class="overview-metric">
+            <span class="overview-metric-label">Top project</span>
+            <span class="overview-metric-value">{% if top_project %}{{ top_project["project"] }}{% else %}--{% endif %}</span>
+            <span class="overview-metric-meta">Average {{ avg_daily_hours | round(1) }}h / day</span>
+          </div>
+        </div>
+        <p class="overview-inline-meta">Review distribution and trends in reports.</p>
+      </article>
+
+      <article class="card overview-module">
+        <div class="overview-module-header">
+          <div>
+            <p class="goals-label">Projects</p>
+            <h3>Active portfolio</h3>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('projects') }}">Open</a>
+        </div>
+        <div class="overview-time-metrics">
+          <div class="overview-metric">
+            <span class="overview-metric-label">Projects</span>
+            <span class="overview-metric-value">{{ projects | length }}</span>
+            <span class="overview-metric-meta">{{ project_distribution | length }} active</span>
+          </div>
+          <div class="overview-metric">
+            <span class="overview-metric-label">Top focus</span>
+            <span class="overview-metric-value">{% if top_project %}{{ top_project["seconds"] | format_seconds }}{% else %}00:00:00{% endif %}</span>
+            <span class="overview-metric-meta">{% if top_project %}{{ top_project["project"] }}{% else %}No data{% endif %}</span>
+          </div>
+        </div>
+        {% if project_distribution %}
+          <ul class="overview-list">
+            {% for project in project_distribution[:3] %}
+              <li class="overview-list-item">
+                <span class="overview-list-title">{{ project["project"] }}</span>
+                <span class="overview-list-meta">{{ project["percent"] | round(0) }}%</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">No projects tracked yet.</p>
+        {% endif %}
+      </article>
+
+      <article class="card overview-module">
+        <div class="overview-module-header">
+          <div>
+            <p class="goals-label">Tags</p>
+            <h3>Organization layer</h3>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('labels') }}">Open</a>
+        </div>
+        <div class="overview-time-metrics">
+          <div class="overview-metric">
+            <span class="overview-metric-label">Tags</span>
+            <span class="overview-metric-value">{{ labels | length }}</span>
+            <span class="overview-metric-meta">Across tasks</span>
+          </div>
+          <div class="overview-metric">
+            <span class="overview-metric-label">Projects</span>
+            <span class="overview-metric-value">{{ projects | length }}</span>
+            <span class="overview-metric-meta">Mapped by tags</span>
+          </div>
+        </div>
+        {% if labels %}
+          <ul class="overview-list">
+            {% for label in labels[:4] %}
+              <li class="overview-list-item">
+                <span class="overview-list-title">{{ label["name"] }}</span>
+                <span class="overview-list-meta">Tag</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">No tags yet.</p>
+        {% endif %}
+      </article>
+
+      <article class="card overview-module">
+        <div class="overview-module-header">
+          <div>
+            <p class="goals-label">Account</p>
+            <h3>Settings snapshot</h3>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('account') }}">Open</a>
+        </div>
+        <div class="overview-time-metrics">
+          <div class="overview-metric">
+            <span class="overview-metric-label">Timezone</span>
+            <span class="overview-metric-value">{{ timezone_name }}</span>
+            <span class="overview-metric-meta">Local settings</span>
+          </div>
+          <div class="overview-metric">
+            <span class="overview-metric-label">Notifications</span>
+            <span class="overview-metric-value">{% if notification_settings.enabled %}On{% else %}Off{% endif %}</span>
+            <span class="overview-metric-meta">{{ notification_settings.interval_minutes }} min</span>
+          </div>
+        </div>
+        <p class="overview-inline-meta">{% if user_email %}{{ user_email }}{% else %}Sign-in details available in settings.{% endif %}</p>
+      </article>
     </section>
   </div>
 {% endblock %}
@@ -148,8 +613,16 @@
     const labels = summary.map((item) => item.label);
     const values = summary.map((item) => item.seconds);
     const ctx = document.getElementById("overview-chart");
+    const projectDistribution = {{ project_distribution | tojson }};
+    const habitSeries = {{ habit_series | tojson }};
     let chartType = "bar";
     let chartInstance = null;
+
+    const formatSeconds = (seconds) => {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      return `${hours}h ${minutes}m`;
+    };
 
     const buildChart = (type) => {
       if (!ctx) {
@@ -182,9 +655,7 @@
               callbacks: {
                 label: (context) => {
                   const seconds = context.raw || 0;
-                  const hours = Math.floor(seconds / 3600);
-                  const minutes = Math.floor((seconds % 3600) / 60);
-                  return `${hours}h ${minutes}m`;
+                  return formatSeconds(seconds);
                 },
               },
             },
@@ -211,5 +682,79 @@
         buildChart(chartType);
       });
     });
+
+    const projectCanvas = document.getElementById("project-distribution-chart");
+    if (projectCanvas && projectDistribution.length) {
+      const projectColors = projectDistribution.map(
+        (_, index) => `hsl(${(index * 47) % 360}, 78%, 45%)`,
+      );
+      new Chart(projectCanvas, {
+        type: "doughnut",
+        data: {
+          labels: projectDistribution.map((item) => item.project),
+          datasets: [
+            {
+              data: projectDistribution.map((item) => item.seconds),
+              backgroundColor: projectColors,
+              borderWidth: 0,
+            },
+          ],
+        },
+        options: {
+          cutout: "72%",
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => formatSeconds(context.raw || 0),
+              },
+            },
+          },
+        },
+      });
+    }
+
+    const habitCanvas = document.getElementById("habit-chart");
+    if (habitCanvas && habitSeries && habitSeries.values && habitSeries.values.length) {
+      const habitLabels = habitSeries.labels.map((label) => label.slice(5));
+      new Chart(habitCanvas, {
+        type: "line",
+        data: {
+          labels: habitLabels,
+          datasets: [
+            {
+              label: "Completion",
+              data: habitSeries.values,
+              borderColor: "#1f6feb",
+              backgroundColor: "rgba(31, 111, 235, 0.18)",
+              borderWidth: 2,
+              tension: 0.35,
+              fill: true,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (context) => `${context.raw || 0}%`,
+              },
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: (value) => `${value}%`,
+              },
+            },
+          },
+        },
+      });
+    }
   </script>
 {% endblock %}
