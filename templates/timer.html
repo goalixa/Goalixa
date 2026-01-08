@@ -141,37 +141,45 @@
                 <span class="timer-list-day">{{ group["label"] }}</span>
                 <span class="timer-list-total">{{ group["total_seconds"] | format_seconds }}</span>
               </div>
-              {% for entry in group["entries"] %}
-                <div class="timer-list-item" data-task-id="{{ entry['task_id'] }}">
-                  <div class="timer-list-row">
+              {% for task in group["tasks"] %}
+                <div class="timer-list-item timer-task-item" data-task-id="{{ task['task_id'] }}">
+                  <div class="timer-list-row timer-task-toggle" role="button" tabindex="0" aria-expanded="false" data-task-toggle>
                     <div class="timer-list-left">
-                      {% if entry["labels"] %}
-                        <span class="timer-list-label">{{ entry["labels"] | join(", ") }}</span>
+                      {% if task["labels"] %}
+                        <span class="timer-list-label">{{ task["labels"] | join(", ") }}</span>
                       {% endif %}
                     </div>
                     <div class="timer-list-center">
-                      <span class="timer-list-title">{{ entry["task_name"] }}</span>
-                      <span class="timer-list-project">{{ entry["project_name"] }}</span>
+                      <span class="timer-list-title">{{ task["task_name"] }}</span>
+                      <span class="timer-list-project">{{ task["project_name"] }}</span>
                     </div>
                     <div class="timer-list-right">
-                      <span class="timer-list-time">{{ entry["start_time"] }} - {{ entry["end_time"] }}</span>
-                      <span class="timer-list-duration">{{ entry["duration_seconds"] | format_seconds }}</span>
-                        <div class="timer-list-actions">
-                          {% if entry["is_running"] %}
-                            <form method="post" action="{{ url_for('stop_task', task_id=entry['task_id']) }}" data-action="stop" data-task-id="{{ entry['task_id'] }}" data-task-name="{{ entry['task_name'] }}">
-                              <button class="btn btn-outline-warning btn-sm timer-list-action pause" type="submit" aria-label="Pause task timer">
-                                <i class="bi bi-pause-fill"></i>
-                              </button>
-                            </form>
-                          {% else %}
-                            <form method="post" action="{{ url_for('start_task', task_id=entry['task_id']) }}" data-action="start" data-task-id="{{ entry['task_id'] }}" data-task-name="{{ entry['task_name'] }}">
-                              <button class="btn btn-outline-primary btn-sm timer-list-action resume" type="submit" aria-label="Start task timer">
-                                <i class="bi bi-play-fill"></i>
-                              </button>
-                            </form>
-                          {% endif %}
-                        </div>
+                      <span class="timer-list-duration">{{ task["total_seconds"] | format_seconds }}</span>
+                      <span class="timer-list-time">{{ task["entries"] | length }} sessions</span>
+                      <div class="timer-list-actions">
+                        {% if task["is_running"] %}
+                          <form method="post" action="{{ url_for('stop_task', task_id=task['task_id']) }}" data-action="stop" data-task-id="{{ task['task_id'] }}" data-task-name="{{ task['task_name'] }}">
+                            <button class="btn btn-outline-warning btn-sm timer-list-action pause" type="submit" aria-label="Pause task timer">
+                              <i class="bi bi-pause-fill"></i>
+                            </button>
+                          </form>
+                        {% else %}
+                          <form method="post" action="{{ url_for('start_task', task_id=task['task_id']) }}" data-action="start" data-task-id="{{ task['task_id'] }}" data-task-name="{{ task['task_name'] }}">
+                            <button class="btn btn-outline-primary btn-sm timer-list-action resume" type="submit" aria-label="Start task timer">
+                              <i class="bi bi-play-fill"></i>
+                            </button>
+                          </form>
+                        {% endif %}
+                      </div>
                     </div>
+                  </div>
+                  <div class="timer-task-details">
+                    {% for entry in task["entries"] %}
+                      <div class="timer-task-entry">
+                        <span class="timer-task-entry-time">{{ entry["start_time"] }} - {{ entry["end_time"] }}</span>
+                        <span class="timer-task-entry-duration">{{ entry["duration_seconds"] | format_seconds }}</span>
+                      </div>
+                    {% endfor %}
                   </div>
                 </div>
               {% endfor %}
@@ -199,14 +207,24 @@
                   <div class="timesheet-day-total">{{ group["total_seconds"] | format_seconds }}</div>
                 </div>
                 <div class="timesheet-entries">
-                  {% if group["entries"] %}
-                    {% for entry in group["entries"] %}
-                      <div class="timesheet-entry">
-                        <div>
-                          <div class="timesheet-entry-title">{{ entry["task_name"] }}</div>
-                          <div class="timesheet-entry-meta">{{ entry["start_time"] }} - {{ entry["end_time"] }}</div>
+                  {% if group["tasks"] %}
+                    {% for task in group["tasks"] %}
+                      <div class="timesheet-task" data-task-id="{{ task['task_id'] }}">
+                        <div class="timesheet-task-summary" role="button" tabindex="0" aria-expanded="false" data-task-toggle>
+                          <div>
+                            <div class="timesheet-task-title">{{ task["task_name"] }}</div>
+                            <div class="timesheet-task-meta">{{ task["project_name"] }}</div>
+                          </div>
+                          <div class="timesheet-task-duration">{{ task["total_seconds"] | format_seconds }}</div>
                         </div>
-                        <div class="timesheet-entry-duration">{{ entry["duration_seconds"] | format_seconds }}</div>
+                        <div class="timesheet-task-details">
+                          {% for entry in task["entries"] %}
+                            <div class="timer-task-entry">
+                              <span class="timer-task-entry-time">{{ entry["start_time"] }} - {{ entry["end_time"] }}</span>
+                              <span class="timer-task-entry-duration">{{ entry["duration_seconds"] | format_seconds }}</span>
+                            </div>
+                          {% endfor %}
+                        </div>
                       </div>
                     {% endfor %}
                   {% else %}
@@ -334,6 +352,38 @@
             calendar.updateSize();
           }
         });
+      });
+
+      const toggleTaskDetails = (toggle) => {
+        const item = toggle.closest(".timer-task-item, .timesheet-task");
+        if (!item) {
+          return;
+        }
+        const isOpen = item.classList.toggle("is-open");
+        toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      };
+
+      document.addEventListener("click", (event) => {
+        const toggle = event.target.closest("[data-task-toggle]");
+        if (!toggle) {
+          return;
+        }
+        if (event.target.closest(".timer-list-actions")) {
+          return;
+        }
+        toggleTaskDetails(toggle);
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") {
+          return;
+        }
+        const toggle = event.target.closest("[data-task-toggle]");
+        if (!toggle) {
+          return;
+        }
+        event.preventDefault();
+        toggleTaskDetails(toggle);
       });
 
       const pomodoroDisplay = document.getElementById("pomodoro-display");

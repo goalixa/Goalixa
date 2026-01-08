@@ -909,7 +909,7 @@ class TaskService:
                     "label": label,
                     "start": day_start,
                     "end": day_end,
-                    "entries": [],
+                    "tasks": {},
                     "total_seconds": 0,
                 }
             )
@@ -932,27 +932,43 @@ class TaskService:
                     continue
                 duration = int((overlap_end - overlap_start).total_seconds())
                 bucket["total_seconds"] += duration
-                bucket["entries"].append(
-                    {
+                task = bucket["tasks"].get(entry["task_id"])
+                if not task:
+                    task = {
                         "task_id": entry["task_id"],
                         "task_name": entry["task_name"] or "Unnamed Task",
                         "project_name": entry["project_name"] or "Unassigned",
                         "labels": entry_labels,
+                        "total_seconds": 0,
+                        "entries": [],
+                        "is_running": bool(running_map.get(entry["task_id"], False)),
+                        "sort_ts": overlap_start.timestamp(),
+                    }
+                    bucket["tasks"][entry["task_id"]] = task
+                task["total_seconds"] += duration
+                task["sort_ts"] = max(task["sort_ts"], overlap_start.timestamp())
+                task["entries"].append(
+                    {
                         "duration_seconds": duration,
                         "start_time": self._format_time(overlap_start),
                         "end_time": self._format_time(overlap_end),
-                        "is_running": bool(running_map.get(entry["task_id"], False)),
                         "sort_ts": overlap_start.timestamp(),
                     }
                 )
 
         result = []
         for bucket in buckets:
-            if not bucket["entries"]:
+            if not bucket["tasks"]:
                 continue
-            bucket["entries"].sort(key=lambda item: item["sort_ts"], reverse=True)
-            for item in bucket["entries"]:
-                item.pop("sort_ts", None)
+            tasks = list(bucket["tasks"].values())
+            for task in tasks:
+                task["entries"].sort(key=lambda item: item["sort_ts"], reverse=True)
+                for entry in task["entries"]:
+                    entry.pop("sort_ts", None)
+            tasks.sort(key=lambda item: item["sort_ts"], reverse=True)
+            for task in tasks:
+                task.pop("sort_ts", None)
+            bucket["tasks"] = tasks
             bucket.pop("start", None)
             bucket.pop("end", None)
             result.append(bucket)
