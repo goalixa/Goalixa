@@ -3355,6 +3355,31 @@ body {
   align-items: start;
 }
 
+.overview-group {
+  display: grid;
+  gap: 12px;
+}
+
+.overview-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.overview-group-title {
+  margin: 4px 0 0;
+  font-size: 1.15rem;
+}
+
+.overview-group-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  align-items: start;
+}
+
 .overview-module {
   display: grid;
   gap: 12px;

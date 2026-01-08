@@ -226,383 +226,399 @@
       </article>
     </section>
 
-    <section class="overview-grid">
-      <article class="card overview-module">
-        <div class="overview-module-header">
-          <div>
-            <p class="goals-label">Planner</p>
-            <h3>Daily focus</h3>
-          </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('planner') }}">Open</a>
+    <section class="overview-group">
+      <header class="overview-group-header">
+        <div>
+          <p class="goals-label">Plan & Execute</p>
+          <h2 class="overview-group-title">Stay focused each day</h2>
         </div>
-        <div class="overview-time-metrics">
-          <div class="overview-metric">
-            <span class="overview-metric-label">Habits done</span>
-            <span class="overview-metric-value">{{ habits_summary["completed"] }}</span>
-            <span class="overview-metric-meta">Of {{ habits_summary["total"] }}</span>
+      </header>
+      <div class="overview-group-grid">
+        <article class="card overview-module">
+          <div class="overview-module-header">
+            <div>
+              <p class="goals-label">Planner</p>
+              <h3>Daily focus</h3>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('planner') }}">Open</a>
           </div>
-          <div class="overview-metric">
-            <span class="overview-metric-label">To-do items</span>
-            <span class="overview-metric-value">{{ todos | length }}</span>
-            <span class="overview-metric-meta">{{ done_todos | length }} done</span>
+          <div class="overview-time-metrics">
+            <div class="overview-metric">
+              <span class="overview-metric-label">Habits done</span>
+              <span class="overview-metric-value">{{ habits_summary["completed"] }}</span>
+              <span class="overview-metric-meta">Of {{ habits_summary["total"] }}</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">To-do items</span>
+              <span class="overview-metric-value">{{ todos | length }}</span>
+              <span class="overview-metric-meta">{{ done_todos | length }} done</span>
+            </div>
           </div>
-        </div>
-        {% if todos %}
-          <ul class="overview-list">
-            {% for todo in todos[:3] %}
-              <li class="overview-list-item">
-                <span class="overview-list-title">{{ todo["name"] }}</span>
-                <span class="overview-list-meta">Today</span>
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <p class="empty">No to-dos yet.</p>
-        {% endif %}
-      </article>
+          {% if todos %}
+            <ul class="overview-list">
+              {% for todo in todos[:3] %}
+                <li class="overview-list-item">
+                  <span class="overview-list-title">{{ todo["name"] }}</span>
+                  <span class="overview-list-meta">Today</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="empty">No to-dos yet.</p>
+          {% endif %}
+        </article>
 
-      <article class="card overview-module">
-        <div class="overview-module-header">
-          <div>
-            <p class="goals-label">Tasks</p>
-            <h3>Execution tracker</h3>
+        <article class="card overview-module">
+          <div class="overview-module-header">
+            <div>
+              <p class="goals-label">Tasks</p>
+              <h3>Execution tracker</h3>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index') }}">Open</a>
           </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index') }}">Open</a>
-        </div>
-        <div class="overview-time-metrics">
-          <div class="overview-metric">
-            <span class="overview-metric-label">Active tasks</span>
-            <span class="overview-metric-value">{{ active_tasks | length }}</span>
-            <span class="overview-metric-meta">{{ running_tasks }} running</span>
+          <div class="overview-time-metrics">
+            <div class="overview-metric">
+              <span class="overview-metric-label">Active tasks</span>
+              <span class="overview-metric-value">{{ active_tasks | length }}</span>
+              <span class="overview-metric-meta">{{ running_tasks }} running</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">Done today</span>
+              <span class="overview-metric-value">{{ done_today_tasks | length }}</span>
+              <span class="overview-metric-meta">{{ completed_tasks | length }} completed</span>
+            </div>
           </div>
-          <div class="overview-metric">
-            <span class="overview-metric-label">Done today</span>
-            <span class="overview-metric-value">{{ done_today_tasks | length }}</span>
-            <span class="overview-metric-meta">{{ completed_tasks | length }} completed</span>
-          </div>
-        </div>
-        {% if active_tasks %}
-          <ul class="overview-list">
-            {% for task in active_tasks[:3] %}
-              <li class="overview-list-item">
-                <span class="overview-list-title">{{ task["name"] }}</span>
-                <span class="overview-list-meta">{{ task["today_seconds"] | format_seconds }}</span>
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <p class="empty">No active tasks.</p>
-        {% endif %}
-      </article>
+          {% if active_tasks %}
+            <ul class="overview-list">
+              {% for task in active_tasks[:3] %}
+                <li class="overview-list-item">
+                  <span class="overview-list-title">{{ task["name"] }}</span>
+                  <span class="overview-list-meta">{{ task["today_seconds"] | format_seconds }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="empty">No active tasks.</p>
+          {% endif %}
+        </article>
 
-      <article class="card overview-module">
-        <div class="overview-module-header">
-          <div>
-            <p class="goals-label">Timer</p>
-            <h3>Focus sessions</h3>
+        <article class="card overview-module">
+          <div class="overview-module-header">
+            <div>
+              <p class="goals-label">Timer</p>
+              <h3>Focus sessions</h3>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('timer') }}">Open</a>
           </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('timer') }}">Open</a>
-        </div>
-        <div class="overview-time-metrics">
-          <div class="overview-metric">
-            <span class="overview-metric-label">Focused today</span>
-            <span class="overview-metric-value">{{ today_seconds | format_seconds }}</span>
-            <span class="overview-metric-meta">Current day</span>
+          <div class="overview-time-metrics">
+            <div class="overview-metric">
+              <span class="overview-metric-label">Focused today</span>
+              <span class="overview-metric-value">{{ today_seconds | format_seconds }}</span>
+              <span class="overview-metric-meta">Current day</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">Weekly total</span>
+              <span class="overview-metric-value">{{ week_total_seconds | format_seconds }}</span>
+              <span class="overview-metric-meta">{{ running_tasks }} running</span>
+            </div>
           </div>
-          <div class="overview-metric">
-            <span class="overview-metric-label">Weekly total</span>
-            <span class="overview-metric-value">{{ week_total_seconds | format_seconds }}</span>
-            <span class="overview-metric-meta">{{ running_tasks }} running</span>
-          </div>
-        </div>
-        <p class="overview-inline-meta">Average daily focus: {{ avg_daily_hours | round(1) }}h</p>
-      </article>
+          <p class="overview-inline-meta">Average daily focus: {{ avg_daily_hours | round(1) }}h</p>
+        </article>
 
-      <article class="card overview-module">
-        <div class="overview-module-header">
-          <div>
-            <p class="goals-label">Calendar</p>
-            <h3>Session timeline</h3>
+        <article class="card overview-module">
+          <div class="overview-module-header">
+            <div>
+              <p class="goals-label">Calendar</p>
+              <h3>Session timeline</h3>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('calendar') }}">Open</a>
           </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('calendar') }}">Open</a>
-        </div>
-        <div class="overview-time-metrics">
-          <div class="overview-metric">
-            <span class="overview-metric-label">Sessions logged</span>
-            <span class="overview-metric-value">{{ calendar_entry_count }}</span>
-            <span class="overview-metric-meta">Past 7 days</span>
+          <div class="overview-time-metrics">
+            <div class="overview-metric">
+              <span class="overview-metric-label">Sessions logged</span>
+              <span class="overview-metric-value">{{ calendar_entry_count }}</span>
+              <span class="overview-metric-meta">Past 7 days</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">Active days</span>
+              <span class="overview-metric-value">{{ calendar_active_days }}</span>
+              <span class="overview-metric-meta">Time logged</span>
+            </div>
           </div>
-          <div class="overview-metric">
-            <span class="overview-metric-label">Active days</span>
-            <span class="overview-metric-value">{{ calendar_active_days }}</span>
-            <span class="overview-metric-meta">Time logged</span>
-          </div>
-        </div>
-        <p class="overview-inline-meta">Review sessions and align blocks on the calendar.</p>
-      </article>
-
-      <article class="card overview-module">
-        <div class="overview-module-header">
-          <div>
-            <p class="goals-label">Habits</p>
-            <h3>Daily rituals</h3>
-          </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('habits') }}">Open</a>
-        </div>
-        <div class="overview-time-metrics">
-          <div class="overview-metric">
-            <span class="overview-metric-label">Completed</span>
-            <span class="overview-metric-value">{{ habits_summary["completed"] }}</span>
-            <span class="overview-metric-meta">Of {{ habits_summary["total"] }}</span>
-          </div>
-          <div class="overview-metric">
-            <span class="overview-metric-label">Best streak</span>
-            <span class="overview-metric-value">{{ habits_summary["best_streak"] }}d</span>
-            <span class="overview-metric-meta">{{ habits_summary["focus_window"] }}</span>
-          </div>
-        </div>
-        {% if habits %}
-          <ul class="overview-list">
-            {% for habit in habits[:3] %}
-              <li class="overview-list-item">
-                <span class="overview-list-title">{{ habit["name"] }}</span>
-                <span class="overview-list-meta">{{ habit["streak"] }}d</span>
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <p class="empty">No habits yet.</p>
-        {% endif %}
-      </article>
-
-      <article class="card overview-module">
-        <div class="overview-module-header">
-          <div>
-            <p class="goals-label">Reminders</p>
-            <h3>Stay on schedule</h3>
-          </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('reminders') }}">Open</a>
-        </div>
-        <div class="overview-time-metrics">
-          <div class="overview-metric">
-            <span class="overview-metric-label">Active</span>
-            <span class="overview-metric-value">{{ reminders_summary.active }}</span>
-            <span class="overview-metric-meta">{{ reminders_summary.total }} total</span>
-          </div>
-          <div class="overview-metric">
-            <span class="overview-metric-label">Overdue</span>
-            <span class="overview-metric-value">{{ reminders_summary.overdue }}</span>
-            <span class="overview-metric-meta">Next: {{ reminders_summary.next_label }}</span>
-          </div>
-        </div>
-        {% if upcoming_reminders %}
-          <ul class="overview-list">
-            {% for reminder in upcoming_reminders %}
-              <li class="overview-list-item">
-                <span class="overview-list-title">{{ reminder["title"] }}</span>
-                <span class="overview-list-meta">{{ reminder["next_label"] }}</span>
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <p class="empty">No upcoming reminders.</p>
-        {% endif %}
-      </article>
-
-      <article class="card overview-module">
-        <div class="overview-module-header">
-          <div>
-            <p class="goals-label">Goals</p>
-            <h3>Target review</h3>
-          </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('goals') }}">Open</a>
-        </div>
-        <div class="overview-time-metrics">
-          <div class="overview-metric">
-            <span class="overview-metric-label">Active goals</span>
-            <span class="overview-metric-value">{{ active_goals_count }}</span>
-            <span class="overview-metric-meta">{{ goals | length }} total</span>
-          </div>
-          <div class="overview-metric">
-            <span class="overview-metric-label">Targets set</span>
-            <span class="overview-metric-value">{{ goals_targets_set }}</span>
-            <span class="overview-metric-meta">{{ total_goal_seconds | format_seconds }}</span>
-          </div>
-        </div>
-        <p class="overview-inline-meta">Keep progress aligned with upcoming milestones.</p>
-      </article>
-
-      <article class="card overview-module">
-        <div class="overview-module-header">
-          <div>
-            <p class="goals-label">Long-term goals</p>
-            <h3>Strategic map</h3>
-          </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('long_term_goals') }}">Open</a>
-        </div>
-        <div class="overview-time-metrics">
-          <div class="overview-metric">
-            <span class="overview-metric-label">Total goals</span>
-            <span class="overview-metric-value">{{ goals | length }}</span>
-            <span class="overview-metric-meta">Long horizon</span>
-          </div>
-          <div class="overview-metric">
-            <span class="overview-metric-label">Linked work</span>
-            <span class="overview-metric-value">{{ linked_projects_total }}</span>
-            <span class="overview-metric-meta">{{ linked_tasks_total }} tasks</span>
-          </div>
-        </div>
-        <p class="overview-inline-meta">Align projects with the big outcomes.</p>
-      </article>
-
-      <article class="card overview-module">
-        <div class="overview-module-header">
-          <div>
-            <p class="goals-label">Weekly goals</p>
-            <h3>Current week</h3>
-          </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('weekly_goals') }}">Open</a>
-        </div>
-        <div class="overview-time-metrics">
-          <div class="overview-metric">
-            <span class="overview-metric-label">This week</span>
-            <span class="overview-metric-value">{{ weekly_goals | length }}</span>
-            <span class="overview-metric-meta">{{ week_range_label }}</span>
-          </div>
-          <div class="overview-metric">
-            <span class="overview-metric-label">Progress</span>
-            <span class="overview-metric-value">{{ weekly_avg_progress }}%</span>
-            <span class="overview-metric-meta">{{ weekly_active_goals }} active</span>
-          </div>
-        </div>
-        {% if weekly_goals %}
-          <ul class="overview-list">
-            {% for goal in weekly_goals[:2] %}
-              <li class="overview-list-item">
-                <span class="overview-list-title">{{ goal["title"] }}</span>
-                <span class="overview-list-meta">{{ goal["progress_percent"] }}%</span>
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <p class="empty">No weekly goals yet.</p>
-        {% endif %}
-      </article>
-
-      <article class="card overview-module">
-        <div class="overview-module-header">
-          <div>
-            <p class="goals-label">Reports</p>
-            <h3>Performance insight</h3>
-          </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('reports') }}">Open</a>
-        </div>
-        <div class="overview-time-metrics">
-          <div class="overview-metric">
-            <span class="overview-metric-label">Total focus</span>
-            <span class="overview-metric-value">{{ week_total_seconds | format_seconds }}</span>
-            <span class="overview-metric-meta">Last 7 days</span>
-          </div>
-          <div class="overview-metric">
-            <span class="overview-metric-label">Top project</span>
-            <span class="overview-metric-value">{% if top_project %}{{ top_project["project"] }}{% else %}--{% endif %}</span>
-            <span class="overview-metric-meta">Average {{ avg_daily_hours | round(1) }}h / day</span>
-          </div>
-        </div>
-        <p class="overview-inline-meta">Review distribution and trends in reports.</p>
-      </article>
-
-      <article class="card overview-module">
-        <div class="overview-module-header">
-          <div>
-            <p class="goals-label">Projects</p>
-            <h3>Active portfolio</h3>
-          </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('projects') }}">Open</a>
-        </div>
-        <div class="overview-time-metrics">
-          <div class="overview-metric">
-            <span class="overview-metric-label">Projects</span>
-            <span class="overview-metric-value">{{ projects | length }}</span>
-            <span class="overview-metric-meta">{{ project_distribution | length }} active</span>
-          </div>
-          <div class="overview-metric">
-            <span class="overview-metric-label">Top focus</span>
-            <span class="overview-metric-value">{% if top_project %}{{ top_project["seconds"] | format_seconds }}{% else %}00:00:00{% endif %}</span>
-            <span class="overview-metric-meta">{% if top_project %}{{ top_project["project"] }}{% else %}No data{% endif %}</span>
-          </div>
-        </div>
-        {% if project_distribution %}
-          <ul class="overview-list">
-            {% for project in project_distribution[:3] %}
-              <li class="overview-list-item">
-                <span class="overview-list-title">{{ project["project"] }}</span>
-                <span class="overview-list-meta">{{ project["percent"] | round(0) }}%</span>
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <p class="empty">No projects tracked yet.</p>
-        {% endif %}
-      </article>
-
-      <article class="card overview-module">
-        <div class="overview-module-header">
-          <div>
-            <p class="goals-label">Tags</p>
-            <h3>Organization layer</h3>
-          </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('labels') }}">Open</a>
-        </div>
-        <div class="overview-time-metrics">
-          <div class="overview-metric">
-            <span class="overview-metric-label">Tags</span>
-            <span class="overview-metric-value">{{ labels | length }}</span>
-            <span class="overview-metric-meta">Across tasks</span>
-          </div>
-          <div class="overview-metric">
-            <span class="overview-metric-label">Projects</span>
-            <span class="overview-metric-value">{{ projects | length }}</span>
-            <span class="overview-metric-meta">Mapped by tags</span>
-          </div>
-        </div>
-        {% if labels %}
-          <ul class="overview-list">
-            {% for label in labels[:4] %}
-              <li class="overview-list-item">
-                <span class="overview-list-title">{{ label["name"] }}</span>
-                <span class="overview-list-meta">Tag</span>
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <p class="empty">No tags yet.</p>
-        {% endif %}
-      </article>
-
-      <article class="card overview-module">
-        <div class="overview-module-header">
-          <div>
-            <p class="goals-label">Account</p>
-            <h3>Settings snapshot</h3>
-          </div>
-          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('account') }}">Open</a>
-        </div>
-        <div class="overview-time-metrics">
-          <div class="overview-metric">
-            <span class="overview-metric-label">Timezone</span>
-            <span class="overview-metric-value">{{ timezone_name }}</span>
-            <span class="overview-metric-meta">Local settings</span>
-          </div>
-          <div class="overview-metric">
-            <span class="overview-metric-label">Notifications</span>
-            <span class="overview-metric-value">{% if notification_settings.enabled %}On{% else %}Off{% endif %}</span>
-            <span class="overview-metric-meta">{{ notification_settings.interval_minutes }} min</span>
-          </div>
-        </div>
-        <p class="overview-inline-meta">{% if user_email %}{{ user_email }}{% else %}Sign-in details available in settings.{% endif %}</p>
-      </article>
+          <p class="overview-inline-meta">Review sessions and align blocks on the calendar.</p>
+        </article>
+      </div>
     </section>
+
+    <section class="overview-group">
+      <header class="overview-group-header">
+        <div>
+          <p class="goals-label">Habits & Reminders</p>
+          <h2 class="overview-group-title">Build consistency</h2>
+        </div>
+      </header>
+      <div class="overview-group-grid">
+        <article class="card overview-module">
+          <div class="overview-module-header">
+            <div>
+              <p class="goals-label">Habits</p>
+              <h3>Daily rituals</h3>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('habits') }}">Open</a>
+          </div>
+          <div class="overview-time-metrics">
+            <div class="overview-metric">
+              <span class="overview-metric-label">Completed</span>
+              <span class="overview-metric-value">{{ habits_summary["completed"] }}</span>
+              <span class="overview-metric-meta">Of {{ habits_summary["total"] }}</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">Best streak</span>
+              <span class="overview-metric-value">{{ habits_summary["best_streak"] }}d</span>
+              <span class="overview-metric-meta">{{ habits_summary["focus_window"] }}</span>
+            </div>
+          </div>
+          {% if habits %}
+            <ul class="overview-list">
+              {% for habit in habits[:3] %}
+                <li class="overview-list-item">
+                  <span class="overview-list-title">{{ habit["name"] }}</span>
+                  <span class="overview-list-meta">{{ habit["streak"] }}d</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="empty">No habits yet.</p>
+          {% endif %}
+        </article>
+
+        <article class="card overview-module">
+          <div class="overview-module-header">
+            <div>
+              <p class="goals-label">Reminders</p>
+              <h3>Stay on schedule</h3>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('reminders') }}">Open</a>
+          </div>
+          <div class="overview-time-metrics">
+            <div class="overview-metric">
+              <span class="overview-metric-label">Active</span>
+              <span class="overview-metric-value">{{ reminders_summary.active }}</span>
+              <span class="overview-metric-meta">{{ reminders_summary.total }} total</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">Overdue</span>
+              <span class="overview-metric-value">{{ reminders_summary.overdue }}</span>
+              <span class="overview-metric-meta">Next: {{ reminders_summary.next_label }}</span>
+            </div>
+          </div>
+          {% if upcoming_reminders %}
+            <ul class="overview-list">
+              {% for reminder in upcoming_reminders %}
+                <li class="overview-list-item">
+                  <span class="overview-list-title">{{ reminder["title"] }}</span>
+                  <span class="overview-list-meta">{{ reminder["next_label"] }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="empty">No upcoming reminders.</p>
+          {% endif %}
+        </article>
+      </div>
+    </section>
+
+    <section class="overview-group">
+      <header class="overview-group-header">
+        <div>
+          <p class="goals-label">Goals</p>
+          <h2 class="overview-group-title">Track outcomes</h2>
+        </div>
+      </header>
+      <div class="overview-group-grid">
+        <article class="card overview-module">
+          <div class="overview-module-header">
+            <div>
+              <p class="goals-label">Goals</p>
+              <h3>Target review</h3>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('goals') }}">Open</a>
+          </div>
+          <div class="overview-time-metrics">
+            <div class="overview-metric">
+              <span class="overview-metric-label">Active goals</span>
+              <span class="overview-metric-value">{{ active_goals_count }}</span>
+              <span class="overview-metric-meta">{{ goals | length }} total</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">Targets set</span>
+              <span class="overview-metric-value">{{ goals_targets_set }}</span>
+              <span class="overview-metric-meta">{{ total_goal_seconds | format_seconds }}</span>
+            </div>
+          </div>
+          <p class="overview-inline-meta">Keep progress aligned with upcoming milestones.</p>
+        </article>
+
+        <article class="card overview-module">
+          <div class="overview-module-header">
+            <div>
+              <p class="goals-label">Long-term goals</p>
+              <h3>Strategic map</h3>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('long_term_goals') }}">Open</a>
+          </div>
+          <div class="overview-time-metrics">
+            <div class="overview-metric">
+              <span class="overview-metric-label">Total goals</span>
+              <span class="overview-metric-value">{{ goals | length }}</span>
+              <span class="overview-metric-meta">Long horizon</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">Linked work</span>
+              <span class="overview-metric-value">{{ linked_projects_total }}</span>
+              <span class="overview-metric-meta">{{ linked_tasks_total }} tasks</span>
+            </div>
+          </div>
+          <p class="overview-inline-meta">Align projects with the big outcomes.</p>
+        </article>
+
+        <article class="card overview-module">
+          <div class="overview-module-header">
+            <div>
+              <p class="goals-label">Weekly goals</p>
+              <h3>Current week</h3>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('weekly_goals') }}">Open</a>
+          </div>
+          <div class="overview-time-metrics">
+            <div class="overview-metric">
+              <span class="overview-metric-label">This week</span>
+              <span class="overview-metric-value">{{ weekly_goals | length }}</span>
+              <span class="overview-metric-meta">{{ week_range_label }}</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">Progress</span>
+              <span class="overview-metric-value">{{ weekly_avg_progress }}%</span>
+              <span class="overview-metric-meta">{{ weekly_active_goals }} active</span>
+            </div>
+          </div>
+          {% if weekly_goals %}
+            <ul class="overview-list">
+              {% for goal in weekly_goals[:2] %}
+                <li class="overview-list-item">
+                  <span class="overview-list-title">{{ goal["title"] }}</span>
+                  <span class="overview-list-meta">{{ goal["progress_percent"] }}%</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="empty">No weekly goals yet.</p>
+          {% endif %}
+        </article>
+      </div>
+    </section>
+
+    <section class="overview-group">
+      <header class="overview-group-header">
+        <div>
+          <p class="goals-label">Insights</p>
+          <h2 class="overview-group-title">See the portfolio</h2>
+        </div>
+      </header>
+      <div class="overview-group-grid">
+        <article class="card overview-module">
+          <div class="overview-module-header">
+            <div>
+              <p class="goals-label">Reports</p>
+              <h3>Performance insight</h3>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('reports') }}">Open</a>
+          </div>
+          <div class="overview-time-metrics">
+            <div class="overview-metric">
+              <span class="overview-metric-label">Total focus</span>
+              <span class="overview-metric-value">{{ week_total_seconds | format_seconds }}</span>
+              <span class="overview-metric-meta">Last 7 days</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">Top project</span>
+              <span class="overview-metric-value">{% if top_project %}{{ top_project["project"] }}{% else %}--{% endif %}</span>
+              <span class="overview-metric-meta">Average {{ avg_daily_hours | round(1) }}h / day</span>
+            </div>
+          </div>
+          <p class="overview-inline-meta">Review distribution and trends in reports.</p>
+        </article>
+
+        <article class="card overview-module">
+          <div class="overview-module-header">
+            <div>
+              <p class="goals-label">Projects</p>
+              <h3>Active portfolio</h3>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('projects') }}">Open</a>
+          </div>
+          <div class="overview-time-metrics">
+            <div class="overview-metric">
+              <span class="overview-metric-label">Projects</span>
+              <span class="overview-metric-value">{{ projects | length }}</span>
+              <span class="overview-metric-meta">{{ project_distribution | length }} active</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">Top focus</span>
+              <span class="overview-metric-value">{% if top_project %}{{ top_project["seconds"] | format_seconds }}{% else %}00:00:00{% endif %}</span>
+              <span class="overview-metric-meta">{% if top_project %}{{ top_project["project"] }}{% else %}No data{% endif %}</span>
+            </div>
+          </div>
+          {% if project_distribution %}
+            <ul class="overview-list">
+              {% for project in project_distribution[:3] %}
+                <li class="overview-list-item">
+                  <span class="overview-list-title">{{ project["project"] }}</span>
+                  <span class="overview-list-meta">{{ project["percent"] | round(0) }}%</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="empty">No projects tracked yet.</p>
+          {% endif %}
+        </article>
+
+        <article class="card overview-module">
+          <div class="overview-module-header">
+            <div>
+              <p class="goals-label">Tags</p>
+              <h3>Organization layer</h3>
+            </div>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('labels') }}">Open</a>
+          </div>
+          <div class="overview-time-metrics">
+            <div class="overview-metric">
+              <span class="overview-metric-label">Tags</span>
+              <span class="overview-metric-value">{{ labels | length }}</span>
+              <span class="overview-metric-meta">Across tasks</span>
+            </div>
+            <div class="overview-metric">
+              <span class="overview-metric-label">Projects</span>
+              <span class="overview-metric-value">{{ projects | length }}</span>
+              <span class="overview-metric-meta">Mapped by tags</span>
+            </div>
+          </div>
+          {% if labels %}
+            <ul class="overview-list">
+              {% for label in labels[:4] %}
+                <li class="overview-list-item">
+                  <span class="overview-list-title">{{ label["name"] }}</span>
+                  <span class="overview-list-meta">Tag</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="empty">No tags yet.</p>
+          {% endif %}
+        </article>
+      </div>
+    </section>
+
   </div>
 {% endblock %}
 
