@@ -460,8 +460,33 @@ body {
 }
 
 .header {
-  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 22px;
+  border-radius: 0 0 18px 18px;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, #ffffff 0%, #f7f7fb 45%, #f1f3f7 100%);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+  text-align: left;
   margin-bottom: 24px;
+  margin-top: -24px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+[data-theme="dark"] .header {
+  background: linear-gradient(135deg, #1e232b 0%, #1a1f27 55%, #171c24 100%);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.4);
+}
+
+.header > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 640px;
 }
 
 .goals-header-bar {
@@ -654,7 +679,7 @@ body {
 .planner-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   gap: 16px;
   flex-wrap: wrap;
 }
@@ -1093,6 +1118,7 @@ body {
   }
 
   .habits-header-actions {
+    flex-direction: column;
     align-items: stretch;
     width: 100%;
   }
@@ -1108,14 +1134,35 @@ body {
 }
 
 .header h1 {
-  margin: 0 0 8px;
-  font-size: 1.7rem;
-  font-weight: 600;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .header p {
   margin: 0;
   color: var(--muted);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header > div:first-child {
+    max-width: 100%;
+  }
+
+  .planner-header-actions,
+  .labels-header-actions,
+  .project-detail-actions,
+  .habits-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 .card {
@@ -1140,7 +1187,7 @@ body {
 .projects-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   gap: 16px;
   flex-wrap: wrap;
 }
@@ -1329,7 +1376,7 @@ body {
 .labels-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   gap: 16px;
   flex-wrap: wrap;
 }
@@ -2058,7 +2105,7 @@ body {
 
 .reports-header {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
