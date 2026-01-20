@@ -22,8 +22,8 @@
             <i class="bi bi-layout-sidebar-inset"></i>
           </button>
         </div>
-        <div class="sidebar-section">
-          <span class="sidebar-title">Track</span>
+        <details class="sidebar-group" open>
+          <summary class="sidebar-title">Track</summary>
           <nav class="sidebar-nav">
             <a class="sidebar-link {% if active_page == 'overview' %}active{% endif %}" href="{{ url_for('overview') }}"><i class="bi bi-bar-chart-line"></i><span class="sidebar-link-label">Overview</span></a>
             <a class="sidebar-link {% if active_page == 'planner' %}active{% endif %}" href="{{ url_for('planner') }}"><i class="bi bi-layout-text-window-reverse"></i><span class="sidebar-link-label">Planner</span></a>
@@ -35,22 +35,22 @@
             <a class="sidebar-link {% if active_page == 'long_term_goals' %}active{% endif %}" href="{{ url_for('long_term_goals') }}"><i class="bi bi-bullseye"></i><span class="sidebar-link-label">Long-term goals</span></a>
             <a class="sidebar-link {% if active_page == 'weekly_goals' %}active{% endif %}" href="{{ url_for('weekly_goals') }}"><i class="bi bi-calendar2-week"></i><span class="sidebar-link-label">Weekly Goals</span></a>
           </nav>
-        </div>
-        <div class="sidebar-section">
-          <span class="sidebar-title">Analyze</span>
+        </details>
+        <details class="sidebar-group" open>
+          <summary class="sidebar-title">Analyze</summary>
           <nav class="sidebar-nav">
             <a class="sidebar-link {% if active_page == 'reports' %}active{% endif %}" href="{{ url_for('reports') }}"><i class="bi bi-graph-up"></i><span class="sidebar-link-label">Reports</span></a>
           </nav>
-        </div>
-        <div class="sidebar-section">
-          <span class="sidebar-title">Manage</span>
+        </details>
+        <details class="sidebar-group" open>
+          <summary class="sidebar-title">Manage</summary>
           <nav class="sidebar-nav">
             <a class="sidebar-link {% if active_page == 'projects' %}active{% endif %}" href="{{ url_for('projects') }}"><i class="bi bi-folder2-open"></i><span class="sidebar-link-label">Projects</span></a>
             <a class="sidebar-link {% if active_page == 'labels' %}active{% endif %}" href="{{ url_for('labels') }}"><i class="bi bi-tags"></i><span class="sidebar-link-label">Tags</span></a>
             <a class="sidebar-link {% if active_page == 'tasks' %}active{% endif %}" href="{{ url_for('index') }}"><i class="bi bi-list-check"></i><span class="sidebar-link-label">Tasks</span></a>
             <a class="sidebar-link {% if active_page == 'account' %}active{% endif %}" href="{{ url_for('account') }}"><i class="bi bi-person-circle"></i><span class="sidebar-link-label">Account</span></a>
           </nav>
-        </div>
+        </details>
         <div class="sidebar-footer">
           <button class="btn btn-outline-light btn-sm theme-toggle" type="button" data-theme-toggle>
             <i class="bi bi-moon-stars"></i>
