@@ -58,7 +58,15 @@
           </button>
         </div>
       </aside>
+      <div class="sidebar-scrim" data-sidebar-toggle aria-hidden="true"></div>
       <main class="app-main col-12 col-lg-10 px-0">
+        <div class="mobile-topbar">
+          <button class="sidebar-toggle mobile-toggle" type="button" data-sidebar-toggle aria-label="Toggle sidebar" aria-pressed="false">
+            <i class="bi bi-layout-sidebar-inset"></i>
+          </button>
+          <span class="mobile-topbar-title">Goalixa</span>
+          <span class="mobile-topbar-spacer" aria-hidden="true"></span>
+        </div>
         <div class="global-timer" id="global-timer" aria-live="polite">
           <a class="global-timer-link" href="{{ url_for('timer') }}">
             <span class="global-timer-label">Timer</span>

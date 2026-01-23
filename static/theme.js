@@ -37,6 +37,8 @@
   const savedSidebar = localStorage.getItem(sidebarKey);
   if (savedSidebar) {
     setSidebarState(savedSidebar);
+  } else if (window.innerWidth < 992) {
+    setSidebarState("collapsed");
   }
 
   const pomodoroKey = "pomodoroState";
@@ -288,6 +290,11 @@
       const next = current === "collapsed" ? "expanded" : "collapsed";
       setSidebarState(next);
       localStorage.setItem(sidebarKey, next);
+    }
+    const sidebarLink = target.closest(".sidebar a.sidebar-link");
+    if (sidebarLink && window.innerWidth < 992) {
+      setSidebarState("collapsed");
+      localStorage.setItem(sidebarKey, "collapsed");
     }
     if (target.closest(".timer-select")) {
       openDropdowns();
