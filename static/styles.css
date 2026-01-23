@@ -520,6 +520,7 @@ body {
 
   .sidebar-link-label {
     font-size: 0.9rem;
+    line-height: 1.2;
   }
 
   .theme-toggle {
@@ -533,6 +534,146 @@ body {
 
   .mobile-topbar-title {
     font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 0.92rem;
+  }
+
+  .page-content .container,
+  .page-content .container-fluid {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .header {
+    position: static;
+    padding: 12px 14px;
+    margin-top: 0;
+    border-radius: 14px;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .header p {
+    font-size: 0.88rem;
+  }
+
+  .card {
+    padding: 16px;
+    margin-bottom: 16px;
+    border-radius: 14px;
+  }
+
+  .card h2 {
+    font-size: 1rem;
+  }
+
+  .site-footer {
+    padding: 20px 16px 14px;
+  }
+
+  .site-footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .toast-stack {
+    right: 16px;
+    left: 16px;
+    bottom: 16px;
+    align-items: stretch;
+  }
+
+  .toast-card {
+    max-width: 100%;
+  }
+
+  .planner-stat-value,
+  .project-stat-value,
+  .label-stat-value,
+  .habit-stat-value,
+  .reminder-stat-value,
+  .reports-metric-value,
+  .goal-stat-value,
+  .overview-metric-value {
+    font-size: 1.2rem;
+  }
+
+  .timer-hero,
+  .timer-range-section,
+  .timer-calendar-section {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .calendar-container {
+    padding: 16px;
+  }
+
+  .calendar-full {
+    padding: 16px;
+    height: auto;
+  }
+
+  .calendar-full-card {
+    padding: 12px;
+  }
+
+  .pomodoro-mode {
+    font-size: 1.3rem;
+  }
+
+  .pomodoro-dial {
+    font-size: 2rem;
+  }
+
+  .pomodoro-controls .btn {
+    padding: 8px 14px;
+  }
+
+  .pomodoro-presets .btn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  .site-footer-inner {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .task-item,
+  .planner-task-item,
+  .habit-row,
+  .goal-card,
+  .reminder-item,
+  .weekly-goal-item {
+    padding: 12px;
+  }
+
+  .goal-top,
+  .reminder-item-header,
+  .projects-total-header,
+  .projects-task-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .task-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .goal-footer {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
@@ -5613,21 +5754,15 @@ body {
 }
 
 @media (max-width: 640px) {
-  .layout {
-    flex-direction: column;
-  }
-
   .sidebar {
-    width: 100%;
-    padding: 18px 16px;
-    gap: 16px;
+    width: min(88vw, 280px);
+    padding: 20px 16px;
+    gap: 14px;
   }
 
   .sidebar-nav {
-    flex-direction: row;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 6px;
+    flex-direction: column;
+    overflow: visible;
   }
 
   .sidebar-group {
@@ -5650,20 +5785,19 @@ body {
   }
 
   .container {
-    padding: 16px;
+    padding: 14px;
   }
 
   .header {
-    padding: 14px 16px;
-    margin-top: -16px;
+    padding: 12px 14px;
   }
 
   .header h1 {
-    font-size: 1.6rem;
+    font-size: 1.45rem;
   }
 
   .card {
-    padding: 16px;
+    padding: 14px;
   }
 
   .planner-grid,
