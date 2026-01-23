@@ -1,16 +1,9 @@
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-import os
-import uuid
 
-from flask import abort, current_app, jsonify, redirect, render_template, request, url_for
-from flask_security import auth_required, current_user, hash_password, url_for_security
-from flask_security.utils import login_user
-
-from app.auth import models as auth_models
-from app.auth.oauth import oauth
-from authlib.integrations.base_client.errors import OAuthError
+from flask import jsonify, redirect, render_template, request, url_for
+from app.auth_client import auth_required, current_user, url_for_security
 
 
 def register_routes(app, service):
@@ -164,34 +157,6 @@ def register_routes(app, service):
             user_email=getattr(current_user, "email", ""),
         )
 
-    @app.route("/login/google", methods=["GET"])
-    def google_login():
-        if not current_app.config.get("GOOGLE_OAUTH_ENABLED"):
-            return abort(404)
-        redirect_uri = os.getenv("GOOGLE_REDIRECT_URI") or url_for("google_callback", _external=True)
-        return oauth.google.authorize_redirect(redirect_uri)
-
-    @app.route("/login/google/callback", methods=["GET"])
-    def google_callback():
-        if not current_app.config.get("GOOGLE_OAUTH_ENABLED"):
-            return abort(404)
-        token = oauth.google.authorize_access_token()
-        if not token:
-            return redirect(url_for_security("login"))
-        user_info = oauth.google.parse_id_token(token)
-        if not user_info:
-            user_info = oauth.google.get("userinfo").json()
-        email = (user_info or {}).get("email")
-        if not email:
-            return redirect(url_for_security("login"))
-        user = auth_models.user_datastore.find_user(email=email)
-        if not user:
-            password = hash_password(uuid.uuid4().hex)
-            user = auth_models.user_datastore.create_user(email=email, password=password)
-            auth_models.db.session.commit()
-        login_user(user)
-        return redirect(url_for("overview"))
-
     @app.route("/timer", methods=["GET"])
     @auth_required()
     def timer():
@@ -309,18 +274,6 @@ def register_routes(app, service):
     def delete_reminder(reminder_id):
         service.delete_reminder(reminder_id)
         return redirect(url_for("reminders"))
-
-    @app.errorhandler(OAuthError)
-    def handle_oauth_error(error):
-        return render_template(
-            "error.html",
-            title="OAuth error",
-            status_code=400,
-            message="Google sign-in failed. Please try again.",
-            details=getattr(error, "description", str(error)),
-            action_url=url_for_security("login"),
-            action_label="Back to sign in",
-        ), 400
 
     @app.errorhandler(400)
     def handle_bad_request(error):

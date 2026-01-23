@@ -5,8 +5,7 @@ from dotenv import load_dotenv
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from app.auth.models import db, init_security
-from app.auth.oauth import init_oauth
+from app.auth_client import init_auth
 
 from app.presentation.filters import register_filters
 from app.presentation.routes import register_routes
@@ -21,32 +20,14 @@ def create_app():
     load_dotenv()
     app = Flask(__name__)
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret")
-    app.config["SECURITY_PASSWORD_SALT"] = os.getenv("SECURITY_PASSWORD_SALT", "dev-salt")
-    app.config["SECURITY_REGISTERABLE"] = True
-    app.config["SECURITY_SEND_REGISTER_EMAIL"] = False
-    app.config["SECURITY_RECOVERABLE"] = True
-    app.config["SECURITY_CHANGEABLE"] = True
-    app.config["SECURITY_TRACKABLE"] = True
-    app.config["SECURITY_CONFIRMABLE"] = False
-    app.config["SECURITY_PROFILEABLE"] = True
-    app.config["SECURITY_PASSWORD_HASH"] = "pbkdf2_sha512"
-    app.config["SECURITY_PASSWORD_SCHEMES"] = ["pbkdf2_sha512"]
-    app.config["SECURITY_EMAIL_SENDER"] = os.getenv("SECURITY_EMAIL_SENDER", "no-reply@example.com")
-    app.config["SECURITY_LOGIN_USER_TEMPLATE"] = "security/login_user.html"
-    app.config["SECURITY_REGISTER_USER_TEMPLATE"] = "security/register_user.html"
-    app.config["SECURITY_FORGOT_PASSWORD_TEMPLATE"] = "security/forgot_password.html"
-    app.config["SECURITY_RESET_PASSWORD_TEMPLATE"] = "security/reset_password.html"
-    app.config["SECURITY_PROFILE_USER_TEMPLATE"] = "security/profile.html"
-    app.config["SECURITY_CHANGE_PASSWORD_TEMPLATE"] = "security/change_password.html"
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["AUTH_SERVICE_URL"] = os.getenv("AUTH_SERVICE_URL", "http://localhost:5001")
+    app.config["AUTH_JWT_SECRET"] = os.getenv("AUTH_JWT_SECRET", "dev-jwt-secret")
+    app.config["AUTH_COOKIE_NAME"] = os.getenv("AUTH_COOKIE_NAME", "goalixa_auth")
 
     # Respect Cloudflare/forwarded headers for scheme/host resolution.
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
-    db.init_app(app)
-    init_security(app)
-    init_oauth(app)
+    init_auth(app)
 
     repository = SQLiteTaskRepository(DB_PATH)
     service = TaskService(repository)
@@ -54,10 +35,6 @@ def create_app():
     register_routes(app, service)
     register_filters(app)
     app.teardown_appcontext(repository.close_db)
-    app.context_processor(lambda: {
-        "google_oauth_enabled": app.config.get("GOOGLE_OAUTH_ENABLED", False),
-    })
-
     with app.app_context():
         service.init_db()
 
