@@ -495,6 +495,45 @@ body {
     border-color: var(--border);
     color: var(--text);
   }
+
+  .sidebar {
+    font-size: 0.9rem;
+  }
+
+  .sidebar-brand-text {
+    font-size: 0.95rem;
+  }
+
+  .sidebar-title {
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+  }
+
+  .sidebar-link {
+    padding: 8px 10px;
+    gap: 10px;
+  }
+
+  .sidebar-link i {
+    font-size: 0.95rem;
+  }
+
+  .sidebar-link-label {
+    font-size: 0.9rem;
+  }
+
+  .theme-toggle {
+    font-size: 0.85rem;
+    padding: 8px 10px;
+  }
+
+  .theme-toggle i {
+    font-size: 0.95rem;
+  }
+
+  .mobile-topbar-title {
+    font-size: 0.95rem;
+  }
 }
 
 .site-footer {
