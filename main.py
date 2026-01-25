@@ -20,7 +20,10 @@ def create_app():
     load_dotenv()
     app = Flask(__name__)
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret")
-    app.config["AUTH_SERVICE_URL"] = os.getenv("AUTH_SERVICE_URL", "http://localhost:5001")
+    app.config["AUTH_SERVICE_URL"] = os.getenv(
+        "AUTH_SERVICE_URL",
+        "https://goalixa.com/auth",
+    )
     app.config["AUTH_JWT_SECRET"] = os.getenv("AUTH_JWT_SECRET", "dev-jwt-secret")
     app.config["AUTH_COOKIE_NAME"] = os.getenv("AUTH_COOKIE_NAME", "goalixa_auth")
 
