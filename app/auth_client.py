@@ -22,7 +22,7 @@ current_user = LocalProxy(lambda: getattr(g, "auth_user", AnonymousUser()))
 
 
 def _auth_settings():
-    base_url = current_app.config.get("AUTH_SERVICE_URL", "http://localhost:5001").rstrip("/")
+    base_url = current_app.config.get("AUTH_SERVICE_URL", "https://goalixa.com/auth").rstrip("/")
     cookie_name = current_app.config.get("AUTH_COOKIE_NAME", "goalixa_auth")
     secret = current_app.config.get("AUTH_JWT_SECRET", "dev-jwt-secret")
     return base_url, cookie_name, secret
