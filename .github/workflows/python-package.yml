@@ -37,4 +37,13 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pytest --allow-no-tests
+        # pytest returns exit code 5 when no tests are collected; treat that as success
+        if ! pytest; then
+          exit_code=$?
+          if [ $exit_code -eq 5 ]; then
+            echo "No tests collected."
+            exit 0
+          else
+            exit $exit_code
+          fi
+        fi
