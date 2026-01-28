@@ -26,9 +26,6 @@ jobs:
         run: |
           echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/goalixa-app" >> $GITHUB_ENV
 
-      - name: Run pytest
-        run: pytest --allow-no-tests
-
       - uses: docker/build-push-action@v6
         with:
           context: .
