@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: goalixa-ingress
+  namespace: goalixa-goalixa
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: REPLACE_ME_GOALIXA_DOMAIN
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: goalixa
+                port:
+                  number: 80
