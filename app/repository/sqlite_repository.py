@@ -366,6 +366,26 @@ class SQLiteTaskRepository:
         )
         db.commit()
 
+    def ensure_user(self, email):
+        """Ensure user exists in the database. Create if not exists."""
+        if self.user_id is None:
+            return None
+        db = self._get_db()
+        user_id = self.user_id
+
+        # Check if user exists
+        row = db.execute("SELECT id FROM user WHERE id = ?", (user_id,)).fetchone()
+        if row:
+            return user_id
+
+        # Create user with their email
+        db.execute(
+            "INSERT OR IGNORE INTO user (id, email, created_at) VALUES (?, ?, ?)",
+            (user_id, email, datetime.utcnow().isoformat()),
+        )
+        db.commit()
+        return user_id
+
     def ensure_default_project(self, name, created_at):
         db = self._get_db()
         if self.user_id is None:

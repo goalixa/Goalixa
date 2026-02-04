@@ -29,7 +29,7 @@ def register_routes(app, service):
     def load_user_context():
         if current_user.is_authenticated:
             service.repository.set_user_id(current_user.id)
-            service.ensure_user_setup()
+            service.ensure_user_setup(current_user.email)
         else:
             service.repository.set_user_id(None)
 

@@ -441,7 +441,10 @@ class TaskService:
     def init_db(self):
         self.repository.init_db()
 
-    def ensure_user_setup(self):
+    def ensure_user_setup(self, email):
+        # Ensure user exists in the database first
+        self.repository.ensure_user(email)
+        # Then create default project
         default_project_id = self.repository.ensure_default_project(
             "General", datetime.utcnow().isoformat()
         )
