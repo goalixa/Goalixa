@@ -1,4 +1,4 @@
-name: Build & Push Goalixa App Image
+name: Build & Deploy App
 
 on:
   push:
@@ -11,6 +11,10 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    outputs:
+      image_name: ghcr.io/${{ github.repository_owner }}/goalixa-app
+      image_tag: ${{ github.sha }}
+      run_number: ${{ github.run_number }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,29 +29,56 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set image name (lowercase)
-        run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/goalixa-app" >> $GITHUB_ENV
-
       - name: Build and Push
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
-            ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/goalixa-app:latest
+            ghcr.io/${{ github.repository_owner }}/goalixa-app:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/goalixa-app:${{ github.run_number }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          labels: |
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
 
   deploy:
-    name: Deploy to Swarm (VM)
     needs: build-and-push
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: self-hosted
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/goalixa-app
     steps:
-      - name: Login to GHCR (for private pull)
+      - name: Deploy to Kubernetes
+        env:
+          KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+          RUN_NUMBER: ${{ needs.build-and-push.outputs.run_number }}
         run: |
-          echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+          if [ -n "$KUBECONFIG_DATA" ]; then
+            echo "$KUBECONFIG_DATA" | base64 -d > /tmp/kubeconfig
+            export KUBECONFIG=/tmp/kubeconfig
 
-      - name: Deploy stack (Swarm)
-        run: |
-          docker stack deploy --with-registry-auth --resolve-image always -c /opt/goalixa-swarm/stack.yml goalixa
+            # Update deployment with specific version tag
+            kubectl set image deployment/goalixa \
+              goalixa=${IMAGE_NAME}:${IMAGE_TAG} \
+              -n goalixa-app
+
+            # Add version annotations for tracking
+            kubectl annotate deployment/goalixa \
+              -n goalixa-app \
+              deployment.kubernetes.io/revision-sha="${IMAGE_TAG}" \
+              deployment.kubernetes.io/revision-number="${RUN_NUMBER}" \
+              deployment.kubernetes.io/deployed-at="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              --overwrite
+
+            # Wait for rollout to complete
+            kubectl rollout status deployment/goalixa -n goalixa-app --timeout=5m
+
+            echo "✅ Deployed version ${RUN_NUMBER} (commit: ${IMAGE_TAG})"
+          else
+            echo "⚠️  KUBECONFIG secret not set - skipping deployment"
+            echo "Image built and pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
+          fi
