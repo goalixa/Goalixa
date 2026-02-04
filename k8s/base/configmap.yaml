@@ -6,5 +6,6 @@ metadata:
 data:
   NODE_ENV: "production"
   AUTH_INTERNAL_URL: "http://auth.goalixa-auth.svc.cluster.local"
+  AUTH_SERVICE_URL: "https://auth.goalixa.com"
   PORT: "80"
   FLASK_DEBUG: "0"
