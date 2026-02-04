@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: goalixa
-  namespace: goalixa-goalixa
+  namespace: goalixa-app
 spec:
   replicas: 2
   selector:
@@ -13,22 +13,49 @@ spec:
       labels:
         app: goalixa
     spec:
+      imagePullSecrets:
+        - name: ghcr-pull
       containers:
         - name: goalixa
-          image: REPLACE_ME_GOALIXA_IMAGE
-          imagePullPolicy: IfNotPresent
+          image: ghcr.io/goalixa/goalixa-app:latest
+          imagePullPolicy: Always
           ports:
             - name: http
-              containerPort: REPLACE_ME_GOALIXA_CONTAINER_PORT
+              containerPort: 80
           envFrom:
             - configMapRef:
                 name: goalixa-config
           env:
-            - name: APP_SECRET
+            - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: goalixa-secrets
-                  key: APP_SECRET
+                  key: SECRET_KEY
+            - name: AUTH_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: goalixa-secrets
+                  key: AUTH_JWT_SECRET
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: goalixa-secrets
+                  key: GOOGLE_CLIENT_ID
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: goalixa-secrets
+                  key: GOOGLE_CLIENT_SECRET
+            - name: ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: goalixa-secrets
+                  key: ADMIN_EMAIL
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: goalixa-secrets
+                  key: ADMIN_PASSWORD
           readinessProbe:
             httpGet:
               path: /

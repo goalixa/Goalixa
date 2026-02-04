@@ -2,11 +2,13 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: goalixa-ingress
-  namespace: goalixa-goalixa
+  namespace: goalixa-app
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   ingressClassName: nginx
   rules:
-    - host: REPLACE_ME_GOALIXA_DOMAIN
+    - host: goalixa.com
       http:
         paths:
           - path: /
