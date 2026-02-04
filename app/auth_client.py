@@ -99,7 +99,11 @@ def auth_required():
                 return func(*args, **kwargs)
             if request.path.startswith("/api/") or request.accept_mimetypes.best == "application/json":
                 return jsonify({"error": "unauthorized"}), 401
-            return redirect(url_for_security("login", next=request.url))
+            # Force HTTPS in the redirect URL to prevent redirect loops
+            next_url = request.url
+            if next_url.startswith("http://"):
+                next_url = next_url.replace("http://", "https://", 1)
+            return redirect(url_for_security("login", next=next_url))
 
         return wrapper
 
