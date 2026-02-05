@@ -1,10 +1,26 @@
 version: "3.8"
 
 services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: goalixa
+      POSTGRES_USER: goalixa
+      POSTGRES_PASSWORD: goalixa
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
   web:
     build: .
     ports:
       - "5000:80"
+    environment:
+      - DATABASE_URL=postgresql://goalixa:goalixa@db:5432/goalixa
+    depends_on:
+      - db
     volumes:
-      - ./data:/app/data
       - .:/app
+
+volumes:
+  postgres_data:

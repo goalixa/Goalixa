@@ -9,12 +9,8 @@ from app.auth_client import init_auth
 
 from app.presentation.filters import register_filters
 from app.presentation.routes import register_routes
-from app.repository.sqlite_repository import SQLiteTaskRepository
+from app.repository.postgres_repository import PostgresTaskRepository
 from app.service.task_service import TaskService
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "data", "data.db")
-
 
 def create_app():
     load_dotenv()
@@ -32,7 +28,10 @@ def create_app():
 
     init_auth(app)
 
-    repository = SQLiteTaskRepository(DB_PATH)
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        raise RuntimeError("DATABASE_URL must be set (e.g. postgresql://user:pass@host:5432/db)")
+    repository = PostgresTaskRepository(database_url)
     service = TaskService(repository)
 
     register_routes(app, service)

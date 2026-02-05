@@ -1,6 +1,6 @@
 # Goalixa
 
-Simple Flask app to track tasks and time spent per task. Uses SQLite for storage and follows a 3-layer structure (presentation, service, repository) to demonstrate basic dependency injection.
+Simple Flask app to track tasks and time spent per task. Uses PostgreSQL for storage and follows a 3-layer structure (presentation, service, repository) to demonstrate basic dependency injection.
 
 ## Features
 - Create tasks
@@ -10,13 +10,13 @@ Simple Flask app to track tasks and time spent per task. Uses SQLite for storage
 ## Tech Stack
 - Python 3.11
 - Flask
-- SQLite
+- PostgreSQL
 - Docker / Docker Compose
 
 ## Project Structure
 - `app/presentation/` routes and template filters
 - `app/service/` business logic
-- `app/repository/` data access (SQLite)
+- `app/repository/` data access (PostgreSQL)
 - `templates/` HTML templates
 - `static/` CSS
 - `main.py` app entrypoint and wiring (DI)
@@ -29,9 +29,9 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-2) Create the data directory (SQLite file will be created inside it):
+2) Start PostgreSQL and set `DATABASE_URL`:
 ```bash
-mkdir -p data
+export DATABASE_URL="postgresql://goalixa:goalixa@localhost:5432/goalixa"
 ```
 
 3) Run the app:
@@ -58,16 +58,10 @@ Build and run:
 docker compose up --build
 ```
 
-If you do not have a `data` directory yet:
-```bash
-mkdir -p data
-```
-
 Open `http://localhost:5000`.
 
 ## Database
-SQLite file is stored at `data/data.db` and is ignored by Git.
+PostgreSQL is used for storage. Configure the connection via `DATABASE_URL`.
 
 ## Notes
 - This is a learning project focused on 3-layer architecture and basic DI.
-- For multi-user or heavier workloads, consider PostgreSQL.
