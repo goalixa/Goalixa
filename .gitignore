@@ -5,3 +5,5 @@ data/
 .idea
 scripts/seed_db.py
 .env
+.claude_cache/
+.claude
