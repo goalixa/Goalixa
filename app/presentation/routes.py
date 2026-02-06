@@ -36,6 +36,11 @@ def register_routes(app, service):
     @app.route("/", methods=["GET"])
     @auth_required()
     def overview():
+        return redirect(url_for("timer"))
+
+    @app.route("/overview", methods=["GET"])
+    @auth_required()
+    def overview_page():
         today = service.current_local_date()
         start_date = today - timedelta(days=6)
         summary = service.summary_by_days(7)
