@@ -185,33 +185,37 @@
         <footer class="site-footer">
           <div class="site-footer-inner">
             <div class="footer-brand">
-              <span class="footer-title">Goalixa</span>
+              <div class="footer-brand-header">
+                <span class="footer-logo">GX</span>
+                <span class="footer-title">Goalixa</span>
+              </div>
               <p class="footer-copy">Track sessions, ship goals, and keep momentum every day.</p>
             </div>
             <div class="footer-links">
-              <span class="footer-label">Navigate</span>
-              <div class="footer-nav">
+              <span class="footer-label">Quick Links</span>
+              <nav class="footer-nav">
                 <a href="{{ url_for('timer') }}">Timer</a>
+                <a href="{{ url_for('overview_page') }}">Overview</a>
                 <a href="{{ url_for('projects') }}">Projects</a>
                 <a href="{{ url_for('reports') }}">Reports</a>
-                <a href="{{ url_for('account') }}">Account</a>
-              </div>
+              </nav>
             </div>
-            <div class="footer-meta">
-              <span class="footer-label">Status</span>
-              <div class="footer-stat">
-                <span>Focused today</span>
-                <strong>02:15</strong>
-              </div>
-              <div class="footer-stat">
-                <span>Week total</span>
-                <strong>18:40</strong>
-              </div>
+            <div class="footer-links">
+              <span class="footer-label">Settings</span>
+              <nav class="footer-nav">
+                <a href="{{ url_for('account') }}">Account</a>
+                <a href="{{ url_for('habits') }}">Habits</a>
+                <a href="{{ url_for('goals') }}">Goals</a>
+                <a href="{{ url_for('labels') }}">Tags</a>
+              </nav>
             </div>
           </div>
           <div class="site-footer-bottom">
-            <span>Built for deep work.</span>
-            <span>v1.0</span>
+            <span class="footer-tagline">Built for deep work.</span>
+            <div class="footer-meta-info">
+              <span class="footer-version">v1.0</span>
+              <span class="footer-copyright">© 2025 Goalixa</span>
+            </div>
           </div>
         </footer>
       </main>
