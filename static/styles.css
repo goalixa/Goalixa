@@ -3763,30 +3763,15 @@ body {
 .timer-hero {
   margin: 0;
   width: 100%;
-  padding: 24px 0;
-  background: transparent;
+  padding: 12px 24px;
+  background: var(--card);
   border-bottom: 1px solid var(--border);
   display: grid;
-  gap: 16px;
-}
-
-.timer-controls {
-  display: flex;
-  flex-direction: column;
   gap: 12px;
 }
 
-.timer-input-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--muted);
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
 .timer-range-section {
-  padding: 0;
+  padding: 16px 24px 0;
 }
 
 .timer-range-card {
@@ -3794,16 +3779,15 @@ body {
   grid-template-columns: minmax(200px, 1fr) auto auto;
   gap: 16px;
   align-items: center;
-  padding: 16px 20px;
-  border-radius: 14px;
-  background: var(--card);
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f2ec 100%);
   border: 1px solid var(--border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: box-shadow 0.2s ease;
+  box-shadow: 0 12px 28px rgba(31, 41, 55, 0.08);
 }
 
-.timer-range-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+[data-theme="dark"] .timer-range-card {
+  background: linear-gradient(180deg, #1a1f27 0%, #171c24 100%);
 }
 
 .pomodoro-card {
@@ -6279,11 +6263,6 @@ body {
     width: 100%;
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .timer-range-card {
-    grid-template-columns: 1fr;
-    gap: 12px;
   }
 
   .card {
