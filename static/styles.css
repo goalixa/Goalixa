@@ -1079,54 +1079,127 @@ body {
   color: var(--muted);
 }
 
+/* Standard Page Header */
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 18px 22px;
-  border-radius: 0 0 18px 18px;
-  border: 1px solid var(--border);
-  background: linear-gradient(135deg, #ffffff 0%, #f7f7fb 45%, #f1f3f7 100%);
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
-  text-align: left;
+  gap: 24px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
   margin-bottom: 24px;
-  margin-top: -24px;
-  position: sticky;
-  top: 0;
-  z-index: 20;
-}
-
-[data-theme="dark"] .header {
-  background: linear-gradient(135deg, #1e232b 0%, #1a1f27 55%, #171c24 100%);
-  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.4);
+  margin-top: 0;
 }
 
 .header > div:first-child {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-width: 640px;
 }
 
-.goals-header-bar {
+.header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.header > div > p {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
+  max-width: 560px;
+}
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Header Meta Info (breadcrumbs, tags, etc.) */
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.header-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  padding: 4px 10px;
+  background: var(--soft);
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.header-meta-item i {
+  font-size: 0.9rem;
+}
+
+/* Page-specific header variants */
+.goals-header-bar,
+.habits-header,
+.projects-header,
+.reminders-header,
+.labels-header,
+.reports-header,
+.calendar-header,
+.planner-header,
+.account-header,
+.overview-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  text-align: left;
+  gap: 24px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
 }
 
-.goals-header-bar h1 {
-  margin-bottom: 6px;
+.goals-header-bar h1,
+.habits-header h1,
+.projects-header h1,
+.reminders-header h1,
+.labels-header h1,
+.reports-header h1,
+.calendar-header h1,
+.planner-header h1,
+.account-header h1,
+.overview-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 6px 0;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
 }
 
-.habits-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  text-align: left;
+.goals-header-bar p,
+.habits-header p,
+.projects-header p,
+.reminders-header p,
+.labels-header p,
+.reports-header p,
+.calendar-header p,
+.planner-header p,
+.account-header p,
+.overview-header p {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
 }
 
 .habits-header-actions {
@@ -1767,12 +1840,29 @@ body {
 }
 
 @media (max-width: 768px) {
-  .header {
+  .header,
+  .goals-header-bar,
+  .projects-header,
+  .reminders-header,
+  .reports-header,
+  .calendar-header,
+  .planner-header,
+  .account-header,
+  .overview-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 16px;
   }
 
-  .header > div:first-child {
+  .header > div:first-child,
+  .goals-header-bar > div:first-child,
+  .projects-header > div:first-child,
+  .reminders-header > div:first-child,
+  .reports-header > div:first-child,
+  .calendar-header > div:first-child,
+  .planner-header > div:first-child,
+  .account-header > div:first-child,
+  .overview-header > div:first-child {
     max-width: 100%;
   }
 
@@ -3673,15 +3763,30 @@ body {
 .timer-hero {
   margin: 0;
   width: 100%;
-  padding: 12px 24px;
-  background: var(--card);
+  padding: 24px 0;
+  background: transparent;
   border-bottom: 1px solid var(--border);
   display: grid;
+  gap: 16px;
+}
+
+.timer-controls {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
+.timer-input-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
 .timer-range-section {
-  padding: 16px 24px 0;
+  padding: 0;
 }
 
 .timer-range-card {
@@ -3689,11 +3794,16 @@ body {
   grid-template-columns: minmax(200px, 1fr) auto auto;
   gap: 16px;
   align-items: center;
-  padding: 12px 14px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #ffffff 0%, #f7f2ec 100%);
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: var(--card);
   border: 1px solid var(--border);
-  box-shadow: 0 12px 28px rgba(31, 41, 55, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease;
+}
+
+.timer-range-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .pomodoro-card {
@@ -6116,15 +6226,64 @@ body {
   }
 
   .container {
-    padding: 14px;
+    padding: 16px;
   }
 
-  .header {
-    padding: 12px 14px;
+  .header,
+  .goals-header-bar,
+  .habits-header,
+  .projects-header,
+  .reminders-header,
+  .labels-header,
+  .reports-header,
+  .calendar-header,
+  .planner-header,
+  .account-header,
+  .overview-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 0;
   }
 
-  .header h1 {
-    font-size: 1.45rem;
+  .header h1,
+  .goals-header-bar h1,
+  .habits-header h1,
+  .projects-header h1,
+  .reminders-header h1,
+  .labels-header h1,
+  .reports-header h1,
+  .calendar-header h1,
+  .planner-header h1,
+  .account-header h1,
+  .overview-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .header > div > p,
+  .goals-header-bar p,
+  .habits-header p,
+  .projects-header p,
+  .reminders-header p,
+  .labels-header p,
+  .reports-header p,
+  .calendar-header p,
+  .planner-header p,
+  .account-header p,
+  .overview-header p {
+    font-size: 0.9rem;
+  }
+
+  .header-actions,
+  .habits-header-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .timer-range-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .card {
