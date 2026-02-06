@@ -371,10 +371,12 @@ class PostgresTaskRepository:
         if row:
             return user_id
 
-        # Create user with their email
+        # Create user with their email (app DB doesn't need auth data, use placeholder values)
         db.execute(
-            'INSERT INTO "user" (id, email, created_at) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING',
-            (user_id, email, datetime.utcnow().isoformat()),
+            '''INSERT INTO "user" (id, email, password_hash, active, created_at)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (id) DO NOTHING''',
+            (user_id, email, 'placeholder', True, datetime.utcnow().isoformat()),
         )
         db.commit()
         return user_id
