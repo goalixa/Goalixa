@@ -13,7 +13,26 @@
     const next = current === "dark" ? "light" : "dark";
     root.setAttribute("data-theme", next);
     localStorage.setItem(storageKey, next);
+    updateThemeIcon(next);
   };
+
+  const updateThemeIcon = (theme) => {
+    const icon = document.querySelector(".theme-toggle-icon");
+    const label = document.querySelector(".theme-toggle-label");
+    if (icon) {
+      if (theme === "dark") {
+        icon.className = "bi bi-sun theme-toggle-icon";
+        if (label) label.textContent = "Light Mode";
+      } else {
+        icon.className = "bi bi-moon-stars theme-toggle-icon";
+        if (label) label.textContent = "Dark Mode";
+      }
+    }
+  };
+
+  // Initialize theme icon on load
+  const currentTheme = root.getAttribute("data-theme") || "light";
+  updateThemeIcon(currentTheme);
 
   const saved = localStorage.getItem(storageKey);
   if (saved) {
@@ -282,6 +301,8 @@
     }
     const button = target.closest("[data-theme-toggle]");
     const sidebarButton = target.closest("[data-sidebar-toggle]");
+    const sectionHeader = target.closest(".sidebar-section-header");
+
     if (button) {
       toggle();
     }
@@ -290,6 +311,13 @@
       const next = current === "collapsed" ? "expanded" : "collapsed";
       setSidebarState(next);
       localStorage.setItem(sidebarKey, next);
+    }
+    if (sectionHeader) {
+      const section = sectionHeader.closest(".sidebar-section");
+      if (section) {
+        const isCollapsed = section.getAttribute("data-collapsed") === "true";
+        section.setAttribute("data-collapsed", isCollapsed ? "false" : "true");
+      }
     }
     const sidebarLink = target.closest(".sidebar a.sidebar-link");
     if (sidebarLink && window.innerWidth < 992) {

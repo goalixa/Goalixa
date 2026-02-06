@@ -12,49 +12,151 @@
 <body>
   <div class="container-fluid">
     <div class="row min-vh-100 app-shell">
-      <aside class="sidebar col-12 col-lg-2 px-3 py-4">
+      <aside class="sidebar col-12 col-lg-2" data-sidebar>
         <div class="sidebar-header">
           <div class="sidebar-brand">
-            <span class="sidebar-brand-mark">GX</span>
+            <div class="sidebar-brand-logo">
+              <span class="sidebar-brand-mark">GX</span>
+              <div class="sidebar-brand-glow"></div>
+            </div>
             <span class="sidebar-brand-text">Goalixa</span>
           </div>
           <button class="sidebar-toggle" type="button" data-sidebar-toggle aria-label="Toggle sidebar" aria-pressed="false">
-            <i class="bi bi-layout-sidebar-inset"></i>
+            <i class="bi bi-chevron-left"></i>
           </button>
         </div>
-        <details class="sidebar-group" open>
-          <summary class="sidebar-title">Track</summary>
-          <nav class="sidebar-nav">
-            <a class="sidebar-link {% if active_page == 'overview' %}active{% endif %}" href="{{ url_for('overview') }}"><i class="bi bi-bar-chart-line"></i><span class="sidebar-link-label">Overview</span></a>
-            <a class="sidebar-link {% if active_page == 'planner' %}active{% endif %}" href="{{ url_for('planner') }}"><i class="bi bi-layout-text-window-reverse"></i><span class="sidebar-link-label">Planner</span></a>
-            <a class="sidebar-link {% if active_page == 'timer' %}active{% endif %}" href="{{ url_for('timer') }}"><i class="bi bi-stopwatch"></i><span class="sidebar-link-label">Timer</span></a>
-            <a class="sidebar-link {% if active_page == 'calendar' %}active{% endif %}" href="{{ url_for('calendar') }}"><i class="bi bi-calendar-week"></i><span class="sidebar-link-label">Calendar</span></a>
-            <a class="sidebar-link {% if active_page == 'habits' %}active{% endif %}" href="{{ url_for('habits') }}"><i class="bi bi-check2-circle"></i><span class="sidebar-link-label">Habits</span></a>
-            <a class="sidebar-link {% if active_page == 'reminders' %}active{% endif %}" href="{{ url_for('reminders') }}"><i class="bi bi-bell"></i><span class="sidebar-link-label">Reminders</span></a>
-            <a class="sidebar-link {% if active_page == 'goals' %}active{% endif %}" href="{{ url_for('goals') }}"><i class="bi bi-graph-up-arrow"></i><span class="sidebar-link-label">Goals overview</span></a>
-            <a class="sidebar-link {% if active_page == 'long_term_goals' %}active{% endif %}" href="{{ url_for('long_term_goals') }}"><i class="bi bi-bullseye"></i><span class="sidebar-link-label">Long-term goals</span></a>
-            <a class="sidebar-link {% if active_page == 'weekly_goals' %}active{% endif %}" href="{{ url_for('weekly_goals') }}"><i class="bi bi-calendar2-week"></i><span class="sidebar-link-label">Weekly Goals</span></a>
-          </nav>
-        </details>
-        <details class="sidebar-group" open>
-          <summary class="sidebar-title">Analyze</summary>
-          <nav class="sidebar-nav">
-            <a class="sidebar-link {% if active_page == 'reports' %}active{% endif %}" href="{{ url_for('reports') }}"><i class="bi bi-graph-up"></i><span class="sidebar-link-label">Reports</span></a>
-          </nav>
-        </details>
-        <details class="sidebar-group" open>
-          <summary class="sidebar-title">Manage</summary>
-          <nav class="sidebar-nav">
-            <a class="sidebar-link {% if active_page == 'projects' %}active{% endif %}" href="{{ url_for('projects') }}"><i class="bi bi-folder2-open"></i><span class="sidebar-link-label">Projects</span></a>
-            <a class="sidebar-link {% if active_page == 'labels' %}active{% endif %}" href="{{ url_for('labels') }}"><i class="bi bi-tags"></i><span class="sidebar-link-label">Tags</span></a>
-            <a class="sidebar-link {% if active_page == 'tasks' %}active{% endif %}" href="{{ url_for('index') }}"><i class="bi bi-list-check"></i><span class="sidebar-link-label">Tasks</span></a>
-            <a class="sidebar-link {% if active_page == 'account' %}active{% endif %}" href="{{ url_for('account') }}"><i class="bi bi-person-circle"></i><span class="sidebar-link-label">Account</span></a>
-          </nav>
-        </details>
+
+        <div class="sidebar-scroll">
+          <!-- Daily Tracking Section -->
+          <div class="sidebar-section" data-collapsed="false">
+            <div class="sidebar-section-header">
+              <i class="bi bi-calendar-day sidebar-section-icon"></i>
+              <span class="sidebar-section-title">Daily Tracking</span>
+              <i class="bi bi-chevron-down sidebar-section-arrow"></i>
+            </div>
+            <nav class="sidebar-nav">
+              <a class="sidebar-link {% if active_page == 'overview' %}active{% endif %}" href="{{ url_for('overview') }}" data-tooltip="Overview">
+                <i class="bi bi-bar-chart-line sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Overview</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+              <a class="sidebar-link {% if active_page == 'planner' %}active{% endif %}" href="{{ url_for('planner') }}" data-tooltip="Planner">
+                <i class="bi bi-layout-text-window-reverse sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Planner</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+              <a class="sidebar-link {% if active_page == 'timer' %}active{% endif %}" href="{{ url_for('timer') }}" data-tooltip="Timer">
+                <i class="bi bi-stopwatch sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Timer</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+              <a class="sidebar-link {% if active_page == 'calendar' %}active{% endif %}" href="{{ url_for('calendar') }}" data-tooltip="Calendar">
+                <i class="bi bi-calendar-week sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Calendar</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+            </nav>
+          </div>
+
+          <!-- Habits & Goals Section -->
+          <div class="sidebar-section" data-collapsed="false">
+            <div class="sidebar-section-header">
+              <i class="bi bi-bullseye sidebar-section-icon"></i>
+              <span class="sidebar-section-title">Habits & Goals</span>
+              <i class="bi bi-chevron-down sidebar-section-arrow"></i>
+            </div>
+            <nav class="sidebar-nav">
+              <a class="sidebar-link {% if active_page == 'habits' %}active{% endif %}" href="{{ url_for('habits') }}" data-tooltip="Habits">
+                <i class="bi bi-check2-circle sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Habits</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+              <a class="sidebar-link {% if active_page == 'reminders' %}active{% endif %}" href="{{ url_for('reminders') }}" data-tooltip="Reminders">
+                <i class="bi bi-bell sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Reminders</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+              <a class="sidebar-link {% if active_page == 'goals' %}active{% endif %}" href="{{ url_for('goals') }}" data-tooltip="Goals Overview">
+                <i class="bi bi-graph-up-arrow sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Goals Overview</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+              <a class="sidebar-link {% if active_page == 'long_term_goals' %}active{% endif %}" href="{{ url_for('long_term_goals') }}" data-tooltip="Long-term Goals">
+                <i class="bi bi-flag-fill sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Long-term Goals</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+              <a class="sidebar-link {% if active_page == 'weekly_goals' %}active{% endif %}" href="{{ url_for('weekly_goals') }}" data-tooltip="Weekly Goals">
+                <i class="bi bi-calendar2-week sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Weekly Goals</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+            </nav>
+          </div>
+
+          <!-- Analytics Section -->
+          <div class="sidebar-section" data-collapsed="false">
+            <div class="sidebar-section-header">
+              <i class="bi bi-graph-up sidebar-section-icon"></i>
+              <span class="sidebar-section-title">Analytics</span>
+              <i class="bi bi-chevron-down sidebar-section-arrow"></i>
+            </div>
+            <nav class="sidebar-nav">
+              <a class="sidebar-link {% if active_page == 'reports' %}active{% endif %}" href="{{ url_for('reports') }}" data-tooltip="Reports">
+                <i class="bi bi-file-earmark-bar-graph sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Reports</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+            </nav>
+          </div>
+
+          <!-- Organization Section -->
+          <div class="sidebar-section" data-collapsed="false">
+            <div class="sidebar-section-header">
+              <i class="bi bi-folder sidebar-section-icon"></i>
+              <span class="sidebar-section-title">Organization</span>
+              <i class="bi bi-chevron-down sidebar-section-arrow"></i>
+            </div>
+            <nav class="sidebar-nav">
+              <a class="sidebar-link {% if active_page == 'projects' %}active{% endif %}" href="{{ url_for('projects') }}" data-tooltip="Projects">
+                <i class="bi bi-folder2-open sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Projects</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+              <a class="sidebar-link {% if active_page == 'labels' %}active{% endif %}" href="{{ url_for('labels') }}" data-tooltip="Tags">
+                <i class="bi bi-tags sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Tags</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+              <a class="sidebar-link {% if active_page == 'tasks' %}active{% endif %}" href="{{ url_for('index') }}" data-tooltip="Tasks">
+                <i class="bi bi-list-check sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Tasks</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+            </nav>
+          </div>
+
+          <!-- Settings Section -->
+          <div class="sidebar-section" data-collapsed="false">
+            <div class="sidebar-section-header">
+              <i class="bi bi-gear sidebar-section-icon"></i>
+              <span class="sidebar-section-title">Settings</span>
+              <i class="bi bi-chevron-down sidebar-section-arrow"></i>
+            </div>
+            <nav class="sidebar-nav">
+              <a class="sidebar-link {% if active_page == 'account' %}active{% endif %}" href="{{ url_for('account') }}" data-tooltip="Account">
+                <i class="bi bi-person-circle sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Account</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+            </nav>
+          </div>
+        </div>
+
         <div class="sidebar-footer">
-          <button class="btn btn-outline-light btn-sm theme-toggle" type="button" data-theme-toggle>
-            <i class="bi bi-moon-stars"></i>
-            <span class="theme-toggle-label">Theme</span>
+          <button class="theme-toggle" type="button" data-theme-toggle data-tooltip="Toggle Theme">
+            <i class="bi bi-moon-stars theme-toggle-icon"></i>
+            <span class="theme-toggle-label">Dark Mode</span>
           </button>
         </div>
       </aside>
