@@ -182,11 +182,29 @@ def register_routes(app, service):
             start_date, end_date = end_date, start_date
 
         list_groups = service.list_time_entries_by_range(start_date, end_date)
+
+        # Calculate today's total
+        today = service.current_local_date()
+        today_total_seconds = 0
+        for group in list_groups:
+            if group["label"] == "Today":
+                today_total_seconds = group["total_seconds"]
+                break
+
+        # Calculate week total
+        week_start, week_end = service.current_week_range()
+        week_total_seconds = 0
+        week_groups = service.list_time_entries_by_range(week_start, week_end)
+        for group in week_groups:
+            week_total_seconds += group["total_seconds"]
+
         return render_template(
             "timer.html",
             timer_list_groups=list_groups,
             timer_range_start=start_date.isoformat(),
             timer_range_end=end_date.isoformat(),
+            today_total_seconds=today_total_seconds,
+            week_total_seconds=week_total_seconds,
         )
 
     @app.route("/calendar", methods=["GET"])
