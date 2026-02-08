@@ -25,6 +25,23 @@ def register_routes(app, service):
             parsed = parsed.replace(tzinfo=tz)
         return parsed.astimezone(timezone.utc).replace(tzinfo=None)
 
+    def build_week_days(week_start, today):
+        week_dates = [week_start + timedelta(days=offset) for offset in range(7)]
+        week_days = []
+        for date in week_dates:
+            day_label = date.strftime("%a")
+            week_days.append(
+                {
+                    "iso": date.isoformat(),
+                    "day": day_label,
+                    "date": date.strftime("%d"),
+                    "full": date.strftime("%b %d"),
+                    "is_today": date == today,
+                    "is_future": date > today,
+                }
+            )
+        return week_days
+
     @app.before_request
     def load_user_context():
         if current_user.is_authenticated:
@@ -199,17 +216,7 @@ def register_routes(app, service):
             week_total_seconds += group["total_seconds"]
 
         tasks = service.list_tasks()
-        week_dates = [week_start + timedelta(days=offset) for offset in range(7)]
-        week_days = [
-            {
-                "iso": date.isoformat(),
-                "day": date.strftime("%a"),
-                "date": date.strftime("%d"),
-                "full": date.strftime("%b %d"),
-                "is_today": date == today,
-            }
-            for date in week_dates
-        ]
+        week_days = build_week_days(week_start, today)
         task_ids = [task["id"] for task in tasks]
         checks_map = service.list_task_daily_checks(task_ids, week_start, week_end)
         task_rows = []
@@ -234,20 +241,11 @@ def register_routes(app, service):
     @app.route("/calendar", methods=["GET"])
     @auth_required()
     def calendar():
+        projects = service.list_projects()
         tasks = service.list_tasks()
         week_start, week_end = service.current_week_range()
         today = service.current_local_date()
-        week_dates = [week_start + timedelta(days=offset) for offset in range(7)]
-        week_days = [
-            {
-                "iso": date.isoformat(),
-                "day": date.strftime("%a"),
-                "date": date.strftime("%d"),
-                "full": date.strftime("%b %d"),
-                "is_today": date == today,
-            }
-            for date in week_dates
-        ]
+        week_days = build_week_days(week_start, today)
         task_ids = [task["id"] for task in tasks]
         checks_map = service.list_task_daily_checks(task_ids, week_start, week_end)
         task_rows = []
@@ -261,6 +259,7 @@ def register_routes(app, service):
             week_label=week_label,
             week_days=week_days,
             task_rows=task_rows,
+            projects=projects,
         )
 
     @app.route("/habits", methods=["GET"])

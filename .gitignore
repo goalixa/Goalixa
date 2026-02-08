@@ -8,3 +8,4 @@ scripts/seed_db.py
 .claude_cache/
 .claude
 __pyca
+.venv

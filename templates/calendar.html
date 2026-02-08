@@ -9,9 +9,20 @@
         <h1>Calendar</h1>
         <p>Review weekly streaks across your task list.</p>
       </div>
-      <div class="calendar-week-meta">
-        <span class="calendar-week-pill">{{ week_label }}</span>
-        <span class="calendar-week-subtitle">Weekly check-ins</span>
+      <div class="calendar-header-actions">
+        <div class="calendar-filters">
+          <div class="calendar-filter">
+            <label for="calendar-project-filter">Project</label>
+            <select id="calendar-project-filter" {% if not projects %}disabled{% endif %}>
+              <option value="">All projects</option>
+              {% for project in projects %}
+                <option value="{{ project['id'] }}">{{ project['name'] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="calendar-week-meta">
+        </div>
       </div>
     </header>
 
@@ -29,7 +40,11 @@
       {% if task_rows %}
         <div class="calendar-week-body">
           {% for task in task_rows %}
-            <div class="calendar-week-grid calendar-week-row">
+            <div
+              class="calendar-week-grid calendar-week-row"
+              data-calendar-row
+              data-project-id="{{ task['project_id'] or '' }}"
+            >
               <div class="calendar-task-cell">
                 <span class="calendar-task-name">{{ task["name"] }}</span>
                 <span class="calendar-task-meta">
@@ -40,7 +55,7 @@
                 {% set checked = task.week_checks[loop.index0] %}
                 <div class="calendar-day-cell{% if day.is_today %} is-today{% endif %}">
                   <span
-                    class="calendar-check{% if checked %} is-checked{% else %} is-missed{% endif %}"
+                    class="calendar-check{% if checked %} is-checked{% elif day.is_future %}{% else %} is-missed{% endif %}"
                     title="{{ day.full }}"
                   ></span>
                 </div>
@@ -48,9 +63,46 @@
             </div>
           {% endfor %}
         </div>
+        <p class="empty" id="calendar-empty-filter" hidden>No tasks match this view.</p>
       {% else %}
         <p class="empty">No tasks yet.</p>
       {% endif %}
     </section>
   </div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+    (() => {
+      const rows = document.querySelectorAll("[data-calendar-row]");
+      const projectFilter = document.getElementById("calendar-project-filter");
+      const emptyState = document.getElementById("calendar-empty-filter");
+
+      if (!rows.length || !projectFilter) return;
+
+      const applyFilter = () => {
+        const selected = projectFilter.value;
+        let visibleCount = 0;
+        rows.forEach((row) => {
+          let isVisible = true;
+          if (selected) {
+            const projectId = row.dataset.projectId || "";
+            isVisible = projectId === selected;
+          }
+          row.hidden = !isVisible;
+          if (isVisible) {
+            visibleCount += 1;
+          }
+        });
+
+        if (emptyState) {
+          emptyState.hidden = visibleCount !== 0;
+        }
+      };
+
+      projectFilter.addEventListener("change", applyFilter);
+      applyFilter();
+    })();
+  </script>
 {% endblock %}

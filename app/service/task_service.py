@@ -1002,7 +1002,12 @@ class TaskService:
 
     def current_week_range(self):
         today = self.current_local_date()
-        start_date = today - timedelta(days=today.weekday())
+        tz_name, _ = self._get_timezone()
+        if tz_name == "Asia/Tehran":
+            start_offset = (today.weekday() + 2) % 7
+        else:
+            start_offset = today.weekday()
+        start_date = today - timedelta(days=start_offset)
         end_date = start_date + timedelta(days=6)
         return start_date, end_date
 

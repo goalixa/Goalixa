@@ -152,7 +152,7 @@
                     {% set checked = task.week_checks[loop.index0] %}
                     <div class="calendar-day-cell{% if day.is_today %} is-today{% endif %}">
                       <span
-                        class="calendar-check{% if checked %} is-checked{% else %} is-missed{% endif %}"
+                        class="calendar-check{% if checked %} is-checked{% elif day.is_future %}{% else %} is-missed{% endif %}"
                         title="{{ day.full }}"
                       ></span>
                     </div>
