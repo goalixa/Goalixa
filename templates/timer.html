@@ -49,11 +49,11 @@
         <div class="timer-range-summary">
           <div class="timer-summary-item">
             <span class="timer-summary-label">TODAY</span>
-            <span class="timer-summary-value">02:15:00</span>
+            <span class="timer-summary-value">{{ today_total_seconds | format_seconds }}</span>
           </div>
           <div class="timer-summary-item">
             <span class="timer-summary-label">WEEK TOTAL</span>
-            <span class="timer-summary-value">18:40:00</span>
+            <span class="timer-summary-value">{{ week_total_seconds | format_seconds }}</span>
           </div>
         </div>
         <div class="timer-range-right">
