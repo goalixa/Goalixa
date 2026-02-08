@@ -56,18 +56,18 @@
           </div>
         </div>
         <div class="timer-range-right">
-          <div class="timer-view-box">
-            <button class="btn btn-outline-primary btn-sm timer-view-btn" type="button" data-view-button="calendar">
+          <div class="timer-view-toggle" role="tablist" aria-label="View options">
+            <button class="timer-view-tab" data-view-button="calendar" role="tab" aria-selected="false" title="Calendar view">
               <i class="bi bi-calendar-week"></i>
-              Calendar
+              <span class="view-label">Calendar</span>
             </button>
-            <button class="btn btn-outline-primary btn-sm timer-view-btn" type="button" data-view-button="list">
-              <i class="bi bi-list-check"></i>
-              View List
+            <button class="timer-view-tab" data-view-button="list" role="tab" aria-selected="false" title="List view">
+              <i class="bi bi-list-task"></i>
+              <span class="view-label">List</span>
             </button>
-            <button class="btn btn-outline-primary btn-sm timer-view-btn is-active" type="button" data-view-button="timesheet">
+            <button class="timer-view-tab is-active" data-view-button="timesheet" role="tab" aria-selected="true" title="Timesheet view">
               <i class="bi bi-clock-history"></i>
-              Timesheet
+              <span class="view-label">Timesheet</span>
             </button>
           </div>
         </div>
@@ -98,25 +98,21 @@
           </div>
         </div>
         <div class="pomodoro-controls">
-          <button class="btn btn-primary btn-sm" type="button" id="pomodoro-start">
-            <i class="bi bi-play-fill"></i>
-            Start
-          </button>
-          <button class="btn btn-outline-primary btn-sm" type="button" id="pomodoro-pause">
-            <i class="bi bi-pause-fill"></i>
-            Pause
+          <button class="btn btn-primary btn-sm" type="button" id="pomodoro-toggle">
+            <i class="bi bi-play-fill" id="pomodoro-toggle-icon"></i>
+            <span id="pomodoro-toggle-text">Start</span>
           </button>
           <button class="btn btn-outline-secondary btn-sm" type="button" id="pomodoro-reset">
             <i class="bi bi-arrow-counterclockwise"></i>
-            Reset
+            <span class="btn-text">Reset</span>
           </button>
           <button class="btn btn-outline-secondary btn-sm" type="button" id="pomodoro-skip">
             <i class="bi bi-skip-forward-fill"></i>
-            Skip
+            <span class="btn-text">Skip</span>
           </button>
           <button class="btn btn-outline-success btn-sm" type="button" id="pomodoro-done">
             <i class="bi bi-check2-circle"></i>
-            Done today
+            <span class="btn-text">Done today</span>
           </button>
         </div>
         <div class="pomodoro-presets">
@@ -314,17 +310,20 @@
       }
 
       const panels = document.querySelectorAll("[data-view-panel]");
-      const buttons = document.querySelectorAll("[data-view-button]");
+      const viewTabs = document.querySelectorAll(".timer-view-tab");
       const taskPicker = document.getElementById("task-picker");
       const taskDropdown = document.querySelector(".timer-dropdown");
       const taskSearch = document.querySelector(".timer-search");
       const taskList = document.querySelector(".timer-list");
       let cachedTasks = [];
 
-      buttons.forEach((button) => {
-        button.addEventListener("click", () => {
-          const targetView = button.dataset.viewButton;
-          buttons.forEach((btn) => btn.classList.toggle("is-active", btn === button));
+      viewTabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          const targetView = tab.dataset.viewButton;
+          viewTabs.forEach((t) => {
+            t.classList.toggle("is-active", t === tab);
+            t.setAttribute("aria-selected", t === tab ? "true" : "false");
+          });
           panels.forEach((panel) =>
             panel.classList.toggle("is-active", panel.dataset.viewPanel === targetView),
           );
@@ -370,8 +369,9 @@
       const pomodoroRing = document.querySelector(".pomodoro-ring");
       const pomodoroDots = document.querySelectorAll("[data-session-dot]");
       const taskClear = document.getElementById("task-clear");
-      const startButton = document.getElementById("pomodoro-start");
-      const pauseButton = document.getElementById("pomodoro-pause");
+      const toggleButton = document.getElementById("pomodoro-toggle");
+      const toggleIcon = document.getElementById("pomodoro-toggle-icon");
+      const toggleText = document.getElementById("pomodoro-toggle-text");
       const resetButton = document.getElementById("pomodoro-reset");
       const skipButton = document.getElementById("pomodoro-skip");
       const doneButton = document.getElementById("pomodoro-done");
@@ -473,11 +473,19 @@
           pomodoroRing.style.setProperty("--pomodoro-progress", `${progress * 360}deg`);
         }
         const requiresTask = state.mode === "work" && !state.taskId;
-        if (startButton) {
-          startButton.disabled = state.isRunning || requiresTask;
-        }
-        if (pauseButton) {
-          pauseButton.disabled = !state.isRunning;
+        if (toggleButton) {
+          toggleButton.disabled = requiresTask;
+          if (state.isRunning) {
+            toggleIcon.className = "bi bi-pause-fill";
+            toggleText.textContent = "Pause";
+            toggleButton.classList.remove("btn-primary");
+            toggleButton.classList.add("btn-warning");
+          } else {
+            toggleIcon.className = "bi bi-play-fill";
+            toggleText.textContent = requiresTask ? "Select task" : "Start";
+            toggleButton.classList.remove("btn-warning");
+            toggleButton.classList.add("btn-primary");
+          }
         }
         if (doneButton) {
           doneButton.disabled = !state.taskId;
@@ -711,16 +719,24 @@
           startInterval(state);
         };
 
-        startButton?.addEventListener("click", startPomodoro);
-
-        pauseButton?.addEventListener("click", () => {
+        const pausePomodoro = () => {
           state.isRunning = false;
           state.lastTick = null;
           stopTaskTimer(state);
           saveState(state);
           updatePomodoroUI(state);
           stopInterval();
-        });
+        };
+
+        const togglePomodoro = () => {
+          if (state.isRunning) {
+            pausePomodoro();
+          } else {
+            startPomodoro();
+          }
+        };
+
+        toggleButton?.addEventListener("click", togglePomodoro);
 
         resetButton?.addEventListener("click", () => {
           state.mode = "work";
@@ -784,7 +800,7 @@
 
         taskClear?.addEventListener("click", () => {
           if (state.isRunning && state.mode === "work") {
-            pauseButton?.click();
+            pausePomodoro();
           }
           state.taskId = null;
           state.taskName = null;
@@ -850,7 +866,7 @@
           }
           const previousTaskId = state.taskId;
           if (state.isRunning) {
-            pauseButton?.click();
+            pausePomodoro();
           }
           state.taskId = selected.id;
           state.taskName = selected.name;

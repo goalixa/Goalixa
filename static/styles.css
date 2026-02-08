@@ -52,12 +52,26 @@
   background: linear-gradient(180deg, #1c2027 0%, #161a21 100%);
 }
 
-[data-theme="dark"] .timer-view-box {
+[data-theme="dark"] .timer-view-toggle {
   background: rgba(22, 26, 33, 0.9);
+  border-color: rgba(90, 141, 255, 0.2);
 }
 
-[data-theme="dark"] .timer-view-btn {
-  background: #1a1f27;
+[data-theme="dark"] .timer-view-tab {
+  background: rgba(26, 31, 39, 0.8);
+  border-color: rgba(90, 141, 255, 0.25);
+  color: var(--text);
+}
+
+[data-theme="dark"] .timer-view-tab:hover {
+  background: rgba(90, 141, 255, 0.15);
+  border-color: rgba(90, 141, 255, 0.35);
+}
+
+[data-theme="dark"] .timer-view-tab.is-active {
+  background: rgba(90, 141, 255, 0.25);
+  border-color: rgba(90, 141, 255, 0.5);
+  color: #b6ccff;
 }
 
 * {
@@ -2796,26 +2810,60 @@ body {
   margin-top: 8px;
 }
 
-.label-picker {
-  display: none;
+.label-picker-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
 }
 
-.task-form .label-picker {
+.label-picker {
   position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  width: min(320px, 100%);
-  padding: 12px;
-  border-radius: 16px;
+  top: calc(100% + 12px);
+  right: 0;
+  display: grid;
+  gap: 10px;
+  width: min(360px, 90vw);
+  min-width: 220px;
+  padding: 14px;
+  border-radius: 18px;
   border: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--card) 0%, rgba(255, 255, 255, 0.96) 100%);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.12);
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  z-index: 30;
+}
+
+[data-theme="dark"] .label-picker {
+  background: linear-gradient(180deg, #1f2430 0%, #1a1f27 100%);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+}
+
+.label-picker::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  right: 22px;
+  width: 12px;
+  height: 12px;
   background: var(--card);
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
-  z-index: 20;
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  transform: rotate(45deg);
+}
+
+[data-theme="dark"] .label-picker::before {
+  background: #1f2430;
 }
 
 .label-picker.is-open {
-  display: grid;
-  gap: 8px;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .label-picker-header {
@@ -2836,44 +2884,58 @@ body {
   color: var(--muted);
 }
 
-.label-picker-help {
-  margin: 0;
-}
-
-.label-picker select {
-  width: 100%;
-  min-height: 160px;
-  padding: 8px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--soft);
-}
-
 .label-options {
   display: grid;
-  gap: 6px;
-  max-height: 200px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  max-height: 220px;
   overflow: auto;
-  padding-right: 4px;
+  padding: 2px 4px 2px 2px;
 }
 
 .label-option {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: 10px;
   cursor: pointer;
-  transition: background 0.2s ease;
 }
 
 .label-option input {
-  margin: 0;
-  accent-color: var(--accent);
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.label-option:hover {
-  background: var(--soft);
+.label-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.label-option:hover .label-pill {
+  border-color: rgba(31, 111, 235, 0.45);
+  box-shadow: 0 8px 16px rgba(31, 111, 235, 0.15);
+}
+
+.label-option input:focus-visible + .label-pill {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.label-option input:checked + .label-pill {
+  border-color: var(--accent);
+  background: rgba(31, 111, 235, 0.12);
+  box-shadow: 0 10px 24px rgba(31, 111, 235, 0.2);
+}
+
+.label-option input:checked + .label-pill .label-swatch {
+  box-shadow: 0 0 0 2px rgba(31, 111, 235, 0.35);
 }
 
 .label-swatch {
@@ -2885,18 +2947,28 @@ body {
 
 .label-name {
   font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .label-empty {
   margin: 0;
   font-size: 0.85rem;
   color: var(--muted);
+  grid-column: 1 / -1;
 }
 
 .label-toggle {
-  background: var(--soft);
+  background: var(--card);
   color: var(--text);
   border: 1px solid var(--border);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.label-toggle:hover {
+  border-color: rgba(31, 111, 235, 0.5);
+  color: var(--accent);
+  box-shadow: 0 10px 22px rgba(31, 111, 235, 0.18);
+  transform: translateY(-1px);
 }
 
 .label-toggle-btn {
@@ -2906,8 +2978,9 @@ body {
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-weight: 600;
+  gap: 8px;
+  font-weight: 700;
+  background: linear-gradient(135deg, rgba(31, 111, 235, 0.12), rgba(242, 169, 0, 0.18));
 }
 
 .label-form select {
@@ -5693,26 +5766,52 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.timer-view-box {
+.timer-view-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px;
-  max-width: 100%;
-  border-radius: 14px;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.timer-view-btn {
-  border-radius: 999px;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  background: #f4f1ec;
-  color: var(--text);
-  font-weight: 600;
+.timer-view-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.9rem;
   cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.timer-view-tab:hover {
+  background: rgba(31, 111, 235, 0.08);
+  color: var(--text);
+}
+
+.timer-view-tab.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(31, 111, 235, 0.25);
+}
+
+.timer-view-tab .bi {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.timer-view-tab .view-label {
+  line-height: 1;
 }
 
 .timer-view-btn.is-active {
@@ -6438,69 +6537,529 @@ body {
 }
 
 @media (max-width: 768px) {
+  /* Timer Hero Section - Task Picker */
   .timer-controls {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
   }
 
-  .timer-actions {
-    justify-content: flex-end;
+  .timer-select {
+    max-width: 100%;
+    min-width: unset;
   }
 
-  .timer-hero-meta {
-    justify-content: flex-start;
+  .timer-select input[type="text"] {
+    padding: 12px 48px 12px 14px;
+    font-size: 1rem;
+    min-height: 48px;
   }
 
+  .timer-clear {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .timer-dropdown {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .timer-search {
+    padding: 10px 12px;
+    font-size: 1rem;
+    min-height: 44px;
+  }
+
+  .timer-list button {
+    padding: 12px;
+    min-height: 48px;
+    font-size: 0.95rem;
+  }
+
+  /* Timer Range Card */
   .timer-range-section {
-    padding: 16px 24px 0;
-    text-align: left;
+    padding: 12px 16px 0;
   }
 
   .timer-range-card {
     grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .timer-range-left,
+  .timer-range-right {
+    width: 100%;
   }
 
   .timer-range-summary {
-    text-align: left;
-    padding: 0;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    width: 100%;
+  }
+
+  .timer-summary-item {
+    flex: 1;
+    text-align: center;
+  }
+
+  .timer-summary-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
+
+  .timer-summary-value {
+    font-size: 1rem;
+  }
+
+  .timer-view-toggle {
+    width: 100%;
+    justify-content: stretch;
+    gap: 4px;
+  }
+
+  .timer-view-tab {
+    flex: 1;
+    min-height: 44px;
+    padding: 10px 8px;
+    font-size: 0.85rem;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .timer-view-tab .bi {
+    font-size: 1.2rem;
+  }
+
+  .timer-view-tab .view-label {
+    display: none;
+  }
+
+  /* Pomodoro Card */
+  .pomodoro-header {
     flex-direction: column;
-    align-items: flex-start;
+    gap: 24px;
+    padding: 16px 0 8px;
+  }
+
+  .pomodoro-copy {
+    width: 100%;
+    text-align: center;
+  }
+
+  .pomodoro-mode {
+    font-size: 1.5rem;
+  }
+
+  .pomodoro-status {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .pomodoro-task {
+    font-size: 0.9rem;
+  }
+
+  .pomodoro-meta {
+    font-size: 0.85rem;
+  }
+
+  .pomodoro-clock {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .pomodoro-ring {
+    width: 160px;
+    height: 160px;
+  }
+
+  .pomodoro-dial {
+    font-size: 2.2rem;
+  }
+
+  .pomodoro-caption {
+    font-size: 0.7rem;
+  }
+
+  .pomodoro-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 8px;
+  }
+
+  .pomodoro-controls .btn {
+    min-height: 44px;
+    min-width: calc(50% - 4px);
+    padding: 12px 16px;
+    font-size: 0.95rem;
+  }
+
+  .pomodoro-controls .btn .bi {
+    font-size: 1.2rem;
+  }
+
+  /* Hide button text on very small mobile if needed */
+  @media (max-width: 380px) {
+    .pomodoro-controls .btn .btn-text,
+    .pomodoro-presets .btn {
+      font-size: 0.85rem;
+      padding: 10px 12px;
+    }
+
+    .pomodoro-controls .btn {
+      min-width: calc(50% - 4px);
+    }
+  }
+
+  .pomodoro-presets {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 8px;
+  }
+
+  .pomodoro-presets .btn {
+    flex: 1 1 calc(33.333% - 6px);
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  /* Timer List View */
+  .timer-list-item {
+    padding: 14px;
   }
 
   .timer-list-row {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
   }
 
+  .timer-list-left,
   .timer-list-center,
   .timer-list-right {
     width: 100%;
   }
 
+  .timer-list-center {
+    gap: 4px;
+  }
+
+  .timer-list-title {
+    font-size: 1rem;
+  }
+
+  .timer-list-project {
+    font-size: 0.85rem;
+  }
+
   .timer-list-right {
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .timer-list-duration {
+    font-size: 1.1rem;
+    text-align: left;
+  }
+
+  .timer-list-time {
+    font-size: 0.85rem;
+    text-align: left;
   }
 
   .timer-list-actions {
-    opacity: 1;
-    pointer-events: auto;
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    gap: 8px;
   }
 
-  .timer-view-box {
-    flex-wrap: wrap;
-    justify-content: flex-start;
+  .timer-list-action {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Timesheet View */
+  .timesheet-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 
   .timesheet-row {
     grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 12px;
   }
 
-  .timesheet-entry {
-    grid-template-columns: 1fr;
+  .timesheet-day {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
   }
 
-  .weekly-goal-info {
+  .timesheet-day-label {
+    font-size: 0.95rem;
+  }
+
+  .timesheet-day-total {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .timesheet-task-summary {
+    padding: 10px;
+  }
+
+  .timesheet-task-title {
+    font-size: 0.95rem;
+  }
+
+  .timesheet-task-meta {
+    font-size: 0.85rem;
+  }
+
+  .timesheet-task-duration {
+    font-size: 1rem;
+  }
+
+  .timer-task-entry {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+
+  /* Calendar View */
+  .timer-calendar-card {
+    padding: 12px;
+  }
+
+  .calendar-week-board {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .calendar-week-grid {
+    display: flex;
     flex-direction: column;
+    gap: 16px;
+    min-width: 100%;
+  }
+
+  .calendar-week-header-row {
+    display: none;
+  }
+
+  .calendar-week-row {
+    flex-direction: column;
+    padding: 12px 0;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .calendar-week-row:last-child {
+    border-bottom: none;
+  }
+
+  .calendar-task-cell {
+    width: 100%;
+    padding: 12px;
+    background: var(--soft);
+    border-radius: 12px;
+    gap: 8px;
+  }
+
+  .calendar-task-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .calendar-task-meta {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .calendar-day-cells {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .calendar-day-cell {
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 8px;
+    background: var(--card);
+  }
+
+  .calendar-day-cell.is-today {
+    background: rgba(31, 111, 235, 0.1);
+  }
+
+  .calendar-check {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Add swipe hint for calendar */
+  .calendar-week-board::after {
+    content: "";
+    display: block;
+    width: 40px;
+    flex-shrink: 0;
+  }
+}
+
+/* Tablet-specific improvements (768px - 992px) */
+@media (min-width: 769px) and (max-width: 992px) {
+  /* Timer Hero & Range Card */
+  .timer-range-card {
+    grid-template-columns: minmax(180px, 1fr) auto;
+    gap: 12px;
+  }
+
+  .timer-range-right {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .timer-view-toggle {
+    flex-wrap: wrap;
+    max-width: 320px;
+  }
+
+  .timer-view-tab {
+    flex: 1 1 calc(50% - 2px);
+    min-width: 100px;
+    font-size: 0.9rem;
+    padding: 8px 10px;
+  }
+
+  .timer-view-tab .view-label {
+    display: inline;
+  }
+
+  /* Pomodoro Card */
+  .pomodoro-header {
+    gap: 20px;
+  }
+
+  .pomodoro-ring {
+    width: 180px;
+    height: 180px;
+  }
+
+  .pomodoro-dial {
+    font-size: 2.3rem;
+  }
+
+  .pomodoro-controls .btn {
+    min-height: 48px;
+    padding: 12px 18px;
+  }
+
+  .pomodoro-presets {
+    justify-content: center;
+  }
+
+  .pomodoro-presets .btn {
+    flex: 0 1 auto;
+    min-width: 100px;
+  }
+
+  /* Calendar View */
+  .calendar-week-grid {
+    grid-template-columns: minmax(160px, 200px) repeat(7, minmax(44px, 1fr));
+    gap: 8px;
+  }
+
+  .timer-calendar-card {
+    padding: 14px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .calendar-week-board {
+    min-width: 100%;
+    padding-bottom: 8px;
+  }
+
+  .calendar-weekday {
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+  }
+
+  .calendar-weekday-date {
+    font-size: 0.9rem;
+  }
+
+  .calendar-check {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    min-height: 20px;
+  }
+
+  .calendar-task-name {
+    font-size: 0.9rem;
+  }
+
+  .calendar-task-meta {
+    font-size: 0.75rem;
+  }
+
+  /* Calendar horizontal scroll indicator */
+  .timer-calendar-card::after {
+    content: "";
+    display: block;
+    width: 20px;
+    flex-shrink: 0;
+  }
+}
+
+  /* Timer List View */
+  .timer-list-row {
+    flex-wrap: wrap;
+  }
+
+  .timer-list-center {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .timer-list-right {
+    flex: 0 0 auto;
+    min-width: 180px;
+  }
+
+  /* Timesheet View */
+  .timesheet-row {
+    grid-template-columns: minmax(140px, 180px) 1fr;
+    gap: 14px;
+  }
+
+  .timer-task-entry {
+    font-size: 0.9rem;
   }
 }
 
@@ -7094,4 +7653,3 @@ body {
     text-align: center;
   }
 }
-

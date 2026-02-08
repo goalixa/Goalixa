@@ -43,27 +43,31 @@
       </div>
       <form class="task-form project-form" method="post" action="{{ url_for('create_project') }}">
         <input type="text" name="name" placeholder="Project name" required />
-        <button class="btn btn-light btn-sm label-toggle label-toggle-btn" type="button" data-target="#project-label-picker" aria-label="Labels">
-          <i class="bi bi-tags"></i>
-          <span>Tags</span>
-        </button>
-        <div class="label-picker" id="project-label-picker">
-          <div class="label-picker-header">
-            <span class="label-picker-title">Project tags</span>
-            <span class="label-picker-hint">Select one or more</span>
-          </div>
-          <div class="label-options">
-            {% if labels %}
-              {% for label in labels %}
-                <label class="label-option">
-                  <input type="checkbox" name="label_ids" value="{{ label['id'] }}" />
-                  <span class="label-swatch" style="background-color: {{ label['color'] }}"></span>
-                  <span class="label-name">{{ label['name'] }}</span>
-                </label>
-              {% endfor %}
-            {% else %}
-              <p class="label-empty">No tags yet.</p>
-            {% endif %}
+        <div class="label-picker-wrap">
+          <button class="btn btn-light btn-sm label-toggle label-toggle-btn" type="button" data-target="#project-label-picker" aria-label="Labels">
+            <i class="bi bi-tags"></i>
+            <span>Tags</span>
+          </button>
+          <div class="label-picker" id="project-label-picker">
+            <div class="label-picker-header">
+              <span class="label-picker-title">Project tags</span>
+              <span class="label-picker-hint">Select one or more</span>
+            </div>
+            <div class="label-options">
+              {% if labels %}
+                {% for label in labels %}
+                  <label class="label-option">
+                    <input type="checkbox" name="label_ids" value="{{ label['id'] }}" />
+                    <span class="label-pill">
+                      <span class="label-swatch" style="background-color: {{ label['color'] }}"></span>
+                      <span class="label-name">{{ label['name'] }}</span>
+                    </span>
+                  </label>
+                {% endfor %}
+              {% else %}
+                <p class="label-empty">No tags yet.</p>
+              {% endif %}
+            </div>
           </div>
         </div>
         <button class="btn btn-primary btn-sm" type="submit">
@@ -111,25 +115,6 @@
                     {% endfor %}
                   </div>
                 {% endif %}
-                {% set can_add_label = (labels | length) > (project['label_ids'] | length) %}
-                <form class="label-form project-label-form" method="post" action="{{ url_for('add_project_label', project_id=project['id']) }}">
-                  <select name="label_id" {% if not can_add_label %}disabled{% endif %} required>
-                    <option value="" disabled selected>
-                      {% if can_add_label %}Add tag{% else %}All tags assigned{% endif %}
-                    </option>
-                    {% if can_add_label %}
-                      {% for label in labels %}
-                        {% if label['id'] not in project['label_ids'] %}
-                          <option value="{{ label['id'] }}">{{ label['name'] }}</option>
-                        {% endif %}
-                      {% endfor %}
-                    {% endif %}
-                  </select>
-                  <button class="btn btn-outline-secondary btn-sm menu-item" type="submit" {% if not can_add_label %}disabled{% endif %}>
-                    <i class="bi bi-plus-lg"></i>
-                    Add
-                  </button>
-                </form>
                 <form id="edit-project-{{ project['id'] }}" class="edit-form project-edit-form project-edit-inline" method="post" action="{{ url_for('edit_project', project_id=project['id']) }}">
                   <input type="text" name="name" value="{{ project['name'] }}" required />
                   <div class="project-edit-row">

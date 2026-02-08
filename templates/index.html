@@ -18,26 +18,30 @@
             <option value="{{ project['id'] }}" {% if loop.first %}selected{% endif %}>{{ project['name'] }}</option>
           {% endfor %}
         </select>
-        <button class="btn btn-light btn-sm label-toggle icon-button" id="create-label-toggle" type="button" aria-label="Labels">
-          <i class="bi bi-tags"></i>
-        </button>
-        <div class="label-picker" id="create-label-picker">
-          <div class="label-picker-header">
-            <span class="label-picker-title">Task tags</span>
-            <span class="label-picker-hint">Pick any</span>
-          </div>
-          <div class="label-options">
-            {% if labels %}
-              {% for label in labels %}
-                <label class="label-option">
-                  <input type="checkbox" name="label_ids" value="{{ label['id'] }}" />
-                  <span class="label-swatch" style="background-color: {{ label['color'] }}"></span>
-                  <span class="label-name">{{ label['name'] }}</span>
-                </label>
-              {% endfor %}
-            {% else %}
-              <p class="label-empty">No tags yet.</p>
-            {% endif %}
+        <div class="label-picker-wrap">
+          <button class="btn btn-light btn-sm label-toggle icon-button" id="create-label-toggle" type="button" aria-label="Labels">
+            <i class="bi bi-tags"></i>
+          </button>
+          <div class="label-picker" id="create-label-picker">
+            <div class="label-picker-header">
+              <span class="label-picker-title">Task tags</span>
+              <span class="label-picker-hint">Pick any</span>
+            </div>
+            <div class="label-options">
+              {% if labels %}
+                {% for label in labels %}
+                  <label class="label-option">
+                    <input type="checkbox" name="label_ids" value="{{ label['id'] }}" />
+                    <span class="label-pill">
+                      <span class="label-swatch" style="background-color: {{ label['color'] }}"></span>
+                      <span class="label-name">{{ label['name'] }}</span>
+                    </span>
+                  </label>
+                {% endfor %}
+              {% else %}
+                <p class="label-empty">No tags yet.</p>
+              {% endif %}
+            </div>
           </div>
         </div>
         <button class="btn btn-primary btn-sm" type="submit">

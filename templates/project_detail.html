@@ -75,25 +75,6 @@
           {% else %}
             <p class="empty">No tags yet.</p>
           {% endif %}
-          {% set can_add_label = (labels | length) > (project['label_ids'] | length) %}
-          <form class="label-form project-label-form" method="post" action="{{ url_for('add_project_label', project_id=project['id']) }}">
-            <select name="label_id" {% if not can_add_label %}disabled{% endif %} required>
-              <option value="" disabled selected>
-                {% if can_add_label %}Add project label{% else %}All tags assigned{% endif %}
-              </option>
-              {% if can_add_label %}
-                {% for label in labels %}
-                  {% if label['id'] not in project['label_ids'] %}
-                    <option value="{{ label['id'] }}">{{ label['name'] }}</option>
-                  {% endif %}
-                {% endfor %}
-              {% endif %}
-            </select>
-            <button class="btn btn-outline-secondary btn-sm menu-item" type="submit" {% if not can_add_label %}disabled{% endif %}>
-              <i class="bi bi-plus-lg"></i>
-              Add
-            </button>
-          </form>
         </div>
         <form id="edit-project-{{ project['id'] }}" class="edit-form project-edit-form project-edit-panel" method="post" action="{{ url_for('edit_project', project_id=project['id']) }}">
           <label>
@@ -122,26 +103,30 @@
       <form class="task-form" id="task-form" method="post" action="{{ url_for('create_task') }}" data-project-id="{{ project['id'] }}">
         <input type="text" id="task-name" name="name" placeholder="Task name" required />
         <input type="hidden" name="project_id" value="{{ project['id'] }}" />
-        <button class="btn btn-light btn-sm label-toggle icon-button" id="create-label-toggle" type="button" aria-label="Labels">
-          <i class="bi bi-tags"></i>
-        </button>
-        <div class="label-picker" id="create-label-picker">
-          <div class="label-picker-header">
-            <span class="label-picker-title">Task tags</span>
-            <span class="label-picker-hint">Pick any</span>
-          </div>
-          <div class="label-options">
-            {% if labels %}
-              {% for label in labels %}
-                <label class="label-option">
-                  <input type="checkbox" name="label_ids" value="{{ label['id'] }}" />
-                  <span class="label-swatch" style="background-color: {{ label['color'] }}"></span>
-                  <span class="label-name">{{ label['name'] }}</span>
-                </label>
-              {% endfor %}
-            {% else %}
-              <p class="label-empty">No tags yet.</p>
-            {% endif %}
+        <div class="label-picker-wrap">
+          <button class="btn btn-light btn-sm label-toggle icon-button" id="create-label-toggle" type="button" aria-label="Labels">
+            <i class="bi bi-tags"></i>
+          </button>
+          <div class="label-picker" id="create-label-picker">
+            <div class="label-picker-header">
+              <span class="label-picker-title">Task tags</span>
+              <span class="label-picker-hint">Pick any</span>
+            </div>
+            <div class="label-options">
+              {% if labels %}
+                {% for label in labels %}
+                  <label class="label-option">
+                    <input type="checkbox" name="label_ids" value="{{ label['id'] }}" />
+                    <span class="label-pill">
+                      <span class="label-swatch" style="background-color: {{ label['color'] }}"></span>
+                      <span class="label-name">{{ label['name'] }}</span>
+                    </span>
+                  </label>
+                {% endfor %}
+              {% else %}
+                <p class="label-empty">No tags yet.</p>
+              {% endif %}
+            </div>
           </div>
         </div>
         <button class="btn btn-primary btn-sm" type="submit">
