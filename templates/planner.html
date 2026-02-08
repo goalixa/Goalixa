@@ -9,6 +9,12 @@
         <h1>Daily Planner</h1>
         <p>Habits and a to-do list in one focused view.</p>
       </div>
+      <div class="planner-header-actions">
+        <div class="planner-toggle" role="group" aria-label="Planner view toggle">
+          <button class="planner-toggle-btn is-active" type="button" data-planner-panel="habits" aria-pressed="true">Habits</button>
+          <button class="planner-toggle-btn" type="button" data-planner-panel="todos" aria-pressed="false">To-dos</button>
+        </div>
+      </div>
     </header>
 
     <section class="planner-hero">
@@ -30,7 +36,7 @@
     </section>
 
     <section class="planner-grid">
-      <article class="card planner-card">
+      <article class="card planner-card is-active" data-planner-section="habits">
         <div class="planner-card-header">
           <div>
             <p class="goals-label">Habits</p>
@@ -85,7 +91,7 @@
         </div>
       </article>
 
-      <article class="card planner-card">
+      <article class="card planner-card" data-planner-section="todos">
         <div class="planner-card-header">
           <div>
             <p class="goals-label">To-do</p>
@@ -166,4 +172,30 @@
       </article>
     </section>
   </div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+    (() => {
+      const toggleButtons = document.querySelectorAll('[data-planner-panel]');
+      const panels = document.querySelectorAll('[data-planner-section]');
+      if (!toggleButtons.length || !panels.length) return;
+
+      const activate = (target) => {
+        toggleButtons.forEach((btn) => {
+          const isActive = btn.dataset.plannerPanel === target;
+          btn.classList.toggle('is-active', isActive);
+          btn.setAttribute('aria-pressed', isActive);
+        });
+        panels.forEach((panel) => {
+          panel.classList.toggle('is-active', panel.dataset.plannerSection === target);
+        });
+      };
+
+      toggleButtons.forEach((btn) => {
+        btn.addEventListener('click', () => activate(btn.dataset.plannerPanel));
+      });
+    })();
+  </script>
 {% endblock %}

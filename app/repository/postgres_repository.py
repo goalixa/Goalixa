@@ -1600,6 +1600,25 @@ class PostgresTaskRepository:
         ).fetchall()
         return {row["task_id"]: row["total"] for row in rows}
 
+    def fetch_task_daily_checks_between(self, task_ids, start_date, end_date):
+        if not task_ids:
+            return {}
+        db = self._get_db()
+        placeholders = ",".join(["%s"] * len(task_ids))
+        rows = db.execute(
+            f"""
+            SELECT task_id, log_date
+            FROM task_daily_checks
+            WHERE task_id IN ({placeholders})
+              AND log_date BETWEEN %s AND %s
+            """,
+            tuple(task_ids) + (start_date, end_date),
+        ).fetchall()
+        checks = {}
+        for row in rows:
+            checks.setdefault(row["task_id"], set()).add(row["log_date"])
+        return checks
+
     def set_task_daily_check(self, task_id, log_date, done):
         db = self._get_db()
         if done:

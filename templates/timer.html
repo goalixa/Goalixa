@@ -3,7 +3,6 @@
 {% set active_page = "timer" %}
 
 {% block head_extra %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/fullcalendar/fullcalendar.min.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/litepicker/litepicker.css') }}" />
 {% endblock %}
 
@@ -129,7 +128,42 @@
     </section>
     <section class="timer-calendar-section timer-view-panel" data-view-panel="calendar">
       <div class="card timer-calendar-card">
-        <div id="timer-calendar"></div>
+        <div class="calendar-week-board">
+          <div class="calendar-week-grid calendar-week-header-row">
+            <div class="calendar-weekday calendar-task-header">Tasks</div>
+            {% for day in week_days %}
+              <div class="calendar-weekday{% if day.is_today %} is-today{% endif %}">
+                <span class="calendar-weekday-name">{{ day.day }}</span>
+                <span class="calendar-weekday-date">{{ day.date }}</span>
+              </div>
+            {% endfor %}
+          </div>
+          {% if task_rows %}
+            <div class="calendar-week-body">
+              {% for task in task_rows %}
+                <div class="calendar-week-grid calendar-week-row">
+                  <div class="calendar-task-cell">
+                    <span class="calendar-task-name">{{ task["name"] }}</span>
+                    <span class="calendar-task-meta">
+                      {% if task["project_name"] %}{{ task["project_name"] }}{% else %}No project{% endif %}
+                    </span>
+                  </div>
+                  {% for day in week_days %}
+                    {% set checked = task.week_checks[loop.index0] %}
+                    <div class="calendar-day-cell{% if day.is_today %} is-today{% endif %}">
+                      <span
+                        class="calendar-check{% if checked %} is-checked{% else %} is-missed{% endif %}"
+                        title="{{ day.full }}"
+                      ></span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="empty">No tasks yet.</p>
+          {% endif %}
+        </div>
       </div>
     </section>
     <section class="timer-calendar-section timer-view-panel" data-view-panel="list">
@@ -243,7 +277,6 @@
 {% endblock %}
 
 {% block scripts %}
-  <script src="{{ url_for('static', filename='vendor/fullcalendar/fullcalendar.min.js') }}"></script>
   <script src="{{ url_for('static', filename='vendor/litepicker/litepicker.js') }}"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -282,64 +315,11 @@
 
       const panels = document.querySelectorAll("[data-view-panel]");
       const buttons = document.querySelectorAll("[data-view-button]");
-      const calendarEl = document.getElementById("timer-calendar");
       const taskPicker = document.getElementById("task-picker");
       const taskDropdown = document.querySelector(".timer-dropdown");
       const taskSearch = document.querySelector(".timer-search");
       const taskList = document.querySelector(".timer-list");
       let cachedTasks = [];
-      const calendar =
-        calendarEl && typeof FullCalendar !== "undefined"
-          ? new FullCalendar.Calendar(calendarEl, {
-              initialView: "dayGridMonth",
-              height: "auto",
-              headerToolbar: {
-                left: "prev,next",
-                center: "title",
-                right: "",
-              },
-              navLinks: true,
-              dayMaxEvents: 4,
-              dayMaxEventRows: 4,
-              eventDisplay: "block",
-              dateClick: (info) => {
-                calendar.changeView("dayGridDay", info.dateStr);
-              },
-              eventClick: (info) => {
-                const taskId = info.event.extendedProps?.taskId;
-                const listButton = document.querySelector('[data-view-button="list"]');
-                if (listButton) {
-                  listButton.click();
-                }
-                if (!taskId) {
-                  return;
-                }
-                const target = document.querySelector(`[data-task-id="${taskId}"]`);
-                if (target) {
-                  target.classList.add("is-highlight");
-                  target.scrollIntoView({ behavior: "smooth", block: "center" });
-                  setTimeout(() => target.classList.remove("is-highlight"), 2000);
-                }
-                info.jsEvent.preventDefault();
-              },
-              events: (info, success, failure) => {
-                const params = new URLSearchParams({
-                  start: info.startStr,
-                  end: info.endStr,
-                });
-                fetch(`/api/timer/entries?${params.toString()}`)
-                  .then((response) => response.json())
-                  .then((payload) => success(payload.events || []))
-                  .catch((error) => {
-                    console.error(error);
-                    failure(error);
-                  });
-              },
-            })
-          : null;
-      if (calendar) {
-        calendar.render();
-      }
 
       buttons.forEach((button) => {
         button.addEventListener("click", () => {
@@ -348,9 +328,6 @@
           panels.forEach((panel) =>
             panel.classList.toggle("is-active", panel.dataset.viewPanel === targetView),
           );
-          if (targetView === "calendar" && calendar) {
-            calendar.updateSize();
-          }
         });
       });
 

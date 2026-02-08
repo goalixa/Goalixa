@@ -18,12 +18,9 @@
           <p class="overview-subtitle">Last 7 days of focus tracking.</p>
         </div>
         <div class="chart-controls">
-          <div class="range-switch">
-            <span class="range-chip active">7d</span>
-          </div>
           <div class="mode-switch">
-            <button class="btn btn-outline-primary btn-sm mode-button active" type="button" data-mode="bar">Bar</button>
-            <button class="btn btn-outline-primary btn-sm mode-button" type="button" data-mode="line">Line</button>
+            <button class="btn btn-outline-primary btn-sm mode-button" type="button" data-mode="bar">Bar</button>
+            <button class="btn btn-outline-primary btn-sm mode-button active" type="button" data-mode="line">Line</button>
           </div>
         </div>
       </div>
@@ -631,7 +628,7 @@
     const ctx = document.getElementById("overview-chart");
     const projectDistribution = {{ project_distribution | tojson }};
     const habitSeries = {{ habit_series | tojson }};
-    let chartType = "bar";
+    let chartType = "line";
     let chartInstance = null;
 
     const formatSeconds = (seconds) => {

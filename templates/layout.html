@@ -6,7 +6,7 @@
   <title>{{ title or "Goalixa" }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.min.css') }}" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v={{ config.get('CSS_VERSION', '1.0') }}" />
   {% block head_extra %}{% endblock %}
 </head>
 <body>
