@@ -1383,6 +1383,35 @@ body {
   flex-wrap: wrap;
 }
 
+.planner-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.planner-toggle-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 12px;
+  border-radius: 9px;
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: all 0.2s ease;
+}
+
+.planner-toggle-btn.is-active {
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(31, 111, 235, 0.22);
+}
+
 .planner-hero {
   display: grid;
   gap: 16px;
@@ -1432,6 +1461,10 @@ body {
 .planner-card {
   display: grid;
   gap: 16px;
+}
+
+.planner-card:not(.is-active) {
+  display: none;
 }
 
 .planner-card-header {
@@ -3758,6 +3791,190 @@ body {
 
 .calendar-full-card #calendar-page {
   height: 100%;
+}
+
+.calendar-week-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  text-align: right;
+}
+
+.calendar-week-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.calendar-week-subtitle {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.calendar-week-board {
+  display: grid;
+  gap: 12px;
+  overflow-x: auto;
+}
+
+.calendar-week-grid {
+  display: grid;
+  grid-template-columns: minmax(200px, 260px) repeat(7, minmax(56px, 1fr));
+  align-items: center;
+  gap: 12px;
+  min-width: 760px;
+}
+
+.calendar-week-header-row {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: grid;
+  gap: 4px;
+}
+
+.calendar-weekday-date {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.calendar-weekday.is-today .calendar-weekday-date {
+  color: var(--accent, #1f6feb);
+}
+
+.calendar-task-header {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.calendar-week-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-week-row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.calendar-week-row:last-child {
+  border-bottom: 0;
+}
+
+.calendar-day-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  border-radius: 12px;
+}
+
+.calendar-day-cell.is-today {
+  background: rgba(31, 111, 235, 0.08);
+}
+
+.calendar-check {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.calendar-check.is-checked {
+  background: var(--accent, #1f6feb);
+  border-color: var(--accent, #1f6feb);
+}
+
+.calendar-check.is-checked::after {
+  content: "";
+  width: 5px;
+  height: 8px;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(45deg);
+  margin-top: -1px;
+}
+
+.calendar-check.is-missed {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.calendar-check.is-missed::before,
+.calendar-check.is-missed::after {
+  content: "";
+  position: absolute;
+  width: 9px;
+  height: 2px;
+  background: #ef4444;
+  border-radius: 999px;
+}
+
+.calendar-check.is-missed::before {
+  transform: rotate(45deg);
+}
+
+.calendar-check.is-missed::after {
+  transform: rotate(-45deg);
+}
+
+.calendar-task-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  justify-self: start;
+  text-align: left;
+}
+
+.calendar-task-name {
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-align: left;
+}
+
+.calendar-task-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .calendar-week-grid {
+    grid-template-columns: minmax(180px, 220px) repeat(7, minmax(52px, 1fr));
+    min-width: 700px;
+  }
+
+  .calendar-week-meta {
+    align-items: flex-start;
+    text-align: left;
+  }
 }
 
 .timer-hero {

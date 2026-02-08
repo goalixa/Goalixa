@@ -198,6 +198,27 @@ def register_routes(app, service):
         for group in week_groups:
             week_total_seconds += group["total_seconds"]
 
+        tasks = service.list_tasks()
+        week_dates = [week_start + timedelta(days=offset) for offset in range(7)]
+        week_days = [
+            {
+                "iso": date.isoformat(),
+                "day": date.strftime("%a"),
+                "date": date.strftime("%d"),
+                "full": date.strftime("%b %d"),
+                "is_today": date == today,
+            }
+            for date in week_dates
+        ]
+        task_ids = [task["id"] for task in tasks]
+        checks_map = service.list_task_daily_checks(task_ids, week_start, week_end)
+        task_rows = []
+        for task in tasks:
+            checked_dates = checks_map.get(task["id"], set())
+            week_checks = [day["iso"] in checked_dates for day in week_days]
+            task_rows.append({**task, "week_checks": week_checks})
+        week_label = f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}"
+
         return render_template(
             "timer.html",
             timer_list_groups=list_groups,
@@ -205,12 +226,42 @@ def register_routes(app, service):
             timer_range_end=end_date.isoformat(),
             today_total_seconds=today_total_seconds,
             week_total_seconds=week_total_seconds,
+            week_label=week_label,
+            week_days=week_days,
+            task_rows=task_rows,
         )
 
     @app.route("/calendar", methods=["GET"])
     @auth_required()
     def calendar():
-        return render_template("calendar.html")
+        tasks = service.list_tasks()
+        week_start, week_end = service.current_week_range()
+        today = service.current_local_date()
+        week_dates = [week_start + timedelta(days=offset) for offset in range(7)]
+        week_days = [
+            {
+                "iso": date.isoformat(),
+                "day": date.strftime("%a"),
+                "date": date.strftime("%d"),
+                "full": date.strftime("%b %d"),
+                "is_today": date == today,
+            }
+            for date in week_dates
+        ]
+        task_ids = [task["id"] for task in tasks]
+        checks_map = service.list_task_daily_checks(task_ids, week_start, week_end)
+        task_rows = []
+        for task in tasks:
+            checked_dates = checks_map.get(task["id"], set())
+            week_checks = [day["iso"] in checked_dates for day in week_days]
+            task_rows.append({**task, "week_checks": week_checks})
+        week_label = f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}"
+        return render_template(
+            "calendar.html",
+            week_label=week_label,
+            week_days=week_days,
+            task_rows=task_rows,
+        )
 
     @app.route("/habits", methods=["GET"])
     @auth_required()

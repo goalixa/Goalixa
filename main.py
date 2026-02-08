@@ -1,4 +1,5 @@
 import os
+import time
 
 from dotenv import load_dotenv
 
@@ -22,6 +23,9 @@ def create_app():
     )
     app.config["AUTH_JWT_SECRET"] = os.getenv("AUTH_JWT_SECRET", "dev-jwt-secret")
     app.config["AUTH_COOKIE_NAME"] = os.getenv("AUTH_COOKIE_NAME", "goalixa_auth")
+
+    # Cache-busting for CSS - changes on each server restart
+    app.config["CSS_VERSION"] = str(int(time.time()))
 
     # Respect Cloudflare/forwarded headers for scheme/host/prefix resolution.
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
