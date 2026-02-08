@@ -43,15 +43,28 @@
       </div>
       <form class="task-form project-form" method="post" action="{{ url_for('create_project') }}">
         <input type="text" name="name" placeholder="Project name" required />
-        <button class="btn btn-light btn-sm label-toggle icon-button" type="button" data-target="#project-label-picker" aria-label="Labels">
+        <button class="btn btn-light btn-sm label-toggle label-toggle-btn" type="button" data-target="#project-label-picker" aria-label="Labels">
           <i class="bi bi-tags"></i>
+          <span>Tags</span>
         </button>
         <div class="label-picker" id="project-label-picker">
-          <select name="label_ids" multiple>
-            {% for label in labels %}
-              <option value="{{ label['id'] }}">{{ label['name'] }}</option>
-            {% endfor %}
-          </select>
+          <div class="label-picker-header">
+            <span class="label-picker-title">Project tags</span>
+            <span class="label-picker-hint">Select one or more</span>
+          </div>
+          <div class="label-options">
+            {% if labels %}
+              {% for label in labels %}
+                <label class="label-option">
+                  <input type="checkbox" name="label_ids" value="{{ label['id'] }}" />
+                  <span class="label-swatch" style="background-color: {{ label['color'] }}"></span>
+                  <span class="label-name">{{ label['name'] }}</span>
+                </label>
+              {% endfor %}
+            {% else %}
+              <p class="label-empty">No tags yet.</p>
+            {% endif %}
+          </div>
         </div>
         <button class="btn btn-primary btn-sm" type="submit">
           <i class="bi bi-plus-lg"></i>
@@ -135,6 +148,10 @@
                 </form>
               </div>
               <div class="task-actions project-actions">
+                <button class="btn btn-outline-secondary btn-sm" type="button" data-edit-target="edit-project-{{ project['id'] }}">
+                  <i class="bi bi-pencil"></i>
+                  Edit
+                </button>
                 <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('project_detail', project_id=project['id']) }}">
                   <i class="bi bi-box-arrow-up-right"></i>
                   Open
@@ -154,4 +171,8 @@
       {% endif %}
     </section>
   </main>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
 {% endblock %}

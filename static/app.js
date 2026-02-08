@@ -385,6 +385,35 @@ document.addEventListener("DOMContentLoaded", () => {
   const completedTaskList = document.getElementById("completed-task-list");
   const labelToggles = document.querySelectorAll(".label-toggle[data-target]");
 
+  const getSelectedLabelIds = () => {
+    if (labelsSelect) {
+      return Array.from(labelsSelect.selectedOptions).map(
+        (option) => option.value,
+      );
+    }
+    if (!form) {
+      return [];
+    }
+    return Array.from(
+      form.querySelectorAll('input[name="label_ids"]:checked'),
+    ).map((inputEl) => inputEl.value);
+  };
+
+  const clearSelectedLabels = () => {
+    if (labelsSelect) {
+      labelsSelect.selectedIndex = -1;
+      return;
+    }
+    if (!form) {
+      return;
+    }
+    form
+      .querySelectorAll('input[name="label_ids"]:checked')
+      .forEach((inputEl) => {
+        inputEl.checked = false;
+      });
+  };
+
   if (form && input) {
     if (createLabelToggle && createLabelPicker) {
       createLabelToggle.addEventListener("click", () => {
@@ -397,9 +426,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const name = input.value.trim();
       const projectId =
         (projectSelect && projectSelect.value) || form.dataset.projectId;
-      const labelIds = labelsSelect
-        ? Array.from(labelsSelect.selectedOptions).map((option) => option.value)
-        : [];
+      const labelIds = getSelectedLabelIds();
       if (!name || !projectId) {
         return;
       }
@@ -413,9 +440,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
         input.value = "";
         input.focus();
-        if (labelsSelect) {
-          labelsSelect.selectedIndex = -1;
-        }
+        clearSelectedLabels();
       } catch (error) {
         form.submit();
       }
