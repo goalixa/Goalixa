@@ -253,12 +253,23 @@ def register_routes(app, service):
             checked_dates = checks_map.get(task["id"], set())
             week_checks = [day["iso"] in checked_dates for day in week_days]
             task_rows.append({**task, "week_checks": week_checks})
+
+        habits_list = service.list_habits(today.isoformat())
+        habit_ids = [habit["id"] for habit in habits_list]
+        habit_logs_map = service.list_habit_logs_between(habit_ids, week_start, week_end)
+        habit_rows = []
+        for habit in habits_list:
+            checked_dates = habit_logs_map.get(habit["id"], set())
+            week_checks = [day["iso"] in checked_dates for day in week_days]
+            habit_rows.append({**habit, "week_checks": week_checks})
+
         week_label = f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}"
         return render_template(
             "calendar.html",
             week_label=week_label,
             week_days=week_days,
             task_rows=task_rows,
+            habit_rows=habit_rows,
             projects=projects,
         )
 

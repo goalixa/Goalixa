@@ -1416,6 +1416,13 @@ class TaskService:
         end_iso = end_date.isoformat() if hasattr(end_date, "isoformat") else str(end_date)
         return self.repository.fetch_task_daily_checks_between(task_ids, start_iso, end_iso)
 
+    def list_habit_logs_between(self, habit_ids, start_date, end_date):
+        if not habit_ids:
+            return {}
+        start_iso = start_date.isoformat() if hasattr(start_date, "isoformat") else str(start_date)
+        end_iso = end_date.isoformat() if hasattr(end_date, "isoformat") else str(end_date)
+        return self.repository.fetch_habit_logs_between(habit_ids, start_iso, end_iso)
+
     def set_task_status(self, task_id, status):
         status = (status or "").strip().lower()
         if status not in {"active", "completed"}:

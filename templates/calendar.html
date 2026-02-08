@@ -11,7 +11,15 @@
       </div>
       <div class="calendar-header-actions">
         <div class="calendar-filters">
-          <div class="calendar-filter">
+          <div class="calendar-toggle">
+            <button class="btn btn-outline-primary btn-sm is-active" type="button" data-calendar-toggle="tasks">
+              Task 
+            </button>
+            <button class="btn btn-outline-primary btn-sm" type="button" data-calendar-toggle="habits">
+              Habit
+            </button>
+          </div>
+          <div class="calendar-filter" data-calendar-filter>
             <label for="calendar-project-filter">Project</label>
             <select id="calendar-project-filter" {% if not projects %}disabled{% endif %}>
               <option value="">All projects</option>
@@ -27,7 +35,7 @@
     </header>
 
     <section class="card calendar-week-board">
-      <div class="calendar-week-grid calendar-week-header-row">
+      <div class="calendar-week-grid calendar-week-header-row" data-calendar-section="tasks">
         <div class="calendar-weekday calendar-task-header">Tasks</div>
         {% for day in week_days %}
           <div class="calendar-weekday{% if day.is_today %} is-today{% endif %}">
@@ -38,7 +46,7 @@
       </div>
 
       {% if task_rows %}
-        <div class="calendar-week-body">
+        <div class="calendar-week-body" data-calendar-section="tasks">
           {% for task in task_rows %}
             <div
               class="calendar-week-grid calendar-week-row"
@@ -65,7 +73,41 @@
         </div>
         <p class="empty" id="calendar-empty-filter" hidden>No tasks match this view.</p>
       {% else %}
-        <p class="empty">No tasks yet.</p>
+        <p class="empty" data-calendar-section="tasks">No tasks yet.</p>
+      {% endif %}
+
+      <div class="calendar-week-grid calendar-week-header-row" data-calendar-section="habits">
+        <div class="calendar-weekday calendar-task-header">Habits</div>
+        {% for day in week_days %}
+          <div class="calendar-weekday{% if day.is_today %} is-today{% endif %}">
+            <span class="calendar-weekday-name">{{ day.day }}</span>
+            <span class="calendar-weekday-date">{{ day.date }}</span>
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if habit_rows %}
+        <div class="calendar-week-body" data-calendar-section="habits">
+          {% for habit in habit_rows %}
+            <div class="calendar-week-grid calendar-week-row">
+              <div class="calendar-task-cell">
+                <span class="calendar-task-name">{{ habit["name"] }}</span>
+                <span class="calendar-task-meta">{{ habit["frequency"] }}</span>
+              </div>
+              {% for day in week_days %}
+                {% set checked = habit.week_checks[loop.index0] %}
+                <div class="calendar-day-cell{% if day.is_today %} is-today{% endif %}">
+                  <span
+                    class="calendar-check{% if checked %} is-checked{% elif day.is_future %}{% else %} is-missed{% endif %}"
+                    title="{{ day.full }}"
+                  ></span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty" data-calendar-section="habits">No habits yet.</p>
       {% endif %}
     </section>
   </div>
@@ -78,10 +120,12 @@
       const rows = document.querySelectorAll("[data-calendar-row]");
       const projectFilter = document.getElementById("calendar-project-filter");
       const emptyState = document.getElementById("calendar-empty-filter");
-
-      if (!rows.length || !projectFilter) return;
+      const toggleButtons = document.querySelectorAll("[data-calendar-toggle]");
+      const sections = document.querySelectorAll("[data-calendar-section]");
+      const projectFilterWrap = document.querySelector("[data-calendar-filter]");
 
       const applyFilter = () => {
+        if (!rows.length || !projectFilter) return;
         const selected = projectFilter.value;
         let visibleCount = 0;
         rows.forEach((row) => {
@@ -101,8 +145,39 @@
         }
       };
 
-      projectFilter.addEventListener("change", applyFilter);
-      applyFilter();
+      const setActiveSection = (target) => {
+        sections.forEach((section) => {
+          const show = section.dataset.calendarSection === target;
+          section.hidden = !show;
+        });
+        toggleButtons.forEach((button) => {
+          button.classList.toggle("is-active", button.dataset.calendarToggle === target);
+        });
+        const showTasks = target === "tasks";
+        if (projectFilterWrap) {
+          projectFilterWrap.hidden = !showTasks;
+        }
+        if (projectFilter) {
+          projectFilter.disabled = !showTasks;
+        }
+        if (!showTasks && emptyState) {
+          emptyState.hidden = true;
+        }
+      };
+
+      if (projectFilter) {
+        projectFilter.addEventListener("change", applyFilter);
+        applyFilter();
+      }
+
+      toggleButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const target = button.dataset.calendarToggle;
+          setActiveSection(target);
+        });
+      });
+
+      setActiveSection("tasks");
     })();
   </script>
 {% endblock %}

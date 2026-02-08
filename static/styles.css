@@ -3883,6 +3883,26 @@ body {
   direction: ltr;
 }
 
+.calendar-week-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0 4px;
+}
+
+.calendar-week-section-title {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.calendar-toggle {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .calendar-week-grid {
   display: grid;
   grid-template-columns: minmax(200px, 260px) repeat(7, minmax(56px, 1fr));

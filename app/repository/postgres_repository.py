@@ -1219,6 +1219,25 @@ class PostgresTaskRepository:
             mapping.setdefault(row["habit_id"], set()).add(row["log_date"])
         return mapping
 
+    def fetch_habit_logs_between(self, habit_ids, start_date, end_date):
+        if not habit_ids:
+            return {}
+        db = self._get_db()
+        placeholders = ",".join(["%s"] * len(habit_ids))
+        rows = db.execute(
+            f"""
+            SELECT habit_id, log_date
+            FROM habit_logs
+            WHERE habit_id IN ({placeholders})
+              AND log_date BETWEEN %s AND %s
+            """,
+            tuple(habit_ids) + (start_date, end_date),
+        ).fetchall()
+        mapping = {}
+        for row in rows:
+            mapping.setdefault(row["habit_id"], set()).add(row["log_date"])
+        return mapping
+
     def fetch_reminders(self):
         db = self._get_db()
         user_id = self._require_user_id()
