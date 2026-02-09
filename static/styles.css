@@ -8218,3 +8218,360 @@ body {
     text-align: center;
   }
 }
+
+/* ========================================
+   ENHANCED OVERVIEW PAGE DARK MODE
+   ======================================== */
+
+/* Overview page background and container */
+[data-theme="dark"] .overview-page {
+  background: linear-gradient(180deg, #0d1016 0%, #0f1217 50%, #11151c 100%);
+}
+
+/* Overview time card - enhanced gradient */
+[data-theme="dark"] .overview-time-card {
+  background: linear-gradient(145deg, #1a2029 0%, #161b22 100%);
+  border: 1px solid rgba(90, 141, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+/* Overview card header */
+[data-theme="dark"] .overview-card-header h2,
+[data-theme="dark"] .goals-title,
+[data-theme="dark"] .overview-group-title {
+  color: #f1f5f9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Overview subtitle - better muted color */
+[data-theme="dark"] .overview-subtitle,
+[data-theme="dark"] .goals-label,
+[data-theme="dark"] .overview-inline-meta {
+  color: #94a3b8;
+}
+
+/* Overview metrics - enhanced card style */
+[data-theme="dark"] .overview-metric {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(23, 32, 45, 0.9) 100%);
+  border: 1px solid rgba(90, 141, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Overview metric value - enhanced with gradient text */
+[data-theme="dark"] .overview-metric-value {
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(90, 141, 255, 0.3);
+}
+
+/* Overview metric label - better uppercase text */
+[data-theme="dark"] .overview-metric-label {
+  color: #64748b;
+  letter-spacing: 0.12em;
+}
+
+/* Overview metric meta */
+[data-theme="dark"] .overview-metric-meta {
+  color: #94a3b8;
+}
+
+/* Overview chart cards */
+[data-theme="dark"] .overview-chart-card {
+  background: linear-gradient(145deg, #1a2029 0%, #161b22 100%);
+  border: 1px solid rgba(90, 141, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Overview donut chart wrapper */
+[data-theme="dark"] .overview-donut {
+  background: radial-gradient(circle at center, rgba(90, 141, 255, 0.05) 0%, transparent 70%);
+}
+
+/* Overview module cards */
+[data-theme="dark"] .overview-module {
+  background: linear-gradient(145deg, #1a2029 0%, #161b22 100%);
+  border: 1px solid rgba(90, 141, 255, 0.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+/* Overview module header */
+[data-theme="dark"] .overview-module-header {
+  background: linear-gradient(90deg, rgba(90, 141, 255, 0.08) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(90, 141, 255, 0.08);
+}
+
+/* Overview module h3 */
+[data-theme="dark"] .overview-module h3 {
+  color: #f1f5f9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Overview list items - enhanced hover */
+[data-theme="dark"] .overview-list-item {
+  color: #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .overview-list-item:hover {
+  background: rgba(90, 141, 255, 0.1);
+  color: #ffffff;
+  transform: translateX(4px);
+}
+
+/* Overview list title */
+[data-theme="dark"] .overview-list-title {
+  color: #e2e8f0;
+}
+
+/* Overview list meta */
+[data-theme="dark"] .overview-list-meta {
+  color: #64748b;
+}
+
+/* Overview dots - enhanced colors */
+[data-theme="dark"] .overview-dot {
+  box-shadow: 0 0 8px var(--dot-color, rgba(90, 141, 255, 0.5));
+}
+
+/* Overview group header */
+[data-theme="dark"] .overview-group-header {
+  background: linear-gradient(90deg, rgba(90, 141, 255, 0.05) 0%, transparent 50%);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(90, 141, 255, 0.08);
+}
+
+/* Empty state styling */
+[data-theme="dark"] .empty {
+  color: #64748b;
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.5) 0%, rgba(23, 32, 45, 0.5) 100%);
+  border: 1px dashed rgba(90, 141, 255, 0.2);
+  border-radius: 14px;
+  padding: 24px;
+}
+
+/* Goals toolbar buttons */
+[data-theme="dark"] .goals-filters .btn {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(90, 141, 255, 0.15);
+  color: #cbd5e1;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .goals-filters .btn:hover {
+  background: rgba(90, 141, 255, 0.15);
+  border-color: rgba(90, 141, 255, 0.3);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .goals-filters .btn.is-active {
+  background: linear-gradient(135deg, #5a8dff 0%, #4a7df0 100%);
+  border-color: #5a8dff;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(90, 141, 255, 0.4);
+}
+
+/* Chart panel background */
+[data-theme="dark"] .chart-panel {
+  background: linear-gradient(145deg, rgba(23, 32, 45, 0.6) 0%, rgba(18, 25, 36, 0.8) 100%);
+  border: 1px solid rgba(90, 141, 255, 0.08);
+  border-radius: 14px;
+}
+
+/* Mode switch buttons for chart */
+[data-theme="dark"] .mode-switch {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(90, 141, 255, 0.15);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+[data-theme="dark"] .mode-button {
+  background: transparent;
+  border-color: transparent;
+  color: #94a3b8;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .mode-button:hover {
+  background: rgba(90, 141, 255, 0.15);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .mode-button.active {
+  background: linear-gradient(135deg, #5a8dff 0%, #4a7df0 100%);
+  border-color: #5a8dff;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(90, 141, 255, 0.3);
+}
+
+/* Goal progress bar in dark mode */
+[data-theme="dark"] .goal-progress-bar {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(90, 141, 255, 0.1);
+}
+
+[data-theme="dark"] .goal-progress-bar span {
+  background: linear-gradient(90deg, #5a8dff 0%, #60a5fa 100%);
+  box-shadow: 0 0 8px rgba(90, 141, 255, 0.5);
+}
+
+/* Goal project cards */
+[data-theme="dark"] .goal-project {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(90, 141, 255, 0.1);
+}
+
+[data-theme="dark"] .goal-project-name {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .goal-project-tasks {
+  color: #64748b;
+}
+
+/* Goal meta styling */
+[data-theme="dark"] .goal-meta-block {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(90, 141, 255, 0.08);
+  border-radius: 10px;
+}
+
+[data-theme="dark"] .goal-meta-label {
+  color: #64748b;
+}
+
+[data-theme="dark"] .goal-meta-value {
+  color: #f1f5f9;
+}
+
+/* Goal footer buttons */
+[data-theme="dark"] .goal-footer .btn-outline-secondary,
+[data-theme="dark"] .goal-footer .btn-outline-primary {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(90, 141, 255, 0.2);
+  color: #cbd5e1;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .goal-footer .btn-outline-secondary:hover,
+[data-theme="dark"] .goal-footer .btn-outline-primary:hover {
+  background: rgba(90, 141, 255, 0.15);
+  border-color: rgba(90, 141, 255, 0.4);
+  color: #ffffff;
+}
+
+/* Weekly goal bar */
+[data-theme="dark"] .weekly-goal-bar {
+  background: rgba(30, 41, 59, 0.8);
+}
+
+[data-theme="dark"] .weekly-goal-bar span {
+  background: linear-gradient(90deg, #5a8dff 0%, #60a5fa 100%);
+  box-shadow: 0 0 8px rgba(90, 141, 255, 0.4);
+}
+
+/* Weekly history group */
+[data-theme="dark"] .weekly-history-group {
+  background: linear-gradient(145deg, #1a2029 0%, #161b22 100%);
+  border-color: rgba(90, 141, 255, 0.12);
+}
+
+/* Donut center text */
+[data-theme="dark"] .donut-center {
+  color: #f1f5f9;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Actions buttons for overview module */
+[data-theme="dark"] .overview-module-header .btn-outline-secondary {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(90, 141, 255, 0.15);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .overview-module-header .btn-outline-secondary:hover {
+  background: rgba(90, 141, 255, 0.15);
+  border-color: rgba(90, 141, 255, 0.3);
+  color: #ffffff;
+}
+
+/* Onboarding tour */
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.tour-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 14, 18, 0.55);
+  backdrop-filter: blur(2px);
+  pointer-events: auto;
+}
+
+.tour-card {
+  position: fixed;
+  width: min(90vw, 320px);
+  max-width: 320px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  z-index: 10002;
+  pointer-events: auto;
+}
+
+.tour-progress {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.tour-title {
+  font-size: 1.05rem;
+  margin: 0 0 6px;
+}
+
+.tour-text {
+  margin: 0 0 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.tour-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.tour-actions .btn {
+  flex: 1 1 auto;
+}
+
+.tour-target {
+  position: relative;
+  z-index: 10001;
+  outline: 2px solid rgba(31, 111, 235, 0.9);
+  outline-offset: 4px;
+  border-radius: 12px;
+  box-shadow: 0 0 0 6px rgba(31, 111, 235, 0.18);
+}
+
+@media (max-width: 640px) {
+  .tour-card {
+    width: calc(100vw - 32px);
+    max-width: 100%;
+  }
+}
