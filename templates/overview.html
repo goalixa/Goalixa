@@ -644,6 +644,15 @@
       if (chartInstance) {
         chartInstance.destroy();
       }
+
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const chartColor = isDark ? '#5a8dff' : '#1f6feb';
+      const chartBg = type === "line"
+        ? (isDark ? 'rgba(90, 141, 255, 0.2)' : 'rgba(31, 111, 235, 0.25)')
+        : chartColor;
+      const gridColor = isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+      const textColor = isDark ? '#94a3b8' : '#666666';
+
       chartInstance = new Chart(ctx, {
         type,
         data: {
@@ -652,10 +661,11 @@
             {
               label: "Total time",
               data: values,
-              borderColor: "#1f6feb",
-              backgroundColor: type === "line" ? "rgba(31, 111, 235, 0.25)" : "#1f6feb",
+              borderColor: chartColor,
+              backgroundColor: chartBg,
               borderWidth: 2,
               tension: 0.35,
+              fill: type === "line",
             },
           ],
         },
@@ -665,6 +675,13 @@
           plugins: {
             legend: { display: false },
             tooltip: {
+              backgroundColor: isDark ? '#1a2029' : '#ffffff',
+              titleColor: isDark ? '#f1f5f9' : '#1f1f1f',
+              bodyColor: isDark ? '#cbd5e1' : '#666666',
+              borderColor: isDark ? 'rgba(90, 141, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+              borderWidth: 1,
+              padding: 12,
+              displayColors: false,
               callbacks: {
                 label: (context) => {
                   const seconds = context.raw || 0;
@@ -677,6 +694,18 @@
             y: {
               ticks: {
                 callback: (value) => `${Math.floor(value / 3600)}h`,
+                color: textColor,
+              },
+              grid: {
+                color: gridColor,
+              },
+            },
+            x: {
+              ticks: {
+                color: textColor,
+              },
+              grid: {
+                color: gridColor,
               },
             },
           },
@@ -696,10 +725,65 @@
       });
     });
 
+    // Rebuild charts when theme changes
+    window.addEventListener('themeChanged', () => {
+      buildChart(chartType);
+
+      // Rebuild project distribution chart
+      const projectCanvas = document.getElementById("project-distribution-chart");
+      if (projectCanvas && projectDistribution.length) {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const projectColors = projectDistribution.map(
+          (_, index) => isDark
+            ? `hsl(${(index * 47) % 360}, 75%, 55%)`
+            : `hsl(${(index * 47) % 360}, 78%, 45%)`,
+        );
+
+        // Get existing chart instance and update colors
+        const existingChart = Chart.getChart(projectCanvas);
+        if (existingChart) {
+          existingChart.data.datasets[0].backgroundColor = projectColors;
+          existingChart.options.plugins.tooltip.backgroundColor = isDark ? '#1a2029' : '#ffffff';
+          existingChart.options.plugins.tooltip.titleColor = isDark ? '#f1f5f9' : '#1f1f1f';
+          existingChart.options.plugins.tooltip.bodyColor = isDark ? '#cbd5e1' : '#666666';
+          existingChart.options.plugins.tooltip.borderColor = isDark ? 'rgba(90, 141, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
+          existingChart.update();
+        }
+      }
+
+      // Rebuild habit chart
+      const habitCanvas = document.getElementById("habit-chart");
+      if (habitCanvas) {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const existingChart = Chart.getChart(habitCanvas);
+        if (existingChart) {
+          const habitChartColor = isDark ? '#5a8dff' : '#1f6feb';
+          const habitChartBg = isDark ? 'rgba(90, 141, 255, 0.15)' : 'rgba(31, 111, 235, 0.18)';
+          const gridColor = isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+          const textColor = isDark ? '#94a3b8' : '#666666';
+
+          existingChart.data.datasets[0].borderColor = habitChartColor;
+          existingChart.data.datasets[0].backgroundColor = habitChartBg;
+          existingChart.options.plugins.tooltip.backgroundColor = isDark ? '#1a2029' : '#ffffff';
+          existingChart.options.plugins.tooltip.titleColor = isDark ? '#f1f5f9' : '#1f1f1f';
+          existingChart.options.plugins.tooltip.bodyColor = isDark ? '#cbd5e1' : '#666666';
+          existingChart.options.plugins.tooltip.borderColor = isDark ? 'rgba(90, 141, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
+          existingChart.options.scales.y.ticks.color = textColor;
+          existingChart.options.scales.y.grid.color = gridColor;
+          existingChart.options.scales.x.ticks.color = textColor;
+          existingChart.options.scales.x.grid.color = gridColor;
+          existingChart.update();
+        }
+      }
+    });
+
     const projectCanvas = document.getElementById("project-distribution-chart");
     if (projectCanvas && projectDistribution.length) {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       const projectColors = projectDistribution.map(
-        (_, index) => `hsl(${(index * 47) % 360}, 78%, 45%)`,
+        (_, index) => isDark
+          ? `hsl(${(index * 47) % 360}, 75%, 55%)`
+          : `hsl(${(index * 47) % 360}, 78%, 45%)`,
       );
       new Chart(projectCanvas, {
         type: "doughnut",
@@ -718,6 +802,12 @@
           plugins: {
             legend: { display: false },
             tooltip: {
+              backgroundColor: isDark ? '#1a2029' : '#ffffff',
+              titleColor: isDark ? '#f1f5f9' : '#1f1f1f',
+              bodyColor: isDark ? '#cbd5e1' : '#666666',
+              borderColor: isDark ? 'rgba(90, 141, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+              borderWidth: 1,
+              padding: 12,
               callbacks: {
                 label: (context) => formatSeconds(context.raw || 0),
               },
@@ -729,6 +819,12 @@
 
     const habitCanvas = document.getElementById("habit-chart");
     if (habitCanvas && habitSeries && habitSeries.values && habitSeries.values.length) {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const habitChartColor = isDark ? '#5a8dff' : '#1f6feb';
+      const habitChartBg = isDark ? 'rgba(90, 141, 255, 0.15)' : 'rgba(31, 111, 235, 0.18)';
+      const gridColor = isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+      const textColor = isDark ? '#94a3b8' : '#666666';
+
       const habitLabels = habitSeries.labels.map((label) => label.slice(5));
       new Chart(habitCanvas, {
         type: "line",
@@ -738,8 +834,8 @@
             {
               label: "Completion",
               data: habitSeries.values,
-              borderColor: "#1f6feb",
-              backgroundColor: "rgba(31, 111, 235, 0.18)",
+              borderColor: habitChartColor,
+              backgroundColor: habitChartBg,
               borderWidth: 2,
               tension: 0.35,
               fill: true,
@@ -752,6 +848,12 @@
           plugins: {
             legend: { display: false },
             tooltip: {
+              backgroundColor: isDark ? '#1a2029' : '#ffffff',
+              titleColor: isDark ? '#f1f5f9' : '#1f1f1f',
+              bodyColor: isDark ? '#cbd5e1' : '#666666',
+              borderColor: isDark ? 'rgba(90, 141, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+              borderWidth: 1,
+              padding: 12,
               callbacks: {
                 label: (context) => `${context.raw || 0}%`,
               },
@@ -763,6 +865,18 @@
               max: 100,
               ticks: {
                 callback: (value) => `${value}%`,
+                color: textColor,
+              },
+              grid: {
+                color: gridColor,
+              },
+            },
+            x: {
+              ticks: {
+                color: textColor,
+              },
+              grid: {
+                color: gridColor,
               },
             },
           },

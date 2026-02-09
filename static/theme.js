@@ -14,6 +14,9 @@
     root.setAttribute("data-theme", next);
     localStorage.setItem(storageKey, next);
     updateThemeIcon(next);
+
+    // Dispatch custom event for charts to rebuild
+    window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: next } }));
   };
 
   const updateThemeIcon = (theme) => {
