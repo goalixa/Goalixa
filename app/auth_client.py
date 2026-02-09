@@ -58,7 +58,13 @@ def _load_user_from_request():
 def init_auth(app):
     @app.before_request
     def load_auth_user():
-        g.auth_user = _load_user_from_request()
+        # Check if auth should be skipped for local development
+        skip_auth = app.config.get("SKIP_AUTH", False)
+        if skip_auth:
+            # Create a fake dev user for local development
+            g.auth_user = AuthUser(user_id=1, email="dev@localhost")
+        else:
+            g.auth_user = _load_user_from_request()
 
     app.jinja_env.globals["url_for_security"] = url_for_security
 
@@ -95,7 +101,9 @@ def auth_required():
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            if current_user.is_authenticated:
+            # Skip auth check if SKIP_AUTH is enabled
+            skip_auth = current_app.config.get("SKIP_AUTH", False)
+            if skip_auth or current_user.is_authenticated:
                 return func(*args, **kwargs)
             if request.path.startswith("/api/") or request.accept_mimetypes.best == "application/json":
                 return jsonify({"error": "unauthorized"}), 401

@@ -27,6 +27,42 @@
         </div>
 
         <div class="sidebar-scroll">
+          <!-- Essentials Section -->
+          <div class="sidebar-section" data-collapsed="false">
+            <div class="sidebar-section-header">
+              <i class="bi bi-star-fill sidebar-section-icon"></i>
+              <span class="sidebar-section-title">Essentials</span>
+              <i class="bi bi-chevron-down sidebar-section-arrow"></i>
+            </div>
+            <nav class="sidebar-nav">
+              <a class="sidebar-link {% if active_page == 'timer' %}active{% endif %}" href="{{ url_for('timer') }}" data-tooltip="Timer">
+                <i class="bi bi-stopwatch sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Timer</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+              <a class="sidebar-link {% if active_page == 'planner' %}active{% endif %}" href="{{ url_for('planner') }}" data-tooltip="Planner">
+                <i class="bi bi-layout-text-window-reverse sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Planner</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+              <a class="sidebar-link {% if active_page == 'tasks' %}active{% endif %}" href="{{ url_for('index') }}" data-tooltip="Tasks">
+                <i class="bi bi-list-check sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Tasks</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+              <a class="sidebar-link {% if active_page == 'calendar' %}active{% endif %}" href="{{ url_for('calendar') }}" data-tooltip="Calendar">
+                <i class="bi bi-calendar-week sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Calendar</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+              <a class="sidebar-link {% if active_page == 'habits' %}active{% endif %}" href="{{ url_for('habits') }}" data-tooltip="Habits">
+                <i class="bi bi-check2-circle sidebar-link-icon"></i>
+                <span class="sidebar-link-label">Habits</span>
+                <span class="sidebar-link-indicator"></span>
+              </a>
+            </nav>
+          </div>
+
           <!-- Daily Tracking Section -->
           <div class="sidebar-section" data-collapsed="false">
             <div class="sidebar-section-header">

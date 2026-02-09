@@ -23,6 +23,7 @@ def create_app():
     )
     app.config["AUTH_JWT_SECRET"] = os.getenv("AUTH_JWT_SECRET", "dev-jwt-secret")
     app.config["AUTH_COOKIE_NAME"] = os.getenv("AUTH_COOKIE_NAME", "goalixa_auth")
+    app.config["SKIP_AUTH"] = os.getenv("SKIP_AUTH", "0") == "1"
 
     # Cache-busting for CSS - changes on each server restart
     app.config["CSS_VERSION"] = str(int(time.time()))
