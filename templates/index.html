@@ -9,14 +9,7 @@
       <p>Track tasks and time spent</p>
     </header>
 
-    <section
-      class="card"
-      data-tour-step="3"
-      data-tour-title="Create a Task"
-      data-tour-text="Add a task, pick a project, and optionally tag it for quick filtering."
-      data-tour-position="bottom"
-      data-tour-page="tasks"
-    >
+    <section class="card" data-tour-id="tasks-create">
       <form class="task-form" id="task-form" method="post" action="{{ url_for('create_task') }}">
         <input type="text" id="task-name" name="name" placeholder="Task name" required />
         <select id="task-project" name="project_id" required>
@@ -58,14 +51,7 @@
       </form>
     </section>
 
-    <section
-      class="card"
-      data-tour-step="4"
-      data-tour-title="Track Progress"
-      data-tour-text="Keep an eye on tasks in progress, mark them done today, and manage completed work."
-      data-tour-position="top"
-      data-tour-page="tasks"
-    >
+    <section class="card" data-tour-id="tasks-list">
       <h2>Tasks</h2>
       <div class="task-columns">
         <div id="task-list" class="task-column">

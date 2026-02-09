@@ -12,14 +12,7 @@
 <body data-page="{{ active_page or '' }}">
   <div class="container-fluid">
     <div class="row min-vh-100 app-shell">
-      <aside
-        class="sidebar col-12 col-lg-2"
-        data-sidebar
-        data-tour-step="1"
-        data-tour-title="Navigation"
-        data-tour-text="Use the sidebar to jump between key areas like Tasks, Timer, and Calendar."
-        data-tour-position="right"
-      >
+      <aside class="sidebar col-12 col-lg-2" data-sidebar>
         <div class="sidebar-header">
           <div class="sidebar-brand">
             <div class="sidebar-brand-logo">
@@ -42,7 +35,7 @@
               <i class="bi bi-chevron-down sidebar-section-arrow"></i>
             </div>
             <nav class="sidebar-nav">
-              <a class="sidebar-link {% if active_page == 'timer' %}active{% endif %}" href="{{ url_for('timer') }}" data-tooltip="Timer">
+              <a class="sidebar-link {% if active_page == 'timer' %}active{% endif %}" href="{{ url_for('timer') }}" data-tooltip="Timer" data-tour-id="nav-timer">
                 <i class="bi bi-stopwatch sidebar-link-icon"></i>
                 <span class="sidebar-link-label">Timer</span>
                 <span class="sidebar-link-indicator"></span>
@@ -52,17 +45,17 @@
                 <span class="sidebar-link-label">Planner</span>
                 <span class="sidebar-link-indicator"></span>
               </a>
-              <a class="sidebar-link {% if active_page == 'tasks' %}active{% endif %}" href="{{ url_for('index') }}" data-tooltip="Tasks">
+              <a class="sidebar-link {% if active_page == 'tasks' %}active{% endif %}" href="{{ url_for('index') }}" data-tooltip="Tasks" data-tour-id="nav-tasks">
                 <i class="bi bi-list-check sidebar-link-icon"></i>
                 <span class="sidebar-link-label">Tasks</span>
                 <span class="sidebar-link-indicator"></span>
               </a>
-              <a class="sidebar-link {% if active_page == 'calendar' %}active{% endif %}" href="{{ url_for('calendar') }}" data-tooltip="Calendar">
+              <a class="sidebar-link {% if active_page == 'calendar' %}active{% endif %}" href="{{ url_for('calendar') }}" data-tooltip="Calendar" data-tour-id="nav-calendar">
                 <i class="bi bi-calendar-week sidebar-link-icon"></i>
                 <span class="sidebar-link-label">Calendar</span>
                 <span class="sidebar-link-indicator"></span>
               </a>
-              <a class="sidebar-link {% if active_page == 'habits' %}active{% endif %}" href="{{ url_for('habits') }}" data-tooltip="Habits">
+              <a class="sidebar-link {% if active_page == 'habits' %}active{% endif %}" href="{{ url_for('habits') }}" data-tooltip="Habits" data-tour-id="nav-habits">
                 <i class="bi bi-check2-circle sidebar-link-icon"></i>
                 <span class="sidebar-link-label">Habits</span>
                 <span class="sidebar-link-indicator"></span>
@@ -78,7 +71,7 @@
               <i class="bi bi-chevron-down sidebar-section-arrow"></i>
             </div>
             <nav class="sidebar-nav">
-              <a class="sidebar-link {% if active_page == 'overview' %}active{% endif %}" href="{{ url_for('overview_page') }}" data-tooltip="Overview">
+              <a class="sidebar-link {% if active_page == 'overview' %}active{% endif %}" href="{{ url_for('overview_page') }}" data-tooltip="Overview" data-tour-id="nav-overview">
                 <i class="bi bi-bar-chart-line sidebar-link-icon"></i>
                 <span class="sidebar-link-label">Overview</span>
                 <span class="sidebar-link-indicator"></span>
@@ -119,7 +112,7 @@
                 <span class="sidebar-link-label">Reminders</span>
                 <span class="sidebar-link-indicator"></span>
               </a>
-              <a class="sidebar-link {% if active_page == 'goals' %}active{% endif %}" href="{{ url_for('goals') }}" data-tooltip="Goals Overview">
+              <a class="sidebar-link {% if active_page == 'goals' %}active{% endif %}" href="{{ url_for('goals') }}" data-tooltip="Goals Overview" data-tour-id="nav-goals">
                 <i class="bi bi-graph-up-arrow sidebar-link-icon"></i>
                 <span class="sidebar-link-label">Goals Overview</span>
                 <span class="sidebar-link-indicator"></span>
@@ -161,12 +154,12 @@
               <i class="bi bi-chevron-down sidebar-section-arrow"></i>
             </div>
             <nav class="sidebar-nav">
-              <a class="sidebar-link {% if active_page == 'projects' %}active{% endif %}" href="{{ url_for('projects') }}" data-tooltip="Projects">
+              <a class="sidebar-link {% if active_page == 'projects' %}active{% endif %}" href="{{ url_for('projects') }}" data-tooltip="Projects" data-tour-id="nav-projects">
                 <i class="bi bi-folder2-open sidebar-link-icon"></i>
                 <span class="sidebar-link-label">Projects</span>
                 <span class="sidebar-link-indicator"></span>
               </a>
-              <a class="sidebar-link {% if active_page == 'labels' %}active{% endif %}" href="{{ url_for('labels') }}" data-tooltip="Tags">
+              <a class="sidebar-link {% if active_page == 'labels' %}active{% endif %}" href="{{ url_for('labels') }}" data-tooltip="Tags" data-tour-id="nav-labels">
                 <i class="bi bi-tags sidebar-link-icon"></i>
                 <span class="sidebar-link-label">Tags</span>
                 <span class="sidebar-link-indicator"></span>
@@ -212,15 +205,7 @@
           <span class="mobile-topbar-title">Goalixa</span>
           <span class="mobile-topbar-spacer" aria-hidden="true"></span>
         </div>
-        <div
-          class="global-timer"
-          id="global-timer"
-          aria-live="polite"
-          data-tour-step="2"
-          data-tour-title="Global Timer"
-          data-tour-text="Track your current focus session and jump back to the Timer anytime."
-          data-tour-position="bottom"
-        >
+        <div class="global-timer" id="global-timer" aria-live="polite" data-tour-id="global-timer">
           <a class="global-timer-link" href="{{ url_for('timer') }}">
             <span class="global-timer-label">Timer</span>
             <span class="global-timer-value" data-global-timer-value>25:00</span>
