@@ -24,6 +24,10 @@ def create_app():
     app.config["AUTH_JWT_SECRET"] = os.getenv("AUTH_JWT_SECRET", "dev-jwt-secret")
     app.config["AUTH_COOKIE_NAME"] = os.getenv("AUTH_COOKIE_NAME", "goalixa_auth")
     app.config["SKIP_AUTH"] = os.getenv("SKIP_AUTH", "0") == "1"
+    app.config["DEMO_SEED_KEY"] = os.getenv("DEMO_SEED_KEY", "")
+    app.config["DEMO_MODE_ENABLED"] = os.getenv("DEMO_MODE_ENABLED", "0") == "1"
+    demo_user_id = os.getenv("DEMO_USER_ID")
+    app.config["DEMO_USER_ID"] = int(demo_user_id) if demo_user_id else None
 
     # Cache-busting for CSS - changes on each server restart
     app.config["CSS_VERSION"] = str(int(time.time()))

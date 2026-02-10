@@ -9,3 +9,4 @@ scripts/seed_db.py
 .claude
 __pyca
 .venv
+scripts/demo_seed.sql

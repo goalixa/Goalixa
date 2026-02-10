@@ -1,9 +1,11 @@
 import calendar
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 
 class TaskService:
+    DEMO_SEED_LOCK_ID = 922337203685477500
     def __init__(self, repository):
         self.repository = repository
 
@@ -67,6 +69,17 @@ class TaskService:
             return datetime.strptime(value, "%H:%M").time()
         except ValueError:
             return None
+
+    def _parse_datetime(self, value):
+        if not value:
+            return None
+        try:
+            parsed = datetime.fromisoformat(value)
+        except ValueError:
+            return None
+        if parsed.tzinfo is None:
+            return parsed
+        return parsed.astimezone(timezone.utc).replace(tzinfo=None)
 
     def _format_occurrence_label(self, dt, now):
         if not dt:
@@ -405,7 +418,7 @@ class TaskService:
         today_start, _ = self._local_day_bounds(today)
         running_entries = self.repository.fetch_running_time_entries()
         for entry in running_entries:
-            started_at = datetime.fromisoformat(entry["started_at"])
+            started_at = self._parse_datetime(entry["started_at"])
             end_at = None
             if started_at < today_start:
                 end_at = today_start
@@ -450,6 +463,28 @@ class TaskService:
         )
         if default_project_id:
             self.repository.backfill_tasks_project(default_project_id)
+
+    def seed_demo_from_file(self, force=False, email=None):
+        if self.repository.user_id is None:
+            return False, "User context not set."
+        seed_email = email or "demo@goalixa.local"
+        self.repository.advisory_lock(self.DEMO_SEED_LOCK_ID)
+        try:
+            self.repository.ensure_user(seed_email)
+            if not force and self.repository.user_has_any_data():
+                return False, "User already has data. Seed skipped."
+            if force:
+                self.repository.clear_user_data()
+            root = Path(__file__).resolve().parents[2]
+            template_path = root / "scripts" / "demo_seed.sql"
+            if not template_path.exists():
+                return False, "Seed file not found."
+            sql_template = template_path.read_text(encoding="utf-8")
+            rendered_sql = sql_template.replace("{{user_id}}", str(self.repository.user_id))
+            self.repository.execute_sql(rendered_sql)
+            return True, "Seed completed."
+        finally:
+            self.repository.advisory_unlock(self.DEMO_SEED_LOCK_ID)
 
     def list_tasks(self):
         self._rollover_running_entries()
@@ -584,9 +619,9 @@ class TaskService:
             )
 
         for entry in entries:
-            entry_start = datetime.fromisoformat(entry["started_at"])
+            entry_start = self._parse_datetime(entry["started_at"])
             entry_end = (
-                datetime.fromisoformat(entry["ended_at"])
+                self._parse_datetime(entry["ended_at"])
                 if entry["ended_at"]
                 else datetime.utcnow()
             )
@@ -635,9 +670,9 @@ class TaskService:
             )
 
         for entry in entries:
-            entry_start = datetime.fromisoformat(entry["started_at"])
+            entry_start = self._parse_datetime(entry["started_at"])
             entry_end = (
-                datetime.fromisoformat(entry["ended_at"])
+                self._parse_datetime(entry["ended_at"])
                 if entry["ended_at"]
                 else datetime.utcnow()
             )
@@ -671,9 +706,9 @@ class TaskService:
 
         totals = {}
         for entry in entries:
-            entry_start = datetime.fromisoformat(entry["started_at"])
+            entry_start = self._parse_datetime(entry["started_at"])
             entry_end = (
-                datetime.fromisoformat(entry["ended_at"])
+                self._parse_datetime(entry["ended_at"])
                 if entry["ended_at"]
                 else datetime.utcnow()
             )
@@ -725,9 +760,9 @@ class TaskService:
 
         totals = {}
         for entry in entries:
-            entry_start = datetime.fromisoformat(entry["started_at"])
+            entry_start = self._parse_datetime(entry["started_at"])
             entry_end = (
-                datetime.fromisoformat(entry["ended_at"])
+                self._parse_datetime(entry["ended_at"])
                 if entry["ended_at"]
                 else datetime.utcnow()
             )
@@ -774,9 +809,9 @@ class TaskService:
         projects = {}
         now = datetime.utcnow()
         for entry in entries:
-            entry_start = datetime.fromisoformat(entry["started_at"])
+            entry_start = self._parse_datetime(entry["started_at"])
             entry_end = (
-                datetime.fromisoformat(entry["ended_at"])
+                self._parse_datetime(entry["ended_at"])
                 if entry["ended_at"]
                 else now
             )
@@ -919,9 +954,9 @@ class TaskService:
 
         now = datetime.utcnow()
         for entry in entries:
-            entry_start = datetime.fromisoformat(entry["started_at"])
+            entry_start = self._parse_datetime(entry["started_at"])
             entry_end = (
-                datetime.fromisoformat(entry["ended_at"])
+                self._parse_datetime(entry["ended_at"])
                 if entry["ended_at"]
                 else now
             )
@@ -987,9 +1022,9 @@ class TaskService:
         now = datetime.utcnow()
         total_seconds = 0
         for entry in entries:
-            entry_start = datetime.fromisoformat(entry["started_at"])
+            entry_start = self._parse_datetime(entry["started_at"])
             entry_end = (
-                datetime.fromisoformat(entry["ended_at"])
+                self._parse_datetime(entry["ended_at"])
                 if entry["ended_at"]
                 else now
             )
@@ -1095,9 +1130,9 @@ class TaskService:
         ]
         events = []
         for entry in entries:
-            entry_start = datetime.fromisoformat(entry["started_at"])
+            entry_start = self._parse_datetime(entry["started_at"])
             entry_end = (
-                datetime.fromisoformat(entry["ended_at"])
+                self._parse_datetime(entry["ended_at"])
                 if entry["ended_at"]
                 else now
             )

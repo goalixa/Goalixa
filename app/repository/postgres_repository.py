@@ -9,6 +9,7 @@ class PostgresTaskRepository:
     def __init__(self, database_url):
         self.database_url = database_url
         self.user_id = None
+        self._table_columns_cache = {}
 
     def set_user_id(self, user_id):
         self.user_id = int(user_id) if user_id is not None else None
@@ -23,10 +24,35 @@ class PostgresTaskRepository:
             g.db = psycopg.connect(self.database_url, row_factory=dict_row)
         return g.db
 
+    def _get_table_columns(self, table_name):
+        cached = self._table_columns_cache.get(table_name)
+        if cached is not None:
+            return cached
+        db = self._get_db()
+        rows = db.execute(
+            """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = %s
+            """,
+            (table_name,),
+        ).fetchall()
+        columns = {row["column_name"] for row in rows}
+        self._table_columns_cache[table_name] = columns
+        return columns
+
     def close_db(self, exception=None):
         db = g.pop("db", None)
         if db is not None:
             db.close()
+
+    def advisory_lock(self, lock_id):
+        db = self._get_db()
+        db.execute("SELECT pg_advisory_lock(%s)", (int(lock_id),))
+
+    def advisory_unlock(self, lock_id):
+        db = self._get_db()
+        db.execute("SELECT pg_advisory_unlock(%s)", (int(lock_id),))
 
     def init_db(self):
         db = self._get_db()
@@ -372,11 +398,26 @@ class PostgresTaskRepository:
             return user_id
 
         # Create user with their email (app DB doesn't need auth data, use placeholder values)
+        columns = ["id", "email"]
+        values = [user_id, email]
+        existing_columns = self._get_table_columns("user")
+        if "password_hash" in existing_columns:
+            columns.append("password_hash")
+            values.append("placeholder")
+        if "active" in existing_columns:
+            columns.append("active")
+            values.append(True)
+        if "created_at" in existing_columns:
+            columns.append("created_at")
+            values.append(datetime.utcnow().isoformat())
+
+        placeholders = ", ".join(["%s"] * len(columns))
+        column_list = ", ".join(columns)
         db.execute(
-            '''INSERT INTO "user" (id, email, password_hash, active, created_at)
-            VALUES (%s, %s, %s, %s, %s)
+            f'''INSERT INTO "user" ({column_list})
+            VALUES ({placeholders})
             ON CONFLICT (id) DO NOTHING''',
-            (user_id, email, 'placeholder', True, datetime.utcnow().isoformat()),
+            tuple(values),
         )
         db.commit()
         return user_id
@@ -761,6 +802,107 @@ class PostgresTaskRepository:
             """,
             (scoped_key, value),
         )
+        db.commit()
+
+    def execute_sql(self, sql):
+        db = self._get_db()
+        cleaned_lines = []
+        for line in sql.splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("--"):
+                continue
+            cleaned_lines.append(line)
+        script = "\n".join(cleaned_lines)
+        for statement in script.split(";"):
+            stmt = statement.strip()
+            if stmt:
+                db.execute(stmt)
+        db.commit()
+
+    def user_has_any_data(self):
+        user_id = self._require_user_id()
+        db = self._get_db()
+        tables = [
+            "projects",
+            "labels",
+            "tasks",
+            "time_entries",
+            "goals",
+            "habits",
+            "reminders",
+            "daily_todos",
+            "weekly_goals",
+        ]
+        for table in tables:
+            row = db.execute(
+                f"SELECT 1 FROM {table} WHERE user_id = %s LIMIT 1",
+                (user_id,),
+            ).fetchone()
+            if row:
+                return True
+        return False
+
+    def clear_user_data(self):
+        user_id = self._require_user_id()
+        db = self._get_db()
+        # Clear join tables first to avoid FK constraint errors.
+        db.execute(
+            "DELETE FROM task_labels WHERE task_id IN (SELECT id FROM tasks WHERE user_id = %s)",
+            (user_id,),
+        )
+        db.execute(
+            "DELETE FROM task_labels WHERE label_id IN (SELECT id FROM labels WHERE user_id = %s)",
+            (user_id,),
+        )
+        db.execute(
+            "DELETE FROM project_labels WHERE project_id IN (SELECT id FROM projects WHERE user_id = %s)",
+            (user_id,),
+        )
+        db.execute(
+            "DELETE FROM project_labels WHERE label_id IN (SELECT id FROM labels WHERE user_id = %s)",
+            (user_id,),
+        )
+        db.execute(
+            "DELETE FROM goal_projects WHERE goal_id IN (SELECT id FROM goals WHERE user_id = %s)",
+            (user_id,),
+        )
+        db.execute(
+            "DELETE FROM goal_projects WHERE project_id IN (SELECT id FROM projects WHERE user_id = %s)",
+            (user_id,),
+        )
+        db.execute(
+            "DELETE FROM goal_tasks WHERE goal_id IN (SELECT id FROM goals WHERE user_id = %s)",
+            (user_id,),
+        )
+        db.execute(
+            "DELETE FROM goal_tasks WHERE task_id IN (SELECT id FROM tasks WHERE user_id = %s)",
+            (user_id,),
+        )
+        db.execute(
+            "DELETE FROM goal_subgoals WHERE goal_id IN (SELECT id FROM goals WHERE user_id = %s)",
+            (user_id,),
+        )
+        db.execute(
+            "DELETE FROM time_entries WHERE user_id = %s",
+            (user_id,),
+        )
+        db.execute(
+            "DELETE FROM task_daily_checks WHERE task_id IN (SELECT id FROM tasks WHERE user_id = %s)",
+            (user_id,),
+        )
+        db.execute(
+            "DELETE FROM habit_logs WHERE habit_id IN (SELECT id FROM habits WHERE user_id = %s)",
+            (user_id,),
+        )
+        # Clear primary tables for the user.
+        db.execute("DELETE FROM reminders WHERE user_id = %s", (user_id,))
+        db.execute("DELETE FROM daily_todos WHERE user_id = %s", (user_id,))
+        db.execute("DELETE FROM weekly_goals WHERE user_id = %s", (user_id,))
+        db.execute("DELETE FROM habits WHERE user_id = %s", (user_id,))
+        db.execute("DELETE FROM goals WHERE user_id = %s", (user_id,))
+        db.execute("DELETE FROM tasks WHERE user_id = %s", (user_id,))
+        db.execute("DELETE FROM projects WHERE user_id = %s", (user_id,))
+        db.execute("DELETE FROM labels WHERE user_id = %s", (user_id,))
         db.commit()
 
     def create_label(self, name, color, created_at):

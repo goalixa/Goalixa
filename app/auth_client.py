@@ -60,11 +60,19 @@ def init_auth(app):
     def load_auth_user():
         # Check if auth should be skipped for local development
         skip_auth = app.config.get("SKIP_AUTH", False)
-        if skip_auth:
+        demo_enabled = app.config.get("DEMO_MODE_ENABLED", False)
+        demo_user_id = app.config.get("DEMO_USER_ID")
+        demo_cookie = request.cookies.get("goalixa_demo") == "1"
+        if demo_enabled and demo_cookie and demo_user_id:
+            g.auth_user = AuthUser(user_id=demo_user_id, email="demo@goalixa.local")
+            g.demo_mode = True
+        elif skip_auth and not demo_enabled:
             # Create a fake dev user for local development
             g.auth_user = AuthUser(user_id=1, email="dev@localhost")
+            g.demo_mode = False
         else:
             g.auth_user = _load_user_from_request()
+            g.demo_mode = False
 
     app.jinja_env.globals["url_for_security"] = url_for_security
 
@@ -103,7 +111,8 @@ def auth_required():
         def wrapper(*args, **kwargs):
             # Skip auth check if SKIP_AUTH is enabled
             skip_auth = current_app.config.get("SKIP_AUTH", False)
-            if skip_auth or current_user.is_authenticated:
+            demo_enabled = current_app.config.get("DEMO_MODE_ENABLED", False)
+            if (skip_auth and not demo_enabled) or current_user.is_authenticated:
                 return func(*args, **kwargs)
             if request.path.startswith("/api/") or request.accept_mimetypes.best == "application/json":
                 return jsonify({"error": "unauthorized"}), 401
