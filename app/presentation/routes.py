@@ -177,22 +177,40 @@ def register_routes(app, service):
         cookie_secure = current_app.config.get("AUTH_COOKIE_SECURE", False)
         cookie_samesite = current_app.config.get("AUTH_COOKIE_SAMESITE", "Lax")
         cookie_domain = current_app.config.get("AUTH_COOKIE_DOMAIN")
-        resp.set_cookie(
-            "goalixa_demo",
-            "1",
-            max_age=60 * 60 * 24,
-            httponly=True,
-            samesite=cookie_samesite,
-            secure=cookie_secure,
-            domain=cookie_domain,
-        )
+        # Manually construct Set-Cookie header to preserve leading dot in domain
+        cookie_parts = [
+            f"goalixa_demo=1",
+            f"Max-Age={60 * 60 * 24}",
+            "Path=/",
+            "HttpOnly",
+        ]
+        if cookie_secure:
+            cookie_parts.append("Secure")
+        if cookie_samesite:
+            cookie_parts.append(f"SameSite={cookie_samesite}")
+        if cookie_domain:
+            # Ensure domain starts with dot for subdomain support
+            domain = cookie_domain if cookie_domain.startswith('.') else f'.{cookie_domain}'
+            cookie_parts.append(f"Domain={domain}")
+        resp.headers['Set-Cookie'] = '; '.join(cookie_parts)
         return resp
 
     @app.route("/demo/exit", methods=["GET"])
     def demo_exit():
         resp = redirect(url_for_security("login"))
         cookie_domain = current_app.config.get("AUTH_COOKIE_DOMAIN")
-        resp.delete_cookie("goalixa_demo", domain=cookie_domain)
+        # Manually construct Set-Cookie header to delete cookie with correct domain
+        cookie_parts = [
+            f"goalixa_demo=",
+            f"Max-Age=0",
+            "Path=/",
+            "HttpOnly",
+        ]
+        if cookie_domain:
+            # Ensure domain starts with dot for subdomain support
+            domain = cookie_domain if cookie_domain.startswith('.') else f'.{cookie_domain}'
+            cookie_parts.append(f"Domain={domain}")
+        resp.headers['Set-Cookie'] = '; '.join(cookie_parts)
         return resp
 
     # Demo-prefixed routes
