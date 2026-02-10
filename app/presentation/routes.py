@@ -9,6 +9,11 @@ from app.auth_client import auth_required, current_user, url_for_security
 def register_routes(app, service):
     from flask import url_for as flask_url_for
 
+    @app.route("/health", methods=["GET"])
+    def health():
+        """Health check endpoint for Kubernetes probes (no auth required)."""
+        return jsonify({"status": "ok"}), 200
+
     def demo_url_for(endpoint, **values):
         """Custom url_for that adds /demo prefix when in demo mode."""
         url = flask_url_for(endpoint, **values)
