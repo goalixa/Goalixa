@@ -8,6 +8,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.auth_client import init_auth
 
+from app.auth.routes import register_auth_routes
 from app.presentation.filters import register_filters
 from app.presentation.routes import register_routes
 from app.repository.postgres_repository import PostgresTaskRepository
@@ -24,6 +25,14 @@ def create_app():
     app.config["AUTH_JWT_SECRET"] = os.getenv("AUTH_JWT_SECRET", "dev-jwt-secret")
     app.config["AUTH_COOKIE_NAME"] = os.getenv("AUTH_COOKIE_NAME", "goalixa_auth")
     app.config["SKIP_AUTH"] = os.getenv("SKIP_AUTH", "0") == "1"
+    # Dual-token authentication configuration
+    app.config["AUTH_ACCESS_TOKEN_TTL_MINUTES"] = int(os.getenv("AUTH_ACCESS_TOKEN_TTL_MINUTES", "15"))
+    app.config["AUTH_REFRESH_TOKEN_TTL_DAYS"] = int(os.getenv("AUTH_REFRESH_TOKEN_TTL_DAYS", "7"))
+    app.config["AUTH_ACCESS_COOKIE_NAME"] = os.getenv("AUTH_ACCESS_COOKIE_NAME", "goalixa_access")
+    app.config["AUTH_REFRESH_COOKIE_NAME"] = os.getenv("AUTH_REFRESH_COOKIE_NAME", "goalixa_refresh")
+    app.config["AUTH_COOKIE_SAMESITE"] = os.getenv("AUTH_COOKIE_SAMESITE", "Lax")
+    app.config["AUTH_COOKIE_SECURE"] = os.getenv("AUTH_COOKIE_SECURE", "0") == "1"
+    app.config["AUTH_COOKIE_DOMAIN"] = os.getenv("AUTH_COOKIE_DOMAIN")
     app.config["DEMO_SEED_KEY"] = os.getenv("DEMO_SEED_KEY", "")
     app.config["DEMO_MODE_ENABLED"] = os.getenv("DEMO_MODE_ENABLED", "0") == "1"
     demo_user_id = os.getenv("DEMO_USER_ID")
@@ -36,6 +45,7 @@ def create_app():
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     init_auth(app)
+    register_auth_routes(app)
 
     database_url = os.getenv("DATABASE_URL")
     if not database_url:

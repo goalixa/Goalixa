@@ -255,6 +255,19 @@ class PostgresTaskRepository:
                 value TEXT NOT NULL
             )
             """,
+            """
+            CREATE TABLE IF NOT EXISTS refresh_token (
+                id SERIAL PRIMARY KEY,
+                token VARCHAR(255) UNIQUE NOT NULL,
+                token_id VARCHAR(36) UNIQUE NOT NULL,
+                user_id INTEGER NOT NULL,
+                expires_at TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                revoked_at TIMESTAMP,
+                replaced_by INTEGER REFERENCES refresh_token(id),
+                FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE
+            )
+            """,
         ]
         for statement in statements:
             db.execute(statement)
@@ -276,6 +289,9 @@ class PostgresTaskRepository:
         db.execute("ALTER TABLE habits ADD COLUMN IF NOT EXISTS goal_name TEXT")
         db.execute("ALTER TABLE habits ADD COLUMN IF NOT EXISTS subgoal_name TEXT")
         db.execute("ALTER TABLE weekly_goals ADD COLUMN IF NOT EXISTS user_id INTEGER")
+        # Add user table columns for auth compatibility
+        db.execute("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)")
+        db.execute("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE")
 
         default_user = db.execute(
             'SELECT id FROM "user" ORDER BY id ASC LIMIT 1'
