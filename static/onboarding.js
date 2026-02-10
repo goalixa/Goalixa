@@ -2,7 +2,7 @@
   const STATE_KEY = "goalixa_onboarding_state_v3";
   const SESSION_KEY = "goalixa_onboarding_session_v1";
   const NAV_KEY = "goalixa_onboarding_nav_v1";
-  const RESTART_ON_LOAD = true;
+  const RESTART_ON_LOAD = false;
 
   const steps = [
     {
@@ -240,6 +240,10 @@
   };
 
   const initTour = () => {
+    const isDemo = document.body?.dataset.demo === "1";
+    if (!isDemo) {
+      return;
+    }
     const forced = isForced();
     const navIndex = getNavIndex();
     if (navIndex !== null) {
@@ -429,18 +433,18 @@
       window.setTimeout(positionCard, 160);
     };
 
-  const advanceToIndex = (nextIndex) => {
-    if (nextIndex >= steps.length) {
-      finishTour(true);
-      return;
-    }
-    const nextStep = steps[nextIndex];
-    if (shouldNavigateToStep(nextStep)) {
-      saveState({ index: nextIndex, done: false });
-      setNavIndex(nextIndex);
-      window.location.href = nextStep.url;
-      return;
-    }
+    const advanceToIndex = (nextIndex) => {
+      if (nextIndex >= steps.length) {
+        finishTour(true);
+        return;
+      }
+      const nextStep = steps[nextIndex];
+      if (shouldNavigateToStep(nextStep)) {
+        saveState({ index: nextIndex, done: false });
+        setNavIndex(nextIndex);
+        window.location.href = nextStep.url;
+        return;
+      }
       showStep(nextIndex);
     };
 

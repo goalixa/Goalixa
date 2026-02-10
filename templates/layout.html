@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v={{ config.get('CSS_VERSION', '1.0') }}" />
   {% block head_extra %}{% endblock %}
 </head>
-<body data-page="{{ active_page or '' }}">
+<body data-page="{{ active_page or '' }}" data-demo="{{ '1' if demo_mode else '0' }}">
   <div class="container-fluid">
     <div class="row min-vh-100 app-shell">
       <aside class="sidebar col-12 col-lg-2" data-sidebar>

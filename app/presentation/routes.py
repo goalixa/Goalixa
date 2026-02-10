@@ -2,11 +2,78 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 
-from flask import jsonify, redirect, render_template, request, url_for
+from flask import jsonify, redirect, render_template, request, url_for, current_app, g
 from app.auth_client import auth_required, current_user, url_for_security
 
 
 def register_routes(app, service):
+    from flask import url_for as flask_url_for
+
+    def demo_url_for(endpoint, **values):
+        """Custom url_for that adds /demo prefix when in demo mode."""
+        url = flask_url_for(endpoint, **values)
+
+        # Add /demo prefix if in demo mode and URL is a local path
+        if getattr(g, "demo_mode", False):
+            # Don't add prefix if already has /demo, or is static, or API, or external URL
+            if (url.startswith("/demo/") or url.startswith("/static/") or
+                url.startswith("/api/") or url.startswith("http:") or
+                url.startswith("https:") or url.startswith("//")):
+                return url
+            # Add /demo prefix
+            if url.startswith("/"):
+                url = "/demo" + url
+
+        return url
+
+    @app.context_processor
+    def inject_demo_mode():
+        return {
+            "demo_mode": getattr(g, "demo_mode", False),
+            "url_for": demo_url_for,
+        }
+
+    DEMO_SKIP_COOKIE = "goalixa_demo_skip_reset"
+
+    # Paths that should redirect to /demo/* when in demo mode
+    DEMO_REDIRECT_PATHS = {
+        "/": "/demo/",
+        "/overview": "/demo/overview",
+        "/timer": "/demo/timer",
+        "/calendar": "/demo/calendar",
+        "/habits": "/demo/habits",
+        "/planner": "/demo/planner",
+        "/reminders": "/demo/reminders",
+        "/goals": "/demo/goals",
+        "/long-term-goals": "/demo/long-term-goals",
+        "/weekly-goals": "/demo/weekly-goals",
+        "/tasks": "/demo/tasks",
+        "/projects": "/demo/projects",
+        "/labels": "/demo/labels",
+        "/reports": "/demo/reports",
+        "/account": "/demo/account",
+    }
+
+    @app.before_request
+    def redirect_demo_to_prefix():
+        """Redirect regular paths to auth/login when user is in demo mode (enforces /demo/* prefix usage)."""
+        path = request.path
+
+        # Skip if already in demo prefix or API/static/demo-specific routes
+        if (path.startswith("/demo/") or path.startswith("/api/") or
+            path.startswith("/static/") or path in {"/demo", "/demo/exit", "/favicon.ico", "/robots.txt"}):
+            return
+
+        # Check if user has demo cookie
+        demo_cookie = request.cookies.get("goalixa_demo") == "1"
+        if not demo_cookie:
+            return
+
+        # Check if this path should be protected (redirect to auth/login)
+        if path in DEMO_REDIRECT_PATHS:
+            # User is in demo mode but accessing non-demo path - redirect to login
+            return redirect(url_for_security("login"))
+
     def parse_iso(value):
         if not value:
             return None
@@ -46,9 +113,721 @@ def register_routes(app, service):
     def load_user_context():
         if current_user.is_authenticated:
             service.repository.set_user_id(current_user.id)
-            service.ensure_user_setup(current_user.email)
+            if not getattr(g, "demo_mode", False):
+                service.ensure_user_setup(current_user.email)
         else:
             service.repository.set_user_id(None)
+
+    def _should_reset_demo():
+        if not getattr(g, "demo_mode", False):
+            return False
+        if request.method != "GET":
+            return False
+        path = request.path or ""
+        if path.startswith("/api/") or path.startswith("/static/"):
+            return False
+        if path in {"/demo", "/demo/exit"} or path.startswith("/demo/seed"):
+            return False
+        if path in {"/favicon.ico", "/robots.txt"}:
+            return False
+        return True
+
+    @app.before_request
+    def reset_demo_data():
+        if not _should_reset_demo():
+            return
+        if request.cookies.get(DEMO_SKIP_COOKIE) == "1":
+            g.demo_skip_reset = True
+            return
+        ok, message = service.seed_demo_from_file(
+            force=True,
+            email=getattr(current_user, "email", None),
+        )
+        if not ok:
+            current_app.logger.warning("Demo reset skipped: %s", message)
+
+    @app.after_request
+    def handle_demo_reset_cookie(response):
+        if getattr(g, "demo_mode", False):
+            if getattr(g, "demo_skip_reset", False):
+                response.delete_cookie(DEMO_SKIP_COOKIE)
+            elif request.method in {"POST", "PUT", "DELETE", "PATCH"} and not request.path.startswith("/api/"):
+                response.set_cookie(
+                    DEMO_SKIP_COOKIE,
+                    "1",
+                    max_age=60,
+                    httponly=True,
+                    samesite="Lax",
+                )
+        return response
+
+    @app.route("/demo", methods=["GET"])
+    def demo_entry():
+        if not current_app.config.get("DEMO_MODE_ENABLED", False):
+            return redirect(url_for_security("login"))
+        demo_user_id = current_app.config.get("DEMO_USER_ID")
+        if not demo_user_id:
+            return "Demo user not configured.", 500
+        resp = redirect("/demo/labels?tour=reset")
+        resp.set_cookie(
+            "goalixa_demo",
+            "1",
+            max_age=60 * 60 * 24,
+            httponly=True,
+            samesite="Lax",
+        )
+        return resp
+
+    @app.route("/demo/exit", methods=["GET"])
+    def demo_exit():
+        resp = redirect(url_for_security("login"))
+        resp.delete_cookie("goalixa_demo")
+        return resp
+
+    # Demo-prefixed routes
+    @app.route("/demo/", methods=["GET"])
+    @auth_required()
+    def demo_overview():
+        return redirect(url_for("demo_timer"))
+
+    @app.route("/demo/overview", methods=["GET"])
+    @auth_required()
+    def demo_overview_page():
+        today = service.current_local_date()
+        start_date = today - timedelta(days=6)
+        summary = service.summary_by_days(7)
+        goals = service.list_goals()
+        goals_in_progress = [
+            goal for goal in goals if goal.get("status") in {"active", "at_risk"}
+        ]
+        total_goal_seconds = sum(goal.get("total_seconds", 0) for goal in goals)
+        goals_targets_set = len([goal for goal in goals if goal.get("target_date")])
+
+        habits_list = service.list_habits(today.isoformat())
+        habits_summary = service.habits_summary(habits_list)
+        habit_series = service.habit_completion_series(14)
+
+        todo_view = service.list_todos_for_today()
+
+        task_view = service.list_tasks_for_today()
+        active_tasks = task_view["tasks"]
+        done_today_tasks = task_view["done_today_tasks"]
+        completed_tasks = task_view["completed_tasks"]
+        running_tasks = sum(1 for task in active_tasks if task.get("is_running"))
+
+        reminders_list = service.list_reminders()
+        reminders_summary = service.reminders_summary(reminders_list)
+        upcoming_reminders = sorted(
+            [
+                reminder
+                for reminder in reminders_list
+                if reminder.get("is_active") and reminder.get("next_at")
+            ],
+            key=lambda reminder: reminder["next_at"],
+        )[:3]
+
+        project_distribution, project_distribution_total = (
+            service.project_distribution_by_range(start_date, today)
+        )
+        top_project = project_distribution[0] if project_distribution else None
+
+        calendar_entries = service.list_time_entries_by_range(start_date, today)
+        calendar_entry_count = sum(
+            len(bucket.get("entries", [])) for bucket in calendar_entries
+        )
+        calendar_active_days = len(calendar_entries)
+
+        projects = service.list_projects()
+        labels = service.list_labels()
+
+        week_start, week_end = service.current_week_range()
+        weekly_goals = service.list_weekly_goals(
+            week_start=week_start.isoformat(),
+            week_end=week_end.isoformat(),
+        )
+        weekly_active_goals = sum(
+            1 for goal in weekly_goals if goal.get("status") == "active"
+        )
+        weekly_completed_goals = sum(
+            1 for goal in weekly_goals if goal.get("status") == "completed"
+        )
+        weekly_avg_progress = (
+            int(
+                sum(goal.get("progress_percent", 0) for goal in weekly_goals)
+                / len(weekly_goals)
+            )
+            if weekly_goals
+            else 0
+        )
+
+        week_total_seconds = sum(bucket.get("seconds", 0) for bucket in summary)
+        today_seconds = summary[-1]["seconds"] if summary else 0
+        avg_daily_hours = week_total_seconds / 3600 / 7 if summary else 0
+
+        linked_projects_total = sum(goal.get("projects_count", 0) for goal in goals)
+        linked_tasks_total = sum(goal.get("tasks_count", 0) for goal in goals)
+
+        timezone_name = service.get_timezone_name()
+        notification_settings = service.get_notification_settings()
+        return render_template(
+            "overview.html",
+            summary=summary,
+            goals=goals,
+            goals_in_progress=goals_in_progress,
+            active_goals_count=len(goals_in_progress),
+            total_goal_seconds=total_goal_seconds,
+            goals_targets_set=goals_targets_set,
+            selected_range=7,
+            allowed_ranges=[7],
+            today_date=today.isoformat(),
+            habits=habits_list,
+            habits_summary=habits_summary,
+            habit_series=habit_series,
+            todos=todo_view["todos"],
+            done_todos=todo_view["done_todos"],
+            active_tasks=active_tasks,
+            done_today_tasks=done_today_tasks,
+            completed_tasks=completed_tasks,
+            running_tasks=running_tasks,
+            reminders=reminders_list,
+            reminders_summary=reminders_summary,
+            upcoming_reminders=upcoming_reminders,
+            project_distribution=project_distribution,
+            project_distribution_total=project_distribution_total,
+            top_project=top_project,
+            calendar_entry_count=calendar_entry_count,
+            calendar_active_days=calendar_active_days,
+            projects=projects,
+            labels=labels,
+            weekly_goals=weekly_goals,
+            weekly_active_goals=weekly_active_goals,
+            weekly_completed_goals=weekly_completed_goals,
+            weekly_avg_progress=weekly_avg_progress,
+            week_range_label=f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}",
+            week_total_seconds=week_total_seconds,
+            today_seconds=today_seconds,
+            avg_daily_hours=avg_daily_hours,
+            linked_projects_total=linked_projects_total,
+            linked_tasks_total=linked_tasks_total,
+            timezone_name=timezone_name,
+            notification_settings=notification_settings,
+            user_email=getattr(current_user, "email", ""),
+        )
+
+    @app.route("/demo/timer", methods=["GET"])
+    @auth_required()
+    def demo_timer():
+        start = request.args.get("start")
+        end = request.args.get("end")
+        if start and end:
+            try:
+                start_date = datetime.fromisoformat(start).date()
+                end_date = datetime.fromisoformat(end).date()
+            except ValueError:
+                end_date = service.current_local_date()
+                start_date = end_date - timedelta(days=6)
+        else:
+            end_date = service.current_local_date()
+            start_date = end_date - timedelta(days=6)
+
+        if end_date < start_date:
+            start_date, end_date = end_date, start_date
+
+        list_groups = service.list_time_entries_by_range(start_date, end_date)
+
+        today = service.current_local_date()
+        today_total_seconds = 0
+        for group in list_groups:
+            if group["label"] == "Today":
+                today_total_seconds = group["total_seconds"]
+                break
+
+        week_start, week_end = service.current_week_range()
+        week_total_seconds = 0
+        week_groups = service.list_time_entries_by_range(week_start, week_end)
+        for group in week_groups:
+            week_total_seconds += group["total_seconds"]
+
+        tasks = service.list_tasks()
+        week_days = build_week_days(week_start, today)
+        task_ids = [task["id"] for task in tasks]
+        checks_map = service.list_task_daily_checks(task_ids, week_start, week_end)
+        task_rows = []
+        for task in tasks:
+            checked_dates = checks_map.get(task["id"], set())
+            week_checks = [day["iso"] in checked_dates for day in week_days]
+            task_rows.append({**task, "week_checks": week_checks})
+        week_label = f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}"
+
+        return render_template(
+            "timer.html",
+            timer_list_groups=list_groups,
+            timer_range_start=start_date.isoformat(),
+            timer_range_end=end_date.isoformat(),
+            today_total_seconds=today_total_seconds,
+            week_total_seconds=week_total_seconds,
+            week_label=week_label,
+            week_days=week_days,
+            task_rows=task_rows,
+        )
+
+    @app.route("/demo/calendar", methods=["GET"])
+    @auth_required()
+    def demo_calendar():
+        projects = service.list_projects()
+        tasks = service.list_tasks()
+        week_start, week_end = service.current_week_range()
+        today = service.current_local_date()
+        week_days = build_week_days(week_start, today)
+        task_ids = [task["id"] for task in tasks]
+        checks_map = service.list_task_daily_checks(task_ids, week_start, week_end)
+        task_rows = []
+        for task in tasks:
+            checked_dates = checks_map.get(task["id"], set())
+            week_checks = [day["iso"] in checked_dates for day in week_days]
+            task_rows.append({**task, "week_checks": week_checks})
+
+        habits_list = service.list_habits(today.isoformat())
+        habit_ids = [habit["id"] for habit in habits_list]
+        habit_logs_map = service.list_habit_logs_between(habit_ids, week_start, week_end)
+        habit_rows = []
+        for habit in habits_list:
+            checked_dates = habit_logs_map.get(habit["id"], set())
+            week_checks = [day["iso"] in checked_dates for day in week_days]
+            habit_rows.append({**habit, "week_checks": week_checks})
+
+        week_label = f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}"
+        return render_template(
+            "calendar.html",
+            week_label=week_label,
+            week_days=week_days,
+            task_rows=task_rows,
+            habit_rows=habit_rows,
+            projects=projects,
+        )
+
+    @app.route("/demo/habits", methods=["GET"])
+    @auth_required()
+    def demo_habits():
+        today = service.current_local_date().isoformat()
+        habits_list = service.list_habits(today)
+        summary = service.habits_summary(habits_list)
+        goals_list = service.list_goals()
+        series = service.habit_completion_series(14)
+        return render_template(
+            "habits.html",
+            habits=habits_list,
+            goals=goals_list,
+            total_habits=summary["total"],
+            completed_habits=summary["completed"],
+            best_streak=summary["best_streak"],
+            focus_window=summary["focus_window"],
+            today=today,
+            habit_series=series,
+        )
+
+    @app.route("/demo/planner", methods=["GET"])
+    @auth_required()
+    def demo_planner():
+        today = service.current_local_date().isoformat()
+        habits_list = service.list_habits(today)
+        summary = service.habits_summary(habits_list)
+        todo_view = service.list_todos_for_today()
+        return render_template(
+            "planner.html",
+            habits=habits_list,
+            habits_summary=summary,
+            todos=todo_view["todos"],
+            done_todos=todo_view["done_todos"],
+            today=today,
+        )
+
+    @app.route("/demo/reminders", methods=["GET"])
+    @auth_required()
+    def demo_reminders():
+        reminders_list = service.list_reminders()
+        summary = service.reminders_summary(reminders_list)
+        today = service.current_local_date().isoformat()
+        notification_settings = service.get_notification_settings()
+        weekday_options = [
+            {"value": 0, "label": "Mon"},
+            {"value": 1, "label": "Tue"},
+            {"value": 2, "label": "Wed"},
+            {"value": 3, "label": "Thu"},
+            {"value": 4, "label": "Fri"},
+            {"value": 5, "label": "Sat"},
+            {"value": 6, "label": "Sun"},
+        ]
+        return render_template(
+            "reminders.html",
+            reminders=reminders_list,
+            reminders_summary=summary,
+            notification_settings=notification_settings,
+            today=today,
+            weekday_options=weekday_options,
+        )
+
+    @app.route("/demo/goals", methods=["GET"])
+    @auth_required()
+    def demo_goals():
+        goals_list = service.list_goals()
+        active_goals = [goal for goal in goals_list if goal.get("status") in {"active", "at_risk"}]
+        total_goal_seconds = sum(goal.get("total_seconds", 0) for goal in goals_list)
+        targets_set = len([goal for goal in goals_list if goal.get("target_date")])
+        week_start, week_end = service.current_week_range()
+        weekly_goals = service.list_weekly_goals(
+            week_start=week_start.isoformat(),
+            week_end=week_end.isoformat(),
+        )
+        return render_template(
+            "goals.html",
+            goals=goals_list,
+            active_goals_count=len(active_goals),
+            total_goal_seconds=total_goal_seconds,
+            targets_set=targets_set,
+            weekly_goals=weekly_goals,
+            weekly_range_label=f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}",
+        )
+
+    @app.route("/demo/long-term-goals", methods=["GET"])
+    @auth_required()
+    def demo_long_term_goals():
+        goals_list = service.list_goals()
+        projects = service.list_projects()
+        tasks = service.list_tasks()
+        active_goals = [goal for goal in goals_list if goal.get("status") in {"active", "at_risk"}]
+        return render_template(
+            "long_term_goals.html",
+            goals=goals_list,
+            projects=projects,
+            tasks=tasks,
+            active_goals_count=len(active_goals),
+        )
+
+    @app.route("/demo/weekly-goals", methods=["GET"])
+    @auth_required()
+    def demo_weekly_goals():
+        week_start, week_end = service.current_week_range()
+        weekly_current = service.list_weekly_goals(
+            week_start=week_start.isoformat(),
+            week_end=week_end.isoformat(),
+        )
+        weekly_all = service.list_weekly_goals()
+        return render_template(
+            "weekly_goals.html",
+            weekly_goals_current=weekly_current,
+            weekly_goals_all=weekly_all,
+            weekly_range_label=f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}",
+            week_start=week_start.isoformat(),
+            week_end=week_end.isoformat(),
+        )
+
+    @app.route("/demo/tasks", methods=["GET"])
+    @auth_required()
+    def demo_tasks():
+        task_view = service.list_tasks_for_today()
+        projects = service.list_projects()
+        labels = service.list_labels()
+        return render_template(
+            "index.html",
+            tasks=task_view["tasks"],
+            done_today_tasks=task_view["done_today_tasks"],
+            completed_tasks=task_view["completed_tasks"],
+            projects=projects,
+            labels=labels,
+        )
+
+    @app.route("/demo/projects", methods=["GET"])
+    @auth_required()
+    def demo_projects():
+        projects_list = service.list_projects()
+        labels = service.list_labels()
+        tasks = service.list_tasks()
+        active_task_count = len(
+            [task for task in tasks if task.get("status") != "completed"]
+        )
+        total_focus_seconds = sum(
+            task.get("total_seconds", 0) for task in tasks
+        )
+        return render_template(
+            "projects.html",
+            projects=projects_list,
+            labels=labels,
+            active_task_count=active_task_count,
+            total_focus_seconds=total_focus_seconds,
+            label_count=len(labels),
+        )
+
+    @app.route("/demo/labels", methods=["GET"])
+    @auth_required()
+    def demo_labels():
+        labels_list = service.list_labels()
+        return render_template("labels.html", labels=labels_list)
+
+    @app.route("/demo/reports", methods=["GET"])
+    @auth_required()
+    def demo_reports():
+        end_date = service.current_local_date()
+        start_date = end_date - timedelta(days=6)
+        summary = service.summary_by_range(start_date, end_date)
+        project_totals = service.project_totals_by_range(start_date, end_date)
+        top_project = project_totals[0] if project_totals else None
+        report_entities = service.report_entities_by_range(start_date, end_date)
+        return render_template(
+            "reports.html",
+            summary=summary,
+            project_totals=project_totals,
+            top_project=top_project,
+            report_entities=report_entities,
+            allowed_ranges=[7],
+        )
+
+    @app.route("/demo/account", methods=["GET"])
+    @auth_required()
+    def demo_account():
+        timezone_options = [
+            "UTC",
+            "Asia/Tehran",
+            "Europe/London",
+            "Europe/Berlin",
+            "America/New_York",
+            "America/Chicago",
+            "America/Los_Angeles",
+            "Asia/Dubai",
+            "Asia/Tokyo",
+        ]
+        notification_settings = service.get_notification_settings()
+        return render_template(
+            "account.html",
+            user=current_user,
+            timezone_name=service.get_timezone_name(),
+            timezone_options=timezone_options,
+            notification_settings=notification_settings,
+        )
+
+    # Demo POST routes - redirect to same demo page after action
+    @app.route("/demo/tasks", methods=["POST"])
+    @auth_required()
+    def demo_create_task():
+        service.add_task(
+            request.form.get("name", ""),
+            request.form.get("project_id"),
+            request.form.getlist("label_ids"),
+        )
+        return redirect("/demo/tasks")
+
+    @app.route("/demo/labels", methods=["POST"])
+    @auth_required()
+    def demo_create_label():
+        service.add_label(request.form.get("name", ""), request.form.get("color", ""))
+        return redirect("/demo/labels")
+
+    @app.route("/demo/projects", methods=["POST"])
+    @auth_required()
+    def demo_create_project():
+        service.add_project(
+            request.form.get("name", ""),
+            request.form.getlist("label_ids"),
+        )
+        return redirect("/demo/projects")
+
+    @app.route("/demo/habits", methods=["POST"])
+    @auth_required()
+    def demo_create_habit():
+        service.add_habit(
+            request.form.get("name", ""),
+            request.form.get("frequency", "Daily"),
+            request.form.get("time_of_day", ""),
+            request.form.get("reminder", ""),
+            request.form.get("notes", ""),
+            request.form.get("goal_name", ""),
+            request.form.get("subgoal_name", ""),
+        )
+        return redirect("/demo/habits")
+
+    @app.route("/demo/reminders", methods=["POST"])
+    @auth_required()
+    def demo_create_reminder():
+        service.add_reminder(request.form)
+        return redirect("/demo/reminders")
+
+    @app.route("/demo/settings/timezone", methods=["POST"])
+    @auth_required()
+    def demo_update_timezone():
+        service.set_timezone_name(request.form.get("timezone", "UTC"))
+        return redirect("/demo/account")
+
+    @app.route("/demo/settings/notifications", methods=["POST"])
+    @auth_required()
+    def demo_update_notifications():
+        service.set_notification_settings(request.form)
+        return redirect("/demo/account")
+
+    # Demo task/action routes
+    @app.route("/demo/tasks/<int:task_id>/start", methods=["POST"])
+    @auth_required()
+    def demo_start_task(task_id):
+        service.start_task(task_id)
+        return redirect("/demo/tasks")
+
+    @app.route("/demo/tasks/<int:task_id>/stop", methods=["POST"])
+    @auth_required()
+    def demo_stop_task(task_id):
+        service.stop_task(task_id)
+        return redirect("/demo/tasks")
+
+    @app.route("/demo/tasks/<int:task_id>/delete", methods=["POST"])
+    @auth_required()
+    def demo_delete_task(task_id):
+        service.delete_task(task_id)
+        return redirect("/demo/tasks")
+
+    @app.route("/demo/tasks/<int:task_id>/daily-check", methods=["POST"])
+    @auth_required()
+    def demo_daily_check_task(task_id):
+        service.set_task_daily_check(task_id, True)
+        return redirect(request.referrer or "/demo/tasks")
+
+    @app.route("/demo/tasks/<int:task_id>/complete", methods=["POST"])
+    @auth_required()
+    def demo_complete_task(task_id):
+        service.set_task_status(task_id, "completed")
+        return redirect("/demo/tasks")
+
+    @app.route("/demo/tasks/<int:task_id>/reopen", methods=["POST"])
+    @auth_required()
+    def demo_reopen_task(task_id):
+        service.set_task_status(task_id, "active")
+        return redirect("/demo/tasks")
+
+    @app.route("/demo/tasks/<int:task_id>/edit", methods=["POST"])
+    @auth_required()
+    def demo_edit_task(task_id):
+        service.update_task(task_id, request.form.get("name", ""))
+        label_id = request.form.get("label_id")
+        if label_id:
+            service.add_label_to_task(task_id, int(label_id))
+        return redirect(request.referrer or "/demo/tasks")
+
+    @app.route("/demo/tasks/<int:task_id>/labels", methods=["POST"])
+    @auth_required()
+    def demo_add_task_label(task_id):
+        label_id = request.form.get("label_id")
+        if label_id:
+            service.add_label_to_task(task_id, int(label_id))
+        return redirect(request.referrer or "/demo/tasks")
+
+    # Demo label action routes
+    @app.route("/demo/labels/<int:label_id>/delete", methods=["POST"])
+    @auth_required()
+    def demo_delete_label(label_id):
+        service.delete_label(label_id)
+        return redirect("/demo/labels")
+
+    @app.route("/demo/labels/<int:label_id>/edit", methods=["POST"])
+    @auth_required()
+    def demo_edit_label(label_id):
+        service.update_label(
+            label_id,
+            request.form.get("name", ""),
+            request.form.get("color", ""),
+        )
+        return redirect("/demo/labels")
+
+    # Demo project action routes
+    @app.route("/demo/projects/<int:project_id>/delete", methods=["POST"])
+    @auth_required()
+    def demo_delete_project(project_id):
+        service.delete_project(project_id)
+        return redirect("/demo/projects")
+
+    @app.route("/demo/projects/<int:project_id>/edit", methods=["POST"])
+    @auth_required()
+    def demo_edit_project(project_id):
+        service.update_project(
+            project_id,
+            request.form.get("name", ""),
+            request.form.getlist("label_ids"),
+        )
+        return redirect(request.referrer or "/demo/projects")
+
+    @app.route("/demo/projects/<int:project_id>/labels", methods=["POST"])
+    @auth_required()
+    def demo_add_project_label(project_id):
+        label_id = request.form.get("label_id")
+        if label_id:
+            service.add_label_to_project(project_id, int(label_id))
+        return redirect("/demo/projects/" + str(project_id))
+
+    # Demo habit action routes
+    @app.route("/demo/habits/<int:habit_id>/toggle", methods=["POST"])
+    @auth_required()
+    def demo_toggle_habit(habit_id):
+        log_date = request.form.get("date") or service.current_local_date().isoformat()
+        done = request.form.get("done") in {"1", "on", "true"}
+        service.set_habit_done(habit_id, log_date, done)
+        return redirect(request.referrer or "/demo/habits")
+
+    @app.route("/demo/habits/<int:habit_id>/update", methods=["POST"])
+    @auth_required()
+    def demo_update_habit(habit_id):
+        service.update_habit(
+            habit_id,
+            request.form.get("name", ""),
+            request.form.get("frequency", "Daily"),
+            request.form.get("time_of_day", ""),
+            request.form.get("reminder", ""),
+            request.form.get("notes", ""),
+            request.form.get("goal_name", ""),
+            request.form.get("subgoal_name", ""),
+        )
+        return redirect(request.referrer or "/demo/habits")
+
+    @app.route("/demo/habits/<int:habit_id>/delete", methods=["POST"])
+    @auth_required()
+    def demo_delete_habit(habit_id):
+        service.delete_habit(habit_id)
+        return redirect(request.referrer or "/demo/habits")
+
+    # Demo reminder action routes
+    @app.route("/demo/reminders/<int:reminder_id>/update", methods=["POST"])
+    @auth_required()
+    def demo_update_reminder(reminder_id):
+        service.update_reminder(reminder_id, request.form)
+        return redirect("/demo/reminders")
+
+    @app.route("/demo/reminders/<int:reminder_id>/toggle", methods=["POST"])
+    @auth_required()
+    def demo_toggle_reminder(reminder_id):
+        is_active = request.form.get("is_active") in {"1", "true", "on", "yes"}
+        service.set_reminder_active(reminder_id, is_active)
+        return redirect("/demo/reminders")
+
+    @app.route("/demo/reminders/<int:reminder_id>/delete", methods=["POST"])
+    @auth_required()
+    def demo_delete_reminder(reminder_id):
+        service.delete_reminder(reminder_id)
+        return redirect("/demo/reminders")
+
+    # Demo todo routes
+    @app.route("/demo/todos", methods=["POST"])
+    @auth_required()
+    def demo_create_todo():
+        service.add_todo(request.form.get("name", ""))
+        return redirect("/demo/planner")
+
+    @app.route("/demo/todos/<int:todo_id>/toggle", methods=["POST"])
+    @auth_required()
+    def demo_toggle_todo(todo_id):
+        done = request.form.get("done") in {"1", "on", "true"}
+        service.set_todo_done(todo_id, done)
+        return redirect("/demo/planner")
+
+    @app.route("/demo/todos/<int:todo_id>/delete", methods=["POST"])
+    @auth_required()
+    def demo_delete_todo(todo_id):
+        service.delete_todo(todo_id)
+        return redirect("/demo/planner")
 
     @app.route("/", methods=["GET"])
     @auth_required()
@@ -775,6 +1554,25 @@ def register_routes(app, service):
             start_dt, end_dt = end_dt, start_dt
         events = service.list_time_entries_for_calendar(start_dt, end_dt)
         return jsonify({"events": events})
+
+    @app.route("/demo/seed", methods=["POST"])
+    @auth_required()
+    def demo_seed():
+        seed_key = current_app.config.get("DEMO_SEED_KEY", "")
+        provided_key = (
+            request.headers.get("X-Seed-Key")
+            or request.args.get("seed_key")
+            or request.form.get("seed_key")
+            or ""
+        )
+        if seed_key and seed_key != provided_key:
+            return jsonify({"ok": False, "message": "Forbidden"}), 403
+        force = request.args.get("force") == "1"
+        ok, message = service.seed_demo_from_file(
+            force=force,
+            email=getattr(current_user, "email", None),
+        )
+        return jsonify({"ok": ok, "message": message}), (200 if ok else 409)
 
     @app.route("/tasks", methods=["GET"])
     @auth_required()
