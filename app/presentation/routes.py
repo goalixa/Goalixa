@@ -174,19 +174,25 @@ def register_routes(app, service):
         if not demo_user_id:
             return "Demo user not configured.", 500
         resp = redirect("/demo/labels?tour=reset")
+        cookie_secure = current_app.config.get("AUTH_COOKIE_SECURE", False)
+        cookie_samesite = current_app.config.get("AUTH_COOKIE_SAMESITE", "Lax")
+        cookie_domain = current_app.config.get("AUTH_COOKIE_DOMAIN")
         resp.set_cookie(
             "goalixa_demo",
             "1",
             max_age=60 * 60 * 24,
             httponly=True,
-            samesite="Lax",
+            samesite=cookie_samesite,
+            secure=cookie_secure,
+            domain=cookie_domain,
         )
         return resp
 
     @app.route("/demo/exit", methods=["GET"])
     def demo_exit():
         resp = redirect(url_for_security("login"))
-        resp.delete_cookie("goalixa_demo")
+        cookie_domain = current_app.config.get("AUTH_COOKIE_DOMAIN")
+        resp.delete_cookie("goalixa_demo", domain=cookie_domain)
         return resp
 
     # Demo-prefixed routes
