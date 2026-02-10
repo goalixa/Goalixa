@@ -215,6 +215,9 @@ def auth_required():
                 return func(*args, **kwargs)
             if request.path.startswith("/api/") or request.accept_mimetypes.best == "application/json":
                 return jsonify({"error": "unauthorized"}), 401
+            # Redirect to /demo if demo mode is enabled
+            if demo_enabled:
+                return redirect("/demo")
             # Force HTTPS in the redirect URL to prevent redirect loops
             next_url = request.url
             if next_url.startswith("http://"):
