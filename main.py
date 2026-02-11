@@ -50,6 +50,7 @@ def create_app():
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
         raise RuntimeError("DATABASE_URL must be set (e.g. postgresql://user:pass@host:5432/db)")
+    app.config["DATABASE_URL"] = database_url
     repository = PostgresTaskRepository(database_url)
     service = TaskService(repository)
 
