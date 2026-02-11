@@ -1352,6 +1352,63 @@ body {
   color: var(--accent);
 }
 
+/* Calendar header tweaks */
+body[data-page="calendar"] .calendar-page {
+  padding-top: 8px;
+}
+
+body[data-page="calendar"] .calendar-header {
+  padding: 8px 0 6px;
+  margin-bottom: 12px;
+}
+
+body[data-page="calendar"] .calendar-header h1 {
+  font-size: 1.6rem;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+body[data-page="calendar"] .calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 10px 0 4px;
+  flex-wrap: wrap;
+}
+
+body[data-page="calendar"] .calendar-toolbar .calendar-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+body[data-page="calendar"] .calendar-toolbar .calendar-week-meta {
+  margin-left: auto;
+}
+
+body[data-page="calendar"] .calendar-title-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+body[data-page="calendar"] .calendar-subtitle {
+  font-size: 0.95rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  body[data-page="calendar"] .calendar-title-wrap {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
 .habit-create-panel.is-hidden {
   display: none;
 }
@@ -4364,6 +4421,33 @@ body {
 .calendar-week-body {
   display: flex;
   flex-direction: column;
+  gap: 0;
+  --calendar-row-height: 52px;
+  max-height: calc(var(--calendar-row-height) * 20);
+  min-height: calc(var(--calendar-row-height) * 8);
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.calendar-week-row {
+  min-height: var(--calendar-row-height);
+}
+
+body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 999px;
+}
+
+[data-theme="dark"] body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .calendar-week-row {

@@ -5,34 +5,34 @@
 {% block content %}
   <div class="container py-4 calendar-page">
     <header class="header calendar-header">
-      <div>
+      <div class="calendar-title-wrap">
         <h1>Calendar</h1>
-        <p>Review weekly streaks across your task list.</p>
-      </div>
-      <div class="calendar-header-actions">
-        <div class="calendar-filters">
-          <div class="calendar-toggle">
-            <button class="btn btn-outline-primary btn-sm is-active" type="button" data-calendar-toggle="tasks">
-              Task 
-            </button>
-            <button class="btn btn-outline-primary btn-sm" type="button" data-calendar-toggle="habits">
-              Habit
-            </button>
-          </div>
-          <div class="calendar-filter" data-calendar-filter>
-            <label for="calendar-project-filter">Project</label>
-            <select id="calendar-project-filter" {% if not projects %}disabled{% endif %}>
-              <option value="">All projects</option>
-              {% for project in projects %}
-                <option value="{{ project['id'] }}">{{ project['name'] }}</option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
-        <div class="calendar-week-meta">
-        </div>
       </div>
     </header>
+
+    <div class="calendar-toolbar">
+      <div class="calendar-filters">
+        <div class="calendar-toggle">
+          <button class="btn btn-outline-primary btn-sm is-active" type="button" data-calendar-toggle="tasks">
+            Task 
+          </button>
+          <button class="btn btn-outline-primary btn-sm" type="button" data-calendar-toggle="habits">
+            Habit
+          </button>
+        </div>
+        <div class="calendar-filter" data-calendar-filter>
+          <label for="calendar-project-filter">Project</label>
+          <select id="calendar-project-filter" {% if not projects %}disabled{% endif %}>
+            <option value="">All projects</option>
+            {% for project in projects %}
+              <option value="{{ project['id'] }}">{{ project['name'] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="calendar-week-meta">
+      </div>
+    </div>
 
     <section class="card calendar-week-board" data-tour-id="calendar-board">
       <div class="calendar-week-grid calendar-week-header-row" data-calendar-section="tasks">
