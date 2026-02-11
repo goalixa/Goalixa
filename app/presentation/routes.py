@@ -78,6 +78,11 @@ self.addEventListener('activate', (event) => {
             "url_for": demo_url_for,
         }
 
+    @app.context_processor
+    def inject_current_user():
+        # Ensure templates always have current_user available (even on public pages)
+        return {"current_user": current_user}
+
     DEMO_SKIP_COOKIE = "goalixa_demo_skip_reset"
 
     # Paths that should redirect to /demo/* when in demo mode
@@ -676,12 +681,14 @@ self.addEventListener('activate', (event) => {
             "Asia/Tokyo",
         ]
         notification_settings = service.get_notification_settings()
+        profile = service.get_profile()
         return render_template(
             "account.html",
             user=current_user,
             timezone_name=service.get_timezone_name(),
             timezone_options=timezone_options,
             notification_settings=notification_settings,
+            profile=profile,
         )
 
     # Demo POST routes - redirect to same demo page after action
@@ -1522,12 +1529,14 @@ self.addEventListener('activate', (event) => {
             "Asia/Tokyo",
         ]
         notification_settings = service.get_notification_settings()
+        profile = service.get_profile()
         return render_template(
             "account.html",
             user=current_user,
             timezone_name=service.get_timezone_name(),
             timezone_options=timezone_options,
             notification_settings=notification_settings,
+            profile=profile,
         )
 
     @app.route("/settings/timezone", methods=["POST"])
@@ -1541,6 +1550,18 @@ self.addEventListener('activate', (event) => {
     def update_notifications():
         service.set_notification_settings(request.form)
         return redirect(url_for("account"))
+
+    @app.route("/settings/profile", methods=["POST"])
+    @auth_required()
+    def update_profile():
+        service.update_profile(request.form)
+        return redirect(url_for("account"))
+
+    @app.route("/demo/settings/profile", methods=["POST"])
+    @auth_required()
+    def demo_update_profile():
+        service.update_profile(request.form)
+        return redirect(url_for("demo_account"))
 
     @app.route("/api/settings/notifications", methods=["GET"])
     @auth_required()

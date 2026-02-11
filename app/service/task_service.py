@@ -242,6 +242,25 @@ class TaskService:
             tz_name = "UTC"
         self.repository.set_setting("timezone", tz_name)
 
+    # ----------------------
+    # Profile settings
+    # ----------------------
+    def get_profile(self):
+        return {
+            "full_name": self.repository.get_setting("profile_full_name") or "",
+            "phone": self.repository.get_setting("profile_phone") or "",
+            "bio": self.repository.get_setting("profile_bio") or "",
+            "user_id": getattr(self.repository, "user_id", None),
+        }
+
+    def update_profile(self, form_data):
+        full_name = (form_data.get("full_name") or "").strip()
+        phone = (form_data.get("phone") or "").strip()
+        bio = (form_data.get("bio") or "").strip()
+        self.repository.set_setting("profile_full_name", full_name)
+        self.repository.set_setting("profile_phone", phone)
+        self.repository.set_setting("profile_bio", bio)
+
     def current_local_date(self):
         _, tz = self._get_timezone()
         return datetime.now(tz).date()
