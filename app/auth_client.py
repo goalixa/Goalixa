@@ -176,17 +176,30 @@ def init_auth(app):
 
 
 def url_for_security(endpoint, **values):
-    """Generate URL for security endpoints - now routes to local API."""
-    base_url = ""  # Use local routes instead of external auth service
-    route_map = {
-        "login": "/api/auth/login",
-        "register": "/api/auth/register",
-        "forgot_password": "/api/auth/forgot",
-        "reset_password": "/api/auth/reset/{token}",
-        "change_password": "/api/auth/change-password",
-        "logout": "/api/auth/logout",
-        "profile": "/api/auth/change-password",
-    }
+    """Generate URL for security endpoints."""
+    base_url = (current_app.config.get("AUTH_SERVICE_URL") or "").rstrip("/")
+    if base_url:
+        # External auth service UI routes (browser-friendly GET/POST pages)
+        route_map = {
+            "login": "/login",
+            "register": "/register",
+            "forgot_password": "/forgot",
+            "reset_password": "/reset/{token}",
+            "change_password": "/change-password",
+            "logout": "/logout",
+            "profile": "/change-password",
+        }
+    else:
+        # Local API routes (useful for dev/test or programmatic login)
+        route_map = {
+            "login": "/api/auth/login",
+            "register": "/api/auth/register",
+            "forgot_password": "/api/auth/forgot",
+            "reset_password": "/api/auth/reset/{token}",
+            "change_password": "/api/auth/change-password",
+            "logout": "/api/auth/logout",
+            "profile": "/api/auth/change-password",
+        }
     path = route_map.get(endpoint)
     if not path:
         raise ValueError(f"Unknown auth endpoint: {endpoint}")
