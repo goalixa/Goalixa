@@ -87,6 +87,7 @@ self.addEventListener('activate', (event) => {
         "/timer": "/demo/timer",
         "/calendar": "/demo/calendar",
         "/habits": "/demo/habits",
+        "/habits/new": "/demo/habits/new",
         "/planner": "/demo/planner",
         "/reminders": "/demo/reminders",
         "/goals": "/demo/goals",
@@ -493,6 +494,15 @@ self.addEventListener('activate', (event) => {
             focus_window=summary["focus_window"],
             today=today,
             habit_series=series,
+        )
+
+    @app.route("/demo/habits/new", methods=["GET"])
+    @auth_required()
+    def demo_new_habit():
+        goals_list = service.list_goals()
+        return render_template(
+            "habit_new.html",
+            goals=goals_list,
         )
 
     @app.route("/demo/planner", methods=["GET"])
@@ -1139,6 +1149,15 @@ self.addEventListener('activate', (event) => {
             focus_window=summary["focus_window"],
             today=today,
             habit_series=series,
+        )
+
+    @app.route("/habits/new", methods=["GET"])
+    @auth_required()
+    def new_habit():
+        goals_list = service.list_goals()
+        return render_template(
+            "habit_new.html",
+            goals=goals_list,
         )
 
     @app.route("/planner", methods=["GET"])

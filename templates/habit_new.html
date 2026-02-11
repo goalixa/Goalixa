@@ -1,0 +1,127 @@
+{% extends "layout.html" %}
+{% set title = "Create Habit" %}
+{% set active_page = "habits" %}
+
+{% block content %}
+  <div class="container py-4 habits-page">
+    <header class="header habits-header">
+      <div>
+        <p class="goals-label">New habit</p>
+        <h1>Create habit</h1>
+        <p>Just the essentials: name, rhythm, goal, and a reminder.</p>
+      </div>
+      <div class="habits-header-actions">
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('habits') }}">
+          <i class="bi bi-arrow-left"></i>
+          Back to habits
+        </a>
+      </div>
+    </header>
+
+    <section class="habit-create-panel">
+      <div class="habit-create-head simple">
+        <h3 class="habit-headline">Quick setup</h3>
+        <p class="habit-head-copy">Give it a name, pick a rhythm, then add an optional goal and reminder.</p>
+      </div>
+      <form class="habit-form" id="habit-create-form" method="post" action="{{ url_for('create_habit') }}">
+        <div class="goal-form-row habit-form-row">
+          <label>
+            Habit name
+            <input type="text" name="name" placeholder="Review day plan" required />
+            <span class="habit-field-hint">Keep it short and action-focused (e.g., “Plan tomorrow”).</span>
+          </label>
+          <label>
+            Frequency
+            <select name="frequency" id="habit-frequency">
+              <option value="Daily">Daily</option>
+              <option value="Weekdays">Weekdays</option>
+              <option value="Weekends">Weekends</option>
+              <option value="Custom">Custom</option>
+            </select>
+            <span class="habit-field-hint">Daily builds streaks fastest; custom works for rare habits.</span>
+          </label>
+        </div>
+
+        <div class="goal-form-row habit-form-row">
+          <label class="habit-goal-field">
+            Goal
+            <div class="habit-goal-select">
+              <select name="goal_name">
+                <option value="">Select a goal</option>
+                {% for goal in goals %}
+                  <option value="{{ goal['name'] }}" data-goal-id="{{ goal['id'] }}">{{ goal['name'] }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <span class="habit-field-hint">Optional: link to a goal so it appears in reports.</span>
+          </label>
+          <label>
+            Sub-goal
+            <select name="subgoal_name">
+              <option value="">Select a sub-goal</option>
+              {% for goal in goals %}
+                {% if goal['subgoals'] %}
+                  <optgroup label="{{ goal['name'] }}">
+                    {% for subgoal in goal['subgoals'] %}
+                      <option value="{{ subgoal['title'] }}">{{ subgoal['title'] }}</option>
+                    {% endfor %}
+                  </optgroup>
+                {% endif %}
+              {% endfor %}
+            </select>
+            <span class="habit-field-hint">Narrow the focus if the goal has sub-steps.</span>
+          </label>
+        </div>
+
+        <div class="goal-form-row habit-form-row">
+          <label>
+            Best time
+            <select name="time_of_day" id="habit-time-of-day">
+              <option value="">Anytime</option>
+              <option value="Morning">Morning</option>
+              <option value="Afternoon">Afternoon</option>
+              <option value="Evening">Evening</option>
+            </select>
+            <span class="habit-field-hint">Pick the window you’re most likely to follow through.</span>
+          </label>
+          <label>
+            Reminder
+            <select name="reminder" id="habit-reminder">
+              <option value="">None</option>
+              <option value="21:00">21:00</option>
+              <option value="22:30">22:30</option>
+            </select>
+            <span class="habit-field-hint">Set a gentle nudge if you often forget this habit.</span>
+          </label>
+        </div>
+
+        <label class="habit-notes-field">
+          Notes
+          <textarea rows="2" name="notes" placeholder="Why is this habit important?"></textarea>
+        </label>
+        <div class="habit-tip-list">
+          <div class="habit-tip">
+            <i class="bi bi-check2-circle"></i>
+            <span>Attach to an existing routine (after coffee, before logging off).</span>
+          </div>
+          <div class="habit-tip">
+            <i class="bi bi-graph-up"></i>
+            <span>Start tiny; you can scale later once the streak is solid.</span>
+          </div>
+          <div class="habit-tip">
+            <i class="bi bi-bell"></i>
+            <span>Use reminders only when the habit is new—remove them once it’s automatic.</span>
+          </div>
+        </div>
+        <div class="goal-form-actions habit-form-actions">
+          <button class="btn btn-outline-secondary btn-sm" type="reset">Reset</button>
+          <button class="btn btn-primary btn-sm" type="submit">Create habit</button>
+        </div>
+      </form>
+    </section>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+{% endblock %}

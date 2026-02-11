@@ -10,88 +10,10 @@
         <p>Track daily routines and close the day with a clear checklist.</p>
       </div>
       <div class="habits-header-actions">
-        <button class="btn btn-primary btn-sm" type="button" data-habit-toggle aria-expanded="false">
+        <a class="btn btn-primary btn-sm" href="{{ url_for('new_habit') }}">
           <i class="bi bi-plus-lg"></i>
           Create habit
-        </button>
-        <div class="habit-create-panel is-hidden" id="habit-create">
-          <form class="habit-form" id="habit-form" method="post" action="{{ url_for('create_habit') }}">
-            <div class="goal-form-row">
-              <label>
-                Habit name
-                <input type="text" name="name" placeholder="Review day plan" required />
-              </label>
-              <label>
-                Frequency
-                <select name="frequency">
-                  <option value="Daily">Daily</option>
-                  <option value="Weekdays">Weekdays</option>
-                  <option value="Weekends">Weekends</option>
-                  <option value="Custom">Custom</option>
-                </select>
-              </label>
-            </div>
-            <div class="goal-form-row">
-              <label class="habit-goal-field">
-                Goal
-                <div class="habit-goal-select">
-                  <select name="goal_name">
-                    <option value="">Select a goal</option>
-                    {% for goal in goals %}
-                      <option value="{{ goal['name'] }}" data-goal-id="{{ goal['id'] }}">{{ goal['name'] }}</option>
-                    {% endfor %}
-                  </select>
-                  <button class="btn btn-outline-danger btn-sm habit-goal-delete" type="button" data-goal-delete>
-                    <i class="bi bi-trash"></i>
-                    Delete goal
-                  </button>
-                </div>
-              </label>
-              <label>
-                Sub-goal
-                <select name="subgoal_name">
-                  <option value="">Select a sub-goal</option>
-                  {% for goal in goals %}
-                    {% if goal['subgoals'] %}
-                      <optgroup label="{{ goal['name'] }}">
-                        {% for subgoal in goal['subgoals'] %}
-                          <option value="{{ subgoal['title'] }}">{{ subgoal['title'] }}</option>
-                        {% endfor %}
-                      </optgroup>
-                    {% endif %}
-                  {% endfor %}
-                </select>
-              </label>
-            </div>
-            <div class="goal-form-row">
-              <label>
-                Best time
-                <select name="time_of_day">
-                  <option value="">Anytime</option>
-                  <option value="Morning">Morning</option>
-                  <option value="Afternoon">Afternoon</option>
-                  <option value="Evening">Evening</option>
-                </select>
-              </label>
-              <label>
-                Reminder
-                <select name="reminder">
-                  <option value="">None</option>
-                  <option value="21:00">21:00</option>
-                  <option value="22:30">22:30</option>
-                </select>
-              </label>
-            </div>
-            <label>
-              Notes
-              <textarea rows="2" name="notes" placeholder="Why is this habit important?"></textarea>
-            </label>
-            <div class="goal-form-actions habit-form-actions">
-              <button class="btn btn-outline-secondary btn-sm" type="reset">Reset</button>
-              <button class="btn btn-primary btn-sm" type="submit">Create habit</button>
-            </div>
-          </form>
-        </div>
+        </a>
       </div>
     </header>
 
@@ -264,28 +186,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const toggleButton = document.querySelector("[data-habit-toggle]");
-      const createPanel = document.getElementById("habit-create");
-      if (toggleButton && createPanel) {
-        toggleButton.addEventListener("click", () => {
-          const isHidden = createPanel.classList.toggle("is-hidden");
-          toggleButton.setAttribute("aria-expanded", String(!isHidden));
-          if (!isHidden) {
-            const input = createPanel.querySelector('input[name="name"]');
-            if (input) {
-              input.focus();
-            }
-          }
-        });
-      }
-      const form = document.getElementById("habit-form");
-      if (form && createPanel && toggleButton) {
-        form.addEventListener("submit", () => {
-          createPanel.classList.add("is-hidden");
-          toggleButton.setAttribute("aria-expanded", "false");
-        });
-      }
-
       document.addEventListener("click", (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) {
