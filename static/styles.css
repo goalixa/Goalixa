@@ -8853,13 +8853,6 @@ body {
   }
 }
 
-/* ============================================================================
-   REDESIGNED TASKS PAGE SECTIONING
-   ============================================================================ */
-
-/* ============================================================================
-   CREATE TASK SECTION - Modern Card Design
-   ============================================================================ */
 .card:has(.task-form) {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border: 1px solid rgba(31, 111, 235, 0.08);
@@ -9613,156 +9606,6 @@ body {
   border-color: rgba(96, 165, 250, 0.3);
 }
 
-/* Compact layout adjustments for Tasks page */
-body[data-page="tasks"] {
-  --touch-target: 36px;
-  font-size: 0.95rem;
-}
-
-body[data-page="tasks"] .header {
-  padding: 16px 0;
-  margin-bottom: 16px;
-  gap: 16px;
-}
-
-body[data-page="tasks"] .header h1 {
-  font-size: 1.5rem;
-}
-
-body[data-page="tasks"] .header p {
-  font-size: 0.9rem;
-}
-
-body[data-page="tasks"] .card {
-  padding: 16px;
-  margin-bottom: 16px;
-  border-radius: 14px;
-}
-
-body[data-page="tasks"] .card h2 {
-  font-size: 1rem;
-  margin-bottom: 8px;
-}
-
-body[data-page="tasks"] .task-form {
-  gap: 10px;
-}
-
-body[data-page="tasks"] .task-form input,
-body[data-page="tasks"] .task-form select {
-  padding: 10px 12px;
-  border-radius: 10px;
-  font-size: 0.95rem;
-}
-
-body[data-page="tasks"] .task-form button {
-  padding: 10px 14px;
-  border-radius: 10px;
-}
-
-body[data-page="tasks"] .label-picker {
-  width: min(320px, 86vw);
-  padding: 12px;
-}
-
-body[data-page="tasks"] .label-options {
-  max-height: 180px;
-}
-
-body[data-page="tasks"] .task-columns {
-  gap: 12px;
-}
-
-body[data-page="tasks"] .task-column {
-  padding: 12px;
-  border-radius: 12px;
-  display: grid;
-  grid-template-rows: auto 1fr;
-  min-height: clamp(340px, 56vh, 520px);
-}
-
-body[data-page="tasks"] .task-column h3 {
-  font-size: 0.95rem;
-  margin-bottom: 8px;
-}
-
-body[data-page="tasks"] .task-list {
-  gap: 10px;
-  max-height: clamp(300px, 52vh, 480px);
-  overflow-y: auto;
-  padding-right: 4px;
-  margin-bottom: 0;
-}
-
-body[data-page="tasks"] .task-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-body[data-page="tasks"] .task-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-body[data-page="tasks"] .task-list::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
-  border-radius: 999px;
-}
-
-[data-theme="dark"] body[data-page="tasks"] .task-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
-}
-
-body[data-page="tasks"] .task-item {
-  padding: 10px 12px;
-  border-radius: 12px;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
-}
-
-body[data-page="tasks"] .task-info {
-  gap: 6px 8px;
-}
-
-body[data-page="tasks"] .name-badge {
-  padding: 5px 10px;
-  border-radius: 10px;
-  font-size: 0.9rem;
-}
-
-body[data-page="tasks"] .task-title {
-  font-size: 0.95rem;
-}
-
-body[data-page="tasks"] .task-time {
-  font-size: 0.85rem;
-}
-
-body[data-page="tasks"] .task-meta {
-  font-size: 0.8rem;
-}
-
-body[data-page="tasks"] .task-status {
-  font-size: 0.75rem;
-  padding: 3px 8px;
-}
-
-body[data-page="tasks"] .task-actions {
-  gap: 6px;
-}
-
-body[data-page="tasks"] .task-actions button {
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-
-body[data-page="tasks"] .icon-button,
-body[data-page="tasks"] .menu-button {
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  min-height: 34px;
-  font-size: 0.95rem;
-}
-
 /* ============================================================================
    TASK ACTION BUTTONS SPECIFIC STYLES
    ============================================================================ */
@@ -9832,22 +9675,22 @@ body[data-page="tasks"] .menu-button {
 @media (max-width: 992px) {
   .task-columns {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 16px;
   }
 
   .task-column {
-    padding: 12px;
+    padding: 16px;
   }
 
   .task-item {
-    padding: 12px;
+    padding: 14px;
   }
 }
 
 @media (max-width: 768px) {
   .task-form {
     flex-wrap: wrap;
-    padding: 12px;
+    padding: 16px;
   }
 
   .task-form input,
