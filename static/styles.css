@@ -1405,6 +1405,32 @@ body {
   gap: 12px;
 }
 
+.habit-field-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid rgba(31, 111, 235, 0.18);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.habit-field-card select,
+.habit-field-card input {
+  margin-top: 0;
+}
+
+[data-theme="dark"] .habit-field-card {
+  background: linear-gradient(180deg, #1a1f2b 0%, #111620 100%);
+  border-color: rgba(90, 141, 255, 0.28);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
 .habit-notes-field textarea {
   min-height: 72px;
 }
@@ -1525,11 +1551,28 @@ body {
   border-color: rgba(90, 141, 255, 0.35);
 }
 
+[data-theme="dark"] .habit-form-row select option {
+  background: #0f1520;
+  color: #e5e7eb;
+}
+
+[data-theme="dark"] .habit-form-row select option:checked {
+  background: #1f2a3d;
+  color: #cbd5f5;
+}
+
 .habit-form-row select:focus,
 .habit-form-row input:focus,
 .habit-notes-field textarea:focus {
   border-color: rgba(79, 70, 229, 0.6);
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+[data-theme="dark"] .habit-form-row select:focus,
+[data-theme="dark"] .habit-form-row input:focus,
+[data-theme="dark"] .habit-notes-field textarea:focus {
+  border-color: rgba(124, 58, 237, 0.7);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.25);
 }
 
 [data-theme="dark"] .habit-notes-field textarea {
