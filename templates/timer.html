@@ -26,7 +26,6 @@
               </button>
             </div>
             <div class="timer-dropdown" id="task-dropdown">
-              <input class="timer-search" type="text" placeholder="Search tasks..." />
               <div class="timer-list">
                 <button type="button">Recent: Design VPC Architecture</button>
                 <button type="button">Recent: Build ETL Jobs</button>
@@ -313,7 +312,6 @@
       const viewTabs = document.querySelectorAll(".timer-view-tab");
       const taskPicker = document.getElementById("task-picker");
       const taskDropdown = document.querySelector(".timer-dropdown");
-      const taskSearch = document.querySelector(".timer-search");
       const taskList = document.querySelector(".timer-list");
       let cachedTasks = [];
 
@@ -490,11 +488,11 @@
         if (doneButton) {
           doneButton.disabled = !state.taskId;
         }
-        if (taskClear) {
-          taskClear.disabled = !state.taskId;
-        }
-        updatePageTitle(state);
-      };
+          if (taskClear) {
+            taskClear.disabled = !state.taskId;
+          }
+          updatePageTitle(state);
+        };
 
       const getNextMode = (state) => {
         if (state.mode === "work") {
@@ -807,9 +805,6 @@
           if (taskPicker) {
             taskPicker.value = "";
           }
-          if (taskSearch) {
-            taskSearch.value = "";
-          }
           if (cachedTasks.length) {
             renderTasks(cachedTasks, "");
           }
@@ -873,9 +868,6 @@
           if (taskPicker) {
             taskPicker.value = selected.name;
           }
-          if (taskSearch) {
-            taskSearch.value = "";
-          }
           if (state.mode !== "work" || state.remaining !== presets.work) {
             state.mode = "work";
             state.remaining = presets.work;
@@ -905,13 +897,23 @@
           taskPicker?.setAttribute("aria-expanded", "false");
         };
 
-        if (taskPicker && taskDropdown && taskSearch && taskList) {
+        if (taskPicker && taskDropdown && taskList) {
           fetch("/api/tasks")
             .then((response) => response.json())
             .then((payload) => {
               cachedTasks = (payload.tasks || []).sort(
                 (a, b) => (b.total_seconds || 0) - (a.total_seconds || 0),
               );
+              const runningTask = cachedTasks.find((task) => task.is_running);
+              if (runningTask && !state.taskId) {
+                state.taskId = runningTask.id;
+                state.taskName = runningTask.name;
+                state.mode = "work";
+                state.isRunning = true;
+                state.lastTick = Date.now();
+                updatePomodoroUI(state);
+                startInterval(state);
+              }
               if (state.taskId) {
                 const current = cachedTasks.find(
                   (task) => String(task.id) === String(state.taskId),
@@ -922,7 +924,7 @@
                   updatePomodoroUI(state);
                 }
               }
-              renderTasks(cachedTasks, taskSearch.value);
+              renderTasks(cachedTasks, taskPicker.value);
 
               taskPicker.addEventListener("focus", () => {
                 openDropdown();
@@ -934,9 +936,6 @@
 
               taskPicker.addEventListener("input", () => {
                 openDropdown();
-                if (taskSearch) {
-                  taskSearch.value = taskPicker.value;
-                }
                 renderTasks(cachedTasks, taskPicker.value);
               });
 
@@ -944,7 +943,10 @@
                 if (event.key === "ArrowDown") {
                   event.preventDefault();
                   openDropdown();
-                  taskSearch?.focus();
+                  const firstButton = taskList?.querySelector("button");
+                  if (firstButton) {
+                    firstButton.focus();
+                  }
                 }
                 if (event.key === "Enter") {
                   const candidates = filterTasks(cachedTasks, taskPicker.value);
@@ -955,17 +957,6 @@
                 }
                 if (event.key === "Escape") {
                   closeDropdown();
-                }
-              });
-
-              taskSearch.addEventListener("input", () => {
-                renderTasks(cachedTasks, taskSearch.value);
-              });
-
-              taskSearch.addEventListener("keydown", (event) => {
-                if (event.key === "Escape") {
-                  closeDropdown();
-                  taskPicker.focus();
                 }
               });
 
