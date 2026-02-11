@@ -2,7 +2,15 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 
-from flask import jsonify, redirect, render_template, request, url_for, current_app, g
+from flask import (
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+    current_app,
+    g,
+)
 from app.auth_client import auth_required, current_user, url_for_security
 
 
@@ -13,6 +21,38 @@ def register_routes(app, service):
     def health():
         """Health check endpoint for Kubernetes probes (no auth required)."""
         return jsonify({"status": "ok"}), 200
+
+    @app.route("/sw.js", methods=["GET"])
+    def disable_service_worker():
+        """
+        Force-disable any previously registered service worker on app.goalixa.com.
+        This prevents legacy PWA behavior from persisting on the non-PWA host.
+        """
+        script = """self.addEventListener('install', (event) => {
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.map((name) => caches.delete(name)));
+    await self.registration.unregister();
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of clients) {
+      client.navigate(client.url);
+    }
+  })());
+});"""
+        response = current_app.response_class(script, mimetype="application/javascript")
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        return response
+
+    @app.route("/manifest.webmanifest", methods=["GET"])
+    @app.route("/manifest.json", methods=["GET"])
+    def disable_manifest():
+        response = current_app.response_class("", status=410, mimetype="text/plain")
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        return response
 
     def demo_url_for(endpoint, **values):
         """Custom url_for that adds /demo prefix when in demo mode."""
