@@ -25,12 +25,12 @@
       </div>
       <form class="habit-form" id="habit-create-form" method="post" action="{{ url_for('create_habit') }}">
         <div class="goal-form-row habit-form-row">
-          <label>
+          <label class="habit-field-card">
             Habit name
             <input type="text" name="name" placeholder="Review day plan" required />
             <span class="habit-field-hint">Keep it short and action-focused (e.g., “Plan tomorrow”).</span>
           </label>
-          <label>
+          <label class="habit-field-card">
             Frequency
             <select name="frequency" id="habit-frequency">
               <option value="Daily">Daily</option>
@@ -43,7 +43,7 @@
         </div>
 
         <div class="goal-form-row habit-form-row">
-          <label class="habit-goal-field">
+          <label class="habit-field-card habit-goal-field">
             Goal
             <div class="habit-goal-select">
               <select name="goal_name">
@@ -55,7 +55,7 @@
             </div>
             <span class="habit-field-hint">Optional: link to a goal so it appears in reports.</span>
           </label>
-          <label>
+          <label class="habit-field-card">
             Sub-goal
             <select name="subgoal_name">
               <option value="">Select a sub-goal</option>
@@ -74,7 +74,7 @@
         </div>
 
         <div class="goal-form-row habit-form-row">
-          <label>
+          <label class="habit-field-card">
             Best time
             <select name="time_of_day" id="habit-time-of-day">
               <option value="">Anytime</option>
@@ -84,7 +84,7 @@
             </select>
             <span class="habit-field-hint">Pick the window you’re most likely to follow through.</span>
           </label>
-          <label>
+          <label class="habit-field-card">
             Reminder
             <select name="reminder" id="habit-reminder">
               <option value="">None</option>
