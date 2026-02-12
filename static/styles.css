@@ -9451,6 +9451,142 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
   transform: translateY(-1px);
 }
 
+.task-board-list {
+  gap: 12px;
+}
+
+.task-board-list .task-item {
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow:
+    0 8px 18px rgba(15, 23, 42, 0.04),
+    0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.task-board-list .task-item:hover {
+  border-color: #d4d8de;
+  box-shadow:
+    0 10px 22px rgba(15, 23, 42, 0.08),
+    0 2px 6px rgba(15, 23, 42, 0.08);
+  transform: translateY(-2px);
+}
+
+.task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.task-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.task-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.task-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1f2937;
+  letter-spacing: 0.1px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.task-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.task-project {
+  font-size: 0.83rem;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 10px;
+}
+
+.task-labels {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.task-label {
+  --label-color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #1f2937;
+  background: color-mix(in srgb, var(--label-color, #6366f1) 14%, #ffffff);
+  border-color: color-mix(in srgb, var(--label-color, #6366f1) 40%, transparent);
+  color: color-mix(in srgb, var(--label-color, #6366f1) 85%, #111827);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.1px;
+}
+
+.task-labels-empty {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .task-project {
+  color: #c7d3e8;
+  background: rgba(96, 165, 250, 0.12);
+  border-color: rgba(96, 165, 250, 0.28);
+}
+
+[data-theme="dark"] .task-label {
+  background: color-mix(in srgb, var(--label-color, #8b5cf6) 18%, #0f131a);
+  border-color: color-mix(in srgb, var(--label-color, #8b5cf6) 40%, transparent);
+  color: color-mix(in srgb, var(--label-color, #8b5cf6) 90%, #dbeafe);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .task-labels-empty {
+  color: #6b7280;
+}
+
+.task-board-list .task-time {
+  background: transparent;
+  padding: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.task-board-list .task-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.task-board-list .task-project {
+  font-size: 0.83rem;
+}
+
+[data-theme="dark"] .task-board-list .task-title {
+  color: #e5e9f5;
+}
+
 .task-info {
   display: flex;
   flex-wrap: wrap;
@@ -9658,10 +9794,25 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
     inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
+[data-theme="dark"] .task-board-list .task-item {
+  background: linear-gradient(180deg, #1c222c 0%, #171d26 100%);
+  border-color: rgba(96, 165, 250, 0.14);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
 [data-theme="dark"] .task-item:hover {
   border-color: rgba(96, 165, 250, 0.2);
   box-shadow:
     0 8px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .task-board-list .task-item:hover {
+  border-color: rgba(96, 165, 250, 0.25);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.55),
     inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
@@ -9672,6 +9823,11 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
 [data-theme="dark"] .task-time {
   color: #64748b;
   background: rgba(96, 165, 250, 0.08);
+}
+
+[data-theme="dark"] .task-board-list .task-time {
+  color: #9fb4d7;
+  background: transparent;
 }
 
 /* Dark Mode - Completed Section */

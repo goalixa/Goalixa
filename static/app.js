@@ -118,26 +118,45 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
         const name = escapeHtml(task.name);
         const project = escapeHtml(task.project_name || "Unassigned");
         const time = formatSeconds(task.today_seconds || 0);
+        const labels = Array.isArray(task.labels) ? task.labels : [];
         const tooltip =
-          task.labels && task.labels.length
-            ? `${name} · ${project} · ${task.labels.map((label) => label.name).join(", ")}`
+          labels.length > 0
+            ? `${name} · ${project} · ${labels.map((label) => label.name).join(", ")}`
             : `${name} · ${project}`;
         const editFormId = `edit-task-${task.id}`;
-        const editField = `<div class="editable-field">
-            <span class="name-badge name-task task-title" title="${escapeHtml(tooltip)}">${name}</span>
-            <button class="edit-toggle icon-button" type="button" aria-label="Edit task" data-edit-target="${editFormId}">
-              <i class="bi bi-pencil"></i>
-            </button>
-          </div>`;
         const labelOptions = availableLabels
           .map(
             (label) =>
               `<option value="${label.id}">${escapeHtml(label.name)}</option>`,
           )
           .join("");
+        const labelChips =
+          labels.length > 0
+            ? `<div class="task-labels" aria-label="Labels">
+                 ${labels
+                   .map(
+                     (label) =>
+                       `<span class="task-label" style="--label-color: ${escapeHtml(label.color)};">${escapeHtml(label.name)}</span>`,
+                   )
+                   .join("")}
+               </div>`
+            : '<span class="task-labels task-labels-empty">No labels</span>';
+
         return `<li class="task-item">
-                  <div class="task-info">
-                    ${editField}
+                  <div class="task-content">
+                    <div class="task-header">
+                      <div class="editable-field task-title-row">
+                        <span class="task-title" title="${escapeHtml(tooltip)}">${name}</span>
+                        <button class="edit-toggle icon-button" type="button" aria-label="Edit task" data-edit-target="${editFormId}">
+                          <i class="bi bi-pencil"></i>
+                        </button>
+                      </div>
+                      <span class="task-time" data-task-id="${task.id}">${time}</span>
+                    </div>
+                    <div class="task-meta-row">
+                      <span class="task-project">${project}</span>
+                      ${labelChips}
+                    </div>
                     <form id="${editFormId}" class="edit-form" method="post" action="/tasks/${task.id}/edit">
                       <input type="text" name="name" value="${name}" required />
                       <div class="task-edit-row">
@@ -151,7 +170,6 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                         </button>
                       </div>
                     </form>
-                    <span class="task-time" data-task-id="${task.id}">${time}</span>
                   </div>
                   <div class="task-actions">
                     <form method="post" action="/tasks/${task.id}/daily-check" data-action="daily-check" data-task-id="${task.id}">
@@ -189,7 +207,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
       })
       .join("");
 
-    container.innerHTML = `<h3>In progress</h3><ul class="task-list">${items}</ul>`;
+    container.innerHTML = `<h3>In progress</h3><ul class="task-list task-board-list">${items}</ul>`;
   }
 
   if (doneTodayContainer) {
@@ -202,9 +220,10 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
           const name = escapeHtml(task.name);
           const project = escapeHtml(task.project_name || "Unassigned");
           const time = formatSeconds(task.today_seconds || 0);
+          const labels = Array.isArray(task.labels) ? task.labels : [];
           const tooltip =
-            task.labels && task.labels.length
-              ? `${name} · ${project} · ${task.labels.map((label) => label.name).join(", ")}`
+            labels.length > 0
+              ? `${name} · ${project} · ${labels.map((label) => label.name).join(", ")}`
               : `${name} · ${project}`;
           const editFormId = `edit-task-${task.id}`;
           const labelOptions = availableLabels
@@ -213,13 +232,32 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                 `<option value="${label.id}">${escapeHtml(label.name)}</option>`,
             )
             .join("");
+          const labelChips =
+            labels.length > 0
+              ? `<div class="task-labels" aria-label="Labels">
+                   ${labels
+                     .map(
+                       (label) =>
+                         `<span class="task-label" style="--label-color: ${escapeHtml(label.color)};">${escapeHtml(label.name)}</span>`,
+                     )
+                     .join("")}
+                 </div>`
+              : '<span class="task-labels task-labels-empty">No labels</span>';
+
           return `<li class="task-item is-done-today">
-                    <div class="task-info">
-                      <div class="editable-field">
-                        <span class="name-badge name-task task-title" title="${escapeHtml(tooltip)}">${name}</span>
-                        <button class="edit-toggle icon-button" type="button" aria-label="Edit task" data-edit-target="${editFormId}">
-                          <i class="bi bi-pencil"></i>
-                        </button>
+                    <div class="task-content">
+                      <div class="task-header">
+                        <div class="editable-field task-title-row">
+                          <span class="task-title" title="${escapeHtml(tooltip)}">${name}</span>
+                          <button class="edit-toggle icon-button" type="button" aria-label="Edit task" data-edit-target="${editFormId}">
+                            <i class="bi bi-pencil"></i>
+                          </button>
+                        </div>
+                        <span class="task-time" data-task-id="${task.id}">${time}</span>
+                      </div>
+                      <div class="task-meta-row">
+                        <span class="task-project">${project}</span>
+                        ${labelChips}
                       </div>
                       <form id="${editFormId}" class="edit-form" method="post" action="/tasks/${task.id}/edit">
                         <input type="text" name="name" value="${name}" required />
@@ -234,7 +272,6 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                           </button>
                         </div>
                       </form>
-                      <span class="task-time" data-task-id="${task.id}">${time}</span>
                     </div>
                     <div class="task-actions">
                       ${task.is_running
@@ -266,7 +303,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                   </li>`;
         })
         .join("");
-      doneTodayContainer.innerHTML = `<h3>Done today</h3><ul class="task-list">${items}</ul>`;
+      doneTodayContainer.innerHTML = `<h3>Done today</h3><ul class="task-list task-board-list">${items}</ul>`;
     }
   }
 
@@ -279,16 +316,35 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
           const name = escapeHtml(task.name);
           const project = escapeHtml(task.project_name || "Unassigned");
           const time = formatSeconds(task.total_seconds || 0);
+          const labels = Array.isArray(task.labels) ? task.labels : [];
           const tooltip =
-            task.labels && task.labels.length
-              ? `${name} · ${project} · ${task.labels.map((label) => label.name).join(", ")}`
+            labels.length > 0
+              ? `${name} · ${project} · ${labels.map((label) => label.name).join(", ")}`
               : `${name} · ${project}`;
+          const labelChips =
+            labels.length > 0
+              ? `<div class="task-labels" aria-label="Labels">
+                   ${labels
+                     .map(
+                       (label) =>
+                         `<span class="task-label" style="--label-color: ${escapeHtml(label.color)};">${escapeHtml(label.name)}</span>`,
+                     )
+                     .join("")}
+                 </div>`
+              : '<span class="task-labels task-labels-empty">No labels</span>';
+
           return `<li class="task-item is-completed">
-                    <div class="task-info">
-                      <div class="editable-field">
-                        <span class="name-badge name-task task-title" title="${escapeHtml(tooltip)}">${name}</span>
+                    <div class="task-content">
+                      <div class="task-header">
+                        <div class="task-title-row">
+                          <span class="task-title" title="${escapeHtml(tooltip)}">${name}</span>
+                        </div>
+                        <span class="task-time">${time}</span>
                       </div>
-                      <span class="task-time">${time}</span>
+                      <div class="task-meta-row">
+                        <span class="task-project">${project}</span>
+                        ${labelChips}
+                      </div>
                     </div>
                     <div class="task-actions">
                       <form method="post" action="/tasks/${task.id}/reopen" data-action="reopen" data-task-id="${task.id}">
@@ -307,7 +363,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                   </li>`;
         })
         .join("");
-      completedContainer.innerHTML = `<ul class="task-list">${items}</ul>`;
+      completedContainer.innerHTML = `<ul class="task-list task-board-list">${items}</ul>`;
     }
   }
 }
