@@ -77,17 +77,17 @@
                       <span class="task-time" data-task-id="{{ task['id'] }}">{{ task['today_seconds'] | format_seconds }}</span>
                     </div>
                     <div class="task-meta-row">
-                      <span class="task-goal">{{ task['goal_name'] or 'No goal' }}</span>
-                      <span class="task-project">{{ task['project_name'] or 'Unassigned' }}</span>
+                      <span class="meta-pill meta-goal"><i class="bi bi-bullseye"></i>{{ task['goal_name'] or 'No goal' }}</span>
+                      <span class="meta-pill meta-project"><i class="bi bi-folder2-open"></i>{{ task['project_name'] or 'Unassigned' }}</span>
                       <span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>{{ task['daily_checks'] }}</span>
                       {% if task['labels'] %}
                         <div class="task-labels" aria-label="Labels">
                           {% for label in task['labels'] %}
-                            <span class="task-label" style="--label-color: {{ label['color'] }}">{{ label['name'] }}</span>
+                            <span class="meta-pill meta-label"><i class="bi bi-tag"></i>{{ label['name'] }}</span>
                           {% endfor %}
                         </div>
                       {% else %}
-                        <span class="task-labels task-labels-empty">No labels</span>
+                        <span class="meta-pill meta-label-empty"><i class="bi bi-tag"></i>No labels</span>
                       {% endif %}
                     </div>
                     <form id="edit-task-{{ task['id'] }}" class="edit-form" method="post" action="{{ url_for('edit_task', task_id=task['id']) }}">
@@ -164,17 +164,17 @@
                       <span class="task-time" data-task-id="{{ task['id'] }}">{{ task['today_seconds'] | format_seconds }}</span>
                     </div>
                     <div class="task-meta-row">
-                      <span class="task-goal">{{ task['goal_name'] or 'No goal' }}</span>
-                      <span class="task-project">{{ task['project_name'] or 'Unassigned' }}</span>
+                      <span class="meta-pill meta-goal"><i class="bi bi-bullseye"></i>{{ task['goal_name'] or 'No goal' }}</span>
+                      <span class="meta-pill meta-project"><i class="bi bi-folder2-open"></i>{{ task['project_name'] or 'Unassigned' }}</span>
                       <span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>{{ task['daily_checks'] }}</span>
                       {% if task['labels'] %}
                         <div class="task-labels" aria-label="Labels">
                           {% for label in task['labels'] %}
-                            <span class="task-label" style="--label-color: {{ label['color'] }};">{{ label['name'] }}</span>
+                            <span class="meta-pill meta-label"><i class="bi bi-tag"></i>{{ label['name'] }}</span>
                           {% endfor %}
                         </div>
                       {% else %}
-                        <span class="task-labels task-labels-empty">No labels</span>
+                        <span class="meta-pill meta-label-empty"><i class="bi bi-tag"></i>No labels</span>
                       {% endif %}
                     </div>
                     <form id="edit-task-{{ task['id'] }}" class="edit-form" method="post" action="{{ url_for('edit_task', task_id=task['id']) }}">
@@ -247,17 +247,17 @@
                     <span class="task-time">{{ task['total_seconds'] | format_seconds }}</span>
                   </div>
                   <div class="task-meta-row">
-                    <span class="task-goal">{{ task['goal_name'] or 'No goal' }}</span>
-                    <span class="task-project">{{ task['project_name'] or 'Unassigned' }}</span>
+                    <span class="meta-pill meta-goal"><i class="bi bi-bullseye"></i>{{ task['goal_name'] or 'No goal' }}</span>
+                    <span class="meta-pill meta-project"><i class="bi bi-folder2-open"></i>{{ task['project_name'] or 'Unassigned' }}</span>
                     <span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>{{ task['daily_checks'] }}</span>
                     {% if task['labels'] %}
                       <div class="task-labels" aria-label="Labels">
                         {% for label in task['labels'] %}
-                          <span class="task-label" style="--label-color: {{ label['color'] }};">{{ label['name'] }}</span>
+                          <span class="meta-pill meta-label"><i class="bi bi-tag"></i>{{ label['name'] }}</span>
                         {% endfor %}
                       </div>
                     {% else %}
-                      <span class="task-labels task-labels-empty">No labels</span>
+                      <span class="meta-pill meta-label-empty"><i class="bi bi-tag"></i>No labels</span>
                     {% endif %}
                   </div>
                 </div>
