@@ -72,6 +72,7 @@
                     </div>
                     <div class="task-meta-row">
                       <span class="task-project">{{ task['project_name'] or 'Unassigned' }}</span>
+                      <span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>{{ task['daily_checks'] }}</span>
                       {% if task['labels'] %}
                         <div class="task-labels" aria-label="Labels">
                           {% for label in task['labels'] %}
@@ -157,6 +158,7 @@
                     </div>
                     <div class="task-meta-row">
                       <span class="task-project">{{ task['project_name'] or 'Unassigned' }}</span>
+                      <span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>{{ task['daily_checks'] }}</span>
                       {% if task['labels'] %}
                         <div class="task-labels" aria-label="Labels">
                           {% for label in task['labels'] %}
@@ -238,6 +240,7 @@
                   </div>
                   <div class="task-meta-row">
                     <span class="task-project">{{ task['project_name'] or 'Unassigned' }}</span>
+                    <span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>{{ task['daily_checks'] }}</span>
                     {% if task['labels'] %}
                       <div class="task-labels" aria-label="Labels">
                         {% for label in task['labels'] %}

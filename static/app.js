@@ -119,6 +119,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
         const project = escapeHtml(task.project_name || "Unassigned");
         const time = formatSeconds(task.today_seconds || 0);
         const labels = Array.isArray(task.labels) ? task.labels : [];
+        const doneCount = Number(task.daily_checks || 0);
         const tooltip =
           labels.length > 0
             ? `${name} · ${project} · ${labels.map((label) => label.name).join(", ")}`
@@ -141,6 +142,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                    .join("")}
                </div>`
             : '<span class="task-labels task-labels-empty">No labels</span>';
+        const donePill = `<span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>${doneCount}</span>`;
 
         return `<li class="task-item">
                   <div class="task-content">
@@ -155,6 +157,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                     </div>
                     <div class="task-meta-row">
                       <span class="task-project">${project}</span>
+                      ${donePill}
                       ${labelChips}
                     </div>
                     <form id="${editFormId}" class="edit-form" method="post" action="/tasks/${task.id}/edit">
@@ -221,6 +224,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
           const project = escapeHtml(task.project_name || "Unassigned");
           const time = formatSeconds(task.today_seconds || 0);
           const labels = Array.isArray(task.labels) ? task.labels : [];
+          const doneCount = Number(task.daily_checks || 0);
           const tooltip =
             labels.length > 0
               ? `${name} · ${project} · ${labels.map((label) => label.name).join(", ")}`
@@ -243,6 +247,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                      .join("")}
                  </div>`
               : '<span class="task-labels task-labels-empty">No labels</span>';
+          const donePill = `<span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>${doneCount}</span>`;
 
           return `<li class="task-item is-done-today">
                     <div class="task-content">
@@ -257,6 +262,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                       </div>
                       <div class="task-meta-row">
                         <span class="task-project">${project}</span>
+                        ${donePill}
                         ${labelChips}
                       </div>
                       <form id="${editFormId}" class="edit-form" method="post" action="/tasks/${task.id}/edit">
@@ -317,6 +323,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
           const project = escapeHtml(task.project_name || "Unassigned");
           const time = formatSeconds(task.total_seconds || 0);
           const labels = Array.isArray(task.labels) ? task.labels : [];
+          const doneCount = Number(task.daily_checks || 0);
           const tooltip =
             labels.length > 0
               ? `${name} · ${project} · ${labels.map((label) => label.name).join(", ")}`
@@ -332,6 +339,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                      .join("")}
                  </div>`
               : '<span class="task-labels task-labels-empty">No labels</span>';
+          const donePill = `<span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>${doneCount}</span>`;
 
           return `<li class="task-item is-completed">
                     <div class="task-content">
@@ -343,6 +351,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                       </div>
                       <div class="task-meta-row">
                         <span class="task-project">${project}</span>
+                        ${donePill}
                         ${labelChips}
                       </div>
                     </div>
