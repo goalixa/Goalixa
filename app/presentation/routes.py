@@ -612,6 +612,7 @@ self.addEventListener('activate', (event) => {
         task_view = service.list_tasks_for_today()
         projects = service.list_projects()
         labels = service.list_labels()
+        goals_list = service.list_goals()
         return render_template(
             "index.html",
             tasks=task_view["tasks"],
@@ -619,6 +620,7 @@ self.addEventListener('activate', (event) => {
             completed_tasks=task_view["completed_tasks"],
             projects=projects,
             labels=labels,
+            goals=goals_list,
         )
 
     @app.route("/demo/projects", methods=["GET"])
@@ -699,6 +701,7 @@ self.addEventListener('activate', (event) => {
             request.form.get("name", ""),
             request.form.get("project_id"),
             request.form.getlist("label_ids"),
+            request.form.get("goal_id"),
         )
         return redirect("/demo/tasks")
 
@@ -1689,6 +1692,7 @@ self.addEventListener('activate', (event) => {
         task_view = service.list_tasks_for_today()
         projects = service.list_projects()
         labels = service.list_labels()
+        goals_list = service.list_goals()
         return render_template(
             "index.html",
             tasks=task_view["tasks"],
@@ -1696,6 +1700,7 @@ self.addEventListener('activate', (event) => {
             completed_tasks=task_view["completed_tasks"],
             projects=projects,
             labels=labels,
+            goals=goals_list,
         )
 
     @app.route("/tasks", methods=["POST"])
@@ -1705,6 +1710,7 @@ self.addEventListener('activate', (event) => {
             request.form.get("name", ""),
             request.form.get("project_id"),
             request.form.getlist("label_ids"),
+            request.form.get("goal_id"),
         )
         return redirect(request.referrer or url_for("index"))
 
@@ -1724,6 +1730,9 @@ self.addEventListener('activate', (event) => {
                     "project_id": task["project_id"],
                     "project_name": task["project_name"],
                     "labels": task["labels"],
+                    "goal_id": task.get("goal_id"),
+                    "goal_name": task.get("goal_name"),
+                    "goals": task.get("goals", []),
                     "status": task.get("status") or "active",
                     "checked_today": bool(task.get("checked_today")),
                     "daily_checks": int(task.get("daily_checks") or 0),
@@ -1742,6 +1751,9 @@ self.addEventListener('activate', (event) => {
                     "project_id": task["project_id"],
                     "project_name": task["project_name"],
                     "labels": task["labels"],
+                    "goal_id": task.get("goal_id"),
+                    "goal_name": task.get("goal_name"),
+                    "goals": task.get("goals", []),
                     "status": task.get("status") or "active",
                     "checked_today": bool(task.get("checked_today")),
                     "daily_checks": int(task.get("daily_checks") or 0),
@@ -1760,6 +1772,9 @@ self.addEventListener('activate', (event) => {
                     "project_id": task["project_id"],
                     "project_name": task["project_name"],
                     "labels": task["labels"],
+                    "goal_id": task.get("goal_id"),
+                    "goal_name": task.get("goal_name"),
+                    "goals": task.get("goals", []),
                     "status": task.get("status") or "active",
                     "checked_today": bool(task.get("checked_today")),
                     "daily_checks": int(task.get("daily_checks") or 0),
@@ -1777,6 +1792,7 @@ self.addEventListener('activate', (event) => {
             payload.get("name", ""),
             payload.get("project_id"),
             payload.get("label_ids", []),
+            payload.get("goal_id"),
         )
         return list_tasks()
 
