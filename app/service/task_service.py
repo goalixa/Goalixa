@@ -1184,9 +1184,14 @@ class TaskService:
             )
         return events
 
-    @staticmethod
-    def _format_time(value):
-        return value.strftime("%I:%M %p").lstrip("0")
+    def _format_time(self, value):
+        if not value:
+            return "--:--"
+        tz_name, tz = self._get_timezone()
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        local_dt = value.astimezone(tz)
+        return local_dt.strftime("%I:%M %p").lstrip("0")
 
     def list_labels(self):
         labels = self.repository.fetch_labels()
