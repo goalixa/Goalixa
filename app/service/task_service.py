@@ -454,11 +454,14 @@ class TaskService:
             task_ids, log_date
         )
         check_counts = self.repository.fetch_task_daily_check_counts(task_ids)
+        goals_map = self.repository.fetch_task_goals_map(task_ids)
         hydrated = []
         for task in tasks:
             task_id = task["id"]
             data = dict(task)
             status = data.get("status") or "active"
+            task_goals = goals_map.get(task_id, [])
+            primary_goal = task_goals[0] if task_goals else None
             hydrated.append(
                 {
                     **data,
@@ -466,6 +469,9 @@ class TaskService:
                     "labels": labels_map.get(task_id, []),
                     "checked_today": task_id in checked_today,
                     "daily_checks": int(check_counts.get(task_id, 0) or 0),
+                    "goals": task_goals,
+                    "goal_id": primary_goal["id"] if primary_goal else None,
+                    "goal_name": primary_goal["name"] if primary_goal else None,
                 }
             )
         return hydrated
@@ -552,7 +558,7 @@ class TaskService:
             "completed_tasks": completed_tasks,
         }
 
-    def add_task(self, name, project_id, label_ids=None):
+    def add_task(self, name, project_id, label_ids=None, goal_id=None):
         name = (name or "").strip()
         if name:
             project_value = int(project_id) if project_id else None
@@ -561,6 +567,8 @@ class TaskService:
             )
             for label_id in label_ids or []:
                 self.repository.add_label_to_task(task_id, int(label_id))
+            if goal_id:
+                self.repository.set_task_goal(task_id, int(goal_id))
 
     def update_task(self, task_id, name):
         name = (name or "").strip()

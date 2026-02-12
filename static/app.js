@@ -117,13 +117,14 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
       .map((task) => {
         const name = escapeHtml(task.name);
         const project = escapeHtml(task.project_name || "Unassigned");
+        const goal = escapeHtml(task.goal_name || "No goal");
         const time = formatSeconds(task.today_seconds || 0);
         const labels = Array.isArray(task.labels) ? task.labels : [];
         const doneCount = Number(task.daily_checks || 0);
         const tooltip =
           labels.length > 0
-            ? `${name} · ${project} · ${labels.map((label) => label.name).join(", ")}`
-            : `${name} · ${project}`;
+            ? `${name} · ${project} · ${goal} · ${labels.map((label) => label.name).join(", ")}`
+            : `${name} · ${project} · ${goal}`;
         const editFormId = `edit-task-${task.id}`;
         const labelOptions = availableLabels
           .map(
@@ -143,6 +144,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                </div>`
             : '<span class="task-labels task-labels-empty">No labels</span>';
         const donePill = `<span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>${doneCount}</span>`;
+        const goalPill = `<span class="task-goal">${goal}</span>`;
 
         return `<li class="task-item">
                   <div class="task-content">
@@ -156,6 +158,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                       <span class="task-time" data-task-id="${task.id}">${time}</span>
                     </div>
                     <div class="task-meta-row">
+                      ${goalPill}
                       <span class="task-project">${project}</span>
                       ${donePill}
                       ${labelChips}
@@ -222,13 +225,14 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
         .map((task) => {
           const name = escapeHtml(task.name);
           const project = escapeHtml(task.project_name || "Unassigned");
+          const goal = escapeHtml(task.goal_name || "No goal");
           const time = formatSeconds(task.today_seconds || 0);
           const labels = Array.isArray(task.labels) ? task.labels : [];
           const doneCount = Number(task.daily_checks || 0);
           const tooltip =
             labels.length > 0
-              ? `${name} · ${project} · ${labels.map((label) => label.name).join(", ")}`
-              : `${name} · ${project}`;
+              ? `${name} · ${project} · ${goal} · ${labels.map((label) => label.name).join(", ")}`
+              : `${name} · ${project} · ${goal}`;
           const editFormId = `edit-task-${task.id}`;
           const labelOptions = availableLabels
             .map(
@@ -248,6 +252,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                  </div>`
               : '<span class="task-labels task-labels-empty">No labels</span>';
           const donePill = `<span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>${doneCount}</span>`;
+          const goalPill = `<span class="task-goal">${goal}</span>`;
 
           return `<li class="task-item is-done-today">
                     <div class="task-content">
@@ -261,6 +266,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                         <span class="task-time" data-task-id="${task.id}">${time}</span>
                       </div>
                       <div class="task-meta-row">
+                        ${goalPill}
                         <span class="task-project">${project}</span>
                         ${donePill}
                         ${labelChips}
@@ -321,13 +327,14 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
         .map((task) => {
           const name = escapeHtml(task.name);
           const project = escapeHtml(task.project_name || "Unassigned");
+          const goal = escapeHtml(task.goal_name || "No goal");
           const time = formatSeconds(task.total_seconds || 0);
           const labels = Array.isArray(task.labels) ? task.labels : [];
           const doneCount = Number(task.daily_checks || 0);
           const tooltip =
             labels.length > 0
-              ? `${name} · ${project} · ${labels.map((label) => label.name).join(", ")}`
-              : `${name} · ${project}`;
+              ? `${name} · ${project} · ${goal} · ${labels.map((label) => label.name).join(", ")}`
+              : `${name} · ${project} · ${goal}`;
           const labelChips =
             labels.length > 0
               ? `<div class="task-labels" aria-label="Labels">
@@ -340,6 +347,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                  </div>`
               : '<span class="task-labels task-labels-empty">No labels</span>';
           const donePill = `<span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>${doneCount}</span>`;
+          const goalPill = `<span class="task-goal">${goal}</span>`;
 
           return `<li class="task-item is-completed">
                     <div class="task-content">
@@ -350,6 +358,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                         <span class="task-time">${time}</span>
                       </div>
                       <div class="task-meta-row">
+                        ${goalPill}
                         <span class="task-project">${project}</span>
                         ${donePill}
                         ${labelChips}
@@ -377,11 +386,16 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
   }
 }
 
-async function createTask(name, projectId, labelIds) {
+async function createTask(name, projectId, labelIds, goalId) {
   const response = await fetch("/api/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, project_id: projectId, label_ids: labelIds }),
+    body: JSON.stringify({
+      name,
+      project_id: projectId,
+      label_ids: labelIds,
+      goal_id: goalId,
+    }),
   });
 
   if (!response.ok) {
@@ -442,6 +456,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("task-form");
   const input = document.getElementById("task-name");
   const projectSelect = document.getElementById("task-project");
+  const goalSelect = document.getElementById("task-goal");
   const labelsSelect = document.getElementById("task-labels");
   const createLabelToggle = document.getElementById("create-label-toggle");
   const createLabelPicker = document.getElementById("create-label-picker");
@@ -479,6 +494,13 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   };
 
+  const getSelectedGoalId = () => {
+    if (goalSelect && goalSelect.value) {
+      return goalSelect.value;
+    }
+    return form?.dataset.goalId || null;
+  };
+
   if (form && input) {
     if (createLabelToggle && createLabelPicker) {
       createLabelToggle.addEventListener("click", () => {
@@ -492,12 +514,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const projectId =
         (projectSelect && projectSelect.value) || form.dataset.projectId;
       const labelIds = getSelectedLabelIds();
+      const goalId = getSelectedGoalId();
       if (!name || !projectId) {
         return;
       }
 
       try {
-        const taskPayload = await createTask(name, projectId, labelIds);
+        const taskPayload = await createTask(name, projectId, labelIds, goalId);
         renderTasks(
           taskPayload.tasks,
           taskPayload.doneTodayTasks,
@@ -506,6 +529,9 @@ document.addEventListener("DOMContentLoaded", () => {
         input.value = "";
         input.focus();
         clearSelectedLabels();
+        if (goalSelect) {
+          goalSelect.selectedIndex = 0;
+        }
       } catch (error) {
         form.submit();
       }

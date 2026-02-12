@@ -1118,6 +1118,55 @@ class PostgresTaskRepository:
             mapping.setdefault(row["goal_id"], []).append(row["task_id"])
         return mapping
 
+    def fetch_task_goals_map(self, task_ids):
+        """Return {task_id: [ {id, name}, ... ]} for the provided task ids."""
+        if not task_ids:
+            return {}
+        db = self._get_db()
+        user_id = self._require_user_id()
+        placeholders = ",".join(["%s"] * len(task_ids))
+        rows = db.execute(
+            f"""
+            SELECT gt.task_id, g.id AS goal_id, g.name
+            FROM goal_tasks gt
+            JOIN goals g ON g.id = gt.goal_id
+            WHERE g.user_id = %s AND gt.task_id IN ({placeholders})
+            """,
+            (user_id, *task_ids),
+        ).fetchall()
+        mapping = {}
+        for row in rows:
+            mapping.setdefault(row["task_id"], []).append(
+                {"id": row["goal_id"], "name": row["name"]}
+            )
+        return mapping
+
+    def set_task_goal(self, task_id, goal_id):
+        """Assign a single goal to a task (replaces existing links)."""
+        db = self._get_db()
+        user_id = self._require_user_id()
+        # Remove existing goal links for this task (scoped to the same user)
+        db.execute(
+            """
+            DELETE FROM goal_tasks
+            WHERE task_id = %s
+              AND task_id IN (SELECT id FROM tasks WHERE id = %s AND user_id = %s)
+            """,
+            (task_id, task_id, user_id),
+        )
+        if goal_id:
+            db.execute(
+                """
+                INSERT INTO goal_tasks (goal_id, task_id)
+                SELECT %s, %s
+                WHERE EXISTS (SELECT 1 FROM goals WHERE id = %s AND user_id = %s)
+                  AND EXISTS (SELECT 1 FROM tasks WHERE id = %s AND user_id = %s)
+                ON CONFLICT DO NOTHING
+                """,
+                (goal_id, task_id, goal_id, user_id, task_id, user_id),
+            )
+        db.commit()
+
     def fetch_goal_subgoals(self, goal_ids):
         if not goal_ids:
             return {}
