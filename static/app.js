@@ -144,7 +144,19 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                </div>`
             : '<span class="task-labels task-labels-empty">No labels</span>';
         const donePill = `<span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>${doneCount}</span>`;
-        const goalPill = `<span class="task-goal">${goal}</span>`;
+        const goalPill = `<span class="meta-pill meta-goal"><i class="bi bi-bullseye"></i>${goal}</span>`;
+        const projectPill = `<span class="meta-pill meta-project"><i class="bi bi-folder2-open"></i>${project}</span>`;
+        const labelsBlock =
+          labels.length > 0
+            ? `<div class="task-labels" aria-label="Labels">
+                 ${labels
+                   .map(
+                     (label) =>
+                       `<span class="meta-pill meta-label"><i class="bi bi-tag"></i>${escapeHtml(label.name)}</span>`,
+                   )
+                   .join("")}
+               </div>`
+            : '<span class="meta-pill meta-label-empty"><i class="bi bi-tag"></i>No labels</span>';
 
         return `<li class="task-item">
                   <div class="task-content">
@@ -159,9 +171,9 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                     </div>
                     <div class="task-meta-row">
                       ${goalPill}
-                      <span class="task-project">${project}</span>
+                      ${projectPill}
                       ${donePill}
-                      ${labelChips}
+                      ${labelsBlock}
                     </div>
                     <form id="${editFormId}" class="edit-form" method="post" action="/tasks/${task.id}/edit">
                       <input type="text" name="name" value="${name}" required />
@@ -240,19 +252,20 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                 `<option value="${label.id}">${escapeHtml(label.name)}</option>`,
             )
             .join("");
-          const labelChips =
+          const donePill = `<span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>${doneCount}</span>`;
+          const goalPill = `<span class="meta-pill meta-goal"><i class="bi bi-bullseye"></i>${goal}</span>`;
+          const projectPill = `<span class="meta-pill meta-project"><i class="bi bi-folder2-open"></i>${project}</span>`;
+          const labelsBlock =
             labels.length > 0
               ? `<div class="task-labels" aria-label="Labels">
                    ${labels
                      .map(
                        (label) =>
-                         `<span class="task-label" style="--label-color: ${escapeHtml(label.color)};">${escapeHtml(label.name)}</span>`,
+                         `<span class="meta-pill meta-label"><i class="bi bi-tag"></i>${escapeHtml(label.name)}</span>`,
                      )
                      .join("")}
                  </div>`
-              : '<span class="task-labels task-labels-empty">No labels</span>';
-          const donePill = `<span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>${doneCount}</span>`;
-          const goalPill = `<span class="task-goal">${goal}</span>`;
+              : '<span class="meta-pill meta-label-empty"><i class="bi bi-tag"></i>No labels</span>';
 
           return `<li class="task-item is-done-today">
                     <div class="task-content">
@@ -267,9 +280,9 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                       </div>
                       <div class="task-meta-row">
                         ${goalPill}
-                        <span class="task-project">${project}</span>
+                        ${projectPill}
                         ${donePill}
-                        ${labelChips}
+                        ${labelsBlock}
                       </div>
                       <form id="${editFormId}" class="edit-form" method="post" action="/tasks/${task.id}/edit">
                         <input type="text" name="name" value="${name}" required />
@@ -335,19 +348,20 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
             labels.length > 0
               ? `${name} · ${project} · ${goal} · ${labels.map((label) => label.name).join(", ")}`
               : `${name} · ${project} · ${goal}`;
-          const labelChips =
+          const donePill = `<span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>${doneCount}</span>`;
+          const goalPill = `<span class="meta-pill meta-goal"><i class="bi bi-bullseye"></i>${goal}</span>`;
+          const projectPill = `<span class="meta-pill meta-project"><i class="bi bi-folder2-open"></i>${project}</span>`;
+          const labelsBlock =
             labels.length > 0
               ? `<div class="task-labels" aria-label="Labels">
                    ${labels
                      .map(
                        (label) =>
-                         `<span class="task-label" style="--label-color: ${escapeHtml(label.color)};">${escapeHtml(label.name)}</span>`,
+                         `<span class="meta-pill meta-label"><i class="bi bi-tag"></i>${escapeHtml(label.name)}</span>`,
                      )
                      .join("")}
                  </div>`
-              : '<span class="task-labels task-labels-empty">No labels</span>';
-          const donePill = `<span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>${doneCount}</span>`;
-          const goalPill = `<span class="task-goal">${goal}</span>`;
+              : '<span class="meta-pill meta-label-empty"><i class="bi bi-tag"></i>No labels</span>';
 
           return `<li class="task-item is-completed">
                     <div class="task-content">
@@ -359,9 +373,9 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                       </div>
                       <div class="task-meta-row">
                         ${goalPill}
-                        <span class="task-project">${project}</span>
+                        ${projectPill}
                         ${donePill}
-                        ${labelChips}
+                        ${labelsBlock}
                       </div>
                     </div>
                     <div class="task-actions">

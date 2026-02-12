@@ -9512,24 +9512,31 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
   flex-wrap: wrap;
 }
 
-.task-project {
-  font-size: 0.83rem;
-  color: #475569;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 4px 10px;
   border-radius: 10px;
+  font-size: 0.83rem;
+  font-weight: 650;
+  letter-spacing: 0.1px;
 }
 
-.task-goal {
-  font-size: 0.83rem;
+.meta-pill i {
+  font-size: 0.9em;
+}
+
+.meta-goal {
   color: #0f172a;
   background: linear-gradient(135deg, #e0f2fe, #eff6ff);
   border: 1px solid #bfdbfe;
-  padding: 4px 10px;
-  border-radius: 10px;
-  font-weight: 650;
-  letter-spacing: 0.1px;
+}
+
+.meta-project {
+  color: #0f172a;
+  background: #fefce8;
+  border: 1px solid #fcd34d;
 }
 
 .task-labels {
@@ -9578,16 +9585,27 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
   color: #94a3b8;
 }
 
+.task-labels-empty i {
+  margin-right: 6px;
+  color: #cbd5e1;
+}
+
 [data-theme="dark"] .task-project {
   color: #c7d3e8;
   background: rgba(96, 165, 250, 0.12);
   border-color: rgba(96, 165, 250, 0.28);
 }
 
-[data-theme="dark"] .task-goal {
+[data-theme="dark"] .meta-goal {
   color: #e5e9f5;
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.16), rgba(124, 58, 237, 0.12));
   border-color: rgba(96, 165, 250, 0.35);
+}
+
+[data-theme="dark"] .meta-project {
+  color: #dbeafe;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.6), rgba(30, 41, 59, 0.9));
+  border-color: rgba(148, 163, 184, 0.3);
 }
 
 [data-theme="dark"] .task-label {
@@ -9609,6 +9627,56 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
 
 [data-theme="dark"] .task-labels-empty {
   color: #6b7280;
+}
+
+[data-theme="dark"] .meta-labels {
+  background: linear-gradient(135deg, rgba(26, 34, 46, 0.9), rgba(20, 28, 39, 0.95));
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+[data-theme="dark"] .meta-labels i {
+  color: #cbd5e1;
+}
+
+.meta-label {
+  color: #1f2937;
+  background: linear-gradient(135deg, #f8fafc, #eef2ff);
+  border: 1px solid #e2e8f0;
+}
+
+.meta-label i {
+  color: #475569;
+}
+
+.meta-label-empty {
+  color: #94a3b8;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border: 1px dashed #cbd5e1;
+}
+
+.meta-label-empty i {
+  color: #cbd5e1;
+  margin-right: 4px;
+}
+
+[data-theme="dark"] .meta-label {
+  color: #e5e9f5;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(42, 52, 68, 0.9));
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+[data-theme="dark"] .meta-label i {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .meta-label-empty {
+  color: #6b7280;
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.7), rgba(30, 41, 59, 0.8));
+  border-color: rgba(107, 114, 128, 0.4);
+}
+
+[data-theme="dark"] .meta-label-empty i {
+  color: #94a3b8;
 }
 
 .task-board-list .task-time {
