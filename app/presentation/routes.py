@@ -411,6 +411,7 @@ self.addEventListener('activate', (event) => {
         list_groups = service.list_time_entries_by_range(start_date, end_date)
 
         today = service.current_local_date()
+        today_target_seconds = service.get_daily_target(today)
         today_total_seconds = 0
         for group in list_groups:
             if group["label"] == "Today":
@@ -440,10 +441,12 @@ self.addEventListener('activate', (event) => {
             timer_range_start=start_date.isoformat(),
             timer_range_end=end_date.isoformat(),
             today_total_seconds=today_total_seconds,
+            today_target_seconds=today_target_seconds,
             week_total_seconds=week_total_seconds,
             week_label=week_label,
             week_days=week_days,
             task_rows=task_rows,
+            today_date=today.isoformat(),
         )
 
     @app.route("/demo/calendar", methods=["GET"])
@@ -1070,6 +1073,7 @@ self.addEventListener('activate', (event) => {
 
         # Calculate today's total
         today = service.current_local_date()
+        today_target_seconds = service.get_daily_target(today)
         today_total_seconds = 0
         for group in list_groups:
             if group["label"] == "Today":
@@ -1100,10 +1104,12 @@ self.addEventListener('activate', (event) => {
             timer_range_start=start_date.isoformat(),
             timer_range_end=end_date.isoformat(),
             today_total_seconds=today_total_seconds,
+            today_target_seconds=today_target_seconds,
             week_total_seconds=week_total_seconds,
             week_label=week_label,
             week_days=week_days,
             task_rows=task_rows,
+            today_date=today.isoformat(),
         )
 
     @app.route("/calendar", methods=["GET"])
@@ -1570,6 +1576,15 @@ self.addEventListener('activate', (event) => {
     @auth_required()
     def get_notification_settings():
         return jsonify(service.get_notification_settings())
+
+    @app.route("/api/daily-target", methods=["POST"])
+    @auth_required()
+    def set_daily_target_api():
+        payload = request.get_json(silent=True) or {}
+        service.set_daily_target(payload.get("target_seconds"))
+        today = service.current_local_date()
+        today_target_seconds = service.get_daily_target(today)
+        return {"ok": True, "today_target_seconds": today_target_seconds}
 
     @app.route("/reports", methods=["GET"])
     @auth_required()

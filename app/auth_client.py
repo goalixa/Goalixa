@@ -37,7 +37,11 @@ def _auth_settings():
     secret = current_app.config.get("AUTH_JWT_SECRET", "dev-jwt-secret")
     access_ttl = current_app.config.get("AUTH_ACCESS_TOKEN_TTL_MINUTES", 15)
     refresh_ttl = current_app.config.get("AUTH_REFRESH_TOKEN_TTL_DAYS", 7)
-    return base_url, access_cookie_name, refresh_cookie_name, secret, access_ttl, refresh_ttl
+    # Convert string "None" to Python None for Flask's set_cookie()
+    # Flask needs None (not "None") to set SameSite=None correctly
+    samesite_config = current_app.config.get("AUTH_COOKIE_SAMESITE", "Lax")
+    samesite = None if samesite_config == "None" else samesite_config
+    return base_url, access_cookie_name, refresh_cookie_name, secret, access_ttl, refresh_ttl, samesite, current_app.config.get("AUTH_COOKIE_DOMAIN"), current_app.config.get("AUTH_COOKIE_SECURE", False)
 
 
 def _decode_token(token, secret):
@@ -56,7 +60,7 @@ def _load_user_from_request():
     2. If access token invalid, try refresh token and auto-issue new access token
     3. Fall back to legacy single-token format for backward compatibility
     """
-    _, access_cookie_name, refresh_cookie_name, secret, access_ttl, refresh_ttl = _auth_settings()
+    _, access_cookie_name, refresh_cookie_name, secret, access_ttl, refresh_ttl, _, _, _ = _auth_settings()
 
     # Try access token first (new dual-token system)
     access_token = request.cookies.get(access_cookie_name)
@@ -155,17 +159,14 @@ def init_auth(app):
     def set_new_access_token(response):
         """Set new access token cookie if it was auto-refreshed."""
         if hasattr(g, "new_access_token"):
-            _, access_cookie_name, _, secret, access_ttl, _ = _auth_settings()
-            cookie_secure = current_app.config.get("AUTH_COOKIE_SECURE", False)
-            cookie_samesite = current_app.config.get("AUTH_COOKIE_SAMESITE", "Lax")
-            cookie_domain = current_app.config.get("AUTH_COOKIE_DOMAIN")
+            _, access_cookie_name, _, secret, access_ttl, _, samesite, cookie_domain, cookie_secure = _auth_settings()
 
             response.set_cookie(
                 access_cookie_name,
                 g.new_access_token,
                 max_age=access_ttl * 60,
                 httponly=True,
-                samesite=cookie_samesite,
+                samesite=samesite,
                 secure=cookie_secure,
                 path="/",
                 domain=cookie_domain,
@@ -247,7 +248,7 @@ def issue_auth_response(user, next_url=None):
     Issue auth response with access and refresh tokens set as cookies.
     Returns a response (either redirect or JSON).
     """
-    _, access_cookie_name, refresh_cookie_name, secret, access_ttl, refresh_ttl = _auth_settings()
+    _, access_cookie_name, refresh_cookie_name, secret, access_ttl, refresh_ttl, samesite, cookie_domain, cookie_secure = _auth_settings()
 
     # Create access token
     access_token = create_access_token(
@@ -277,10 +278,6 @@ def issue_auth_response(user, next_url=None):
     refresh_expires = datetime.utcnow() + timedelta(days=refresh_ttl)
     token_repo.create_refresh_token(user.id, refresh_token_str, refresh_expires, g)
 
-    cookie_secure = current_app.config.get("AUTH_COOKIE_SECURE", False)
-    cookie_samesite = current_app.config.get("AUTH_COOKIE_SAMESITE", "Lax")
-    cookie_domain = current_app.config.get("AUTH_COOKIE_DOMAIN")
-
     # Determine response type based on request
     if request.path.startswith("/api/") or request.accept_mimetypes.best == "application/json":
         from flask import make_response
@@ -291,7 +288,7 @@ def issue_auth_response(user, next_url=None):
             access_token,
             max_age=access_ttl * 60,
             httponly=True,
-            samesite=cookie_samesite,
+            samesite=samesite,
             secure=cookie_secure,
             path="/",
             domain=cookie_domain,
@@ -301,7 +298,7 @@ def issue_auth_response(user, next_url=None):
             refresh_token_jwt,
             max_age=refresh_ttl * 86400,
             httponly=True,
-            samesite=cookie_samesite,
+            samesite=samesite,
             secure=cookie_secure,
             path="/",
             domain=cookie_domain,
@@ -318,7 +315,7 @@ def issue_auth_response(user, next_url=None):
         access_token,
         max_age=access_ttl * 60,
         httponly=True,
-        samesite=cookie_samesite,
+        samesite=samesite,
         secure=cookie_secure,
         path="/",
         domain=cookie_domain,
@@ -328,7 +325,7 @@ def issue_auth_response(user, next_url=None):
         refresh_token_jwt,
         max_age=refresh_ttl * 86400,
         httponly=True,
-        samesite=cookie_samesite,
+        samesite=samesite,
         secure=cookie_secure,
         path="/",
         domain=cookie_domain,
@@ -340,11 +337,7 @@ def clear_auth_cookies():
     """Clear both access and refresh cookies."""
     from flask import make_response
 
-    _, access_cookie_name, refresh_cookie_name, _, _, _ = _auth_settings()
-
-    cookie_secure = current_app.config.get("AUTH_COOKIE_SECURE", False)
-    cookie_samesite = current_app.config.get("AUTH_COOKIE_SAMESITE", "Lax")
-    cookie_domain = current_app.config.get("AUTH_COOKIE_DOMAIN")
+    _, access_cookie_name, refresh_cookie_name, _, _, _, samesite, cookie_domain, _ = _auth_settings()
 
     response = make_response()
 
@@ -353,7 +346,7 @@ def clear_auth_cookies():
         access_cookie_name,
         path="/",
         domain=cookie_domain,
-        samesite=cookie_samesite,
+        samesite=samesite,
     )
 
     # Clear refresh cookie
@@ -361,7 +354,7 @@ def clear_auth_cookies():
         refresh_cookie_name,
         path="/",
         domain=cookie_domain,
-        samesite=cookie_samesite,
+        samesite=samesite,
     )
 
     # Also clear legacy cookie
@@ -370,7 +363,7 @@ def clear_auth_cookies():
         legacy_cookie_name,
         path="/",
         domain=cookie_domain,
-        samesite=cookie_samesite,
+        samesite=samesite,
     )
 
     return response

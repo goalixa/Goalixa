@@ -12,6 +12,7 @@
         <div class="timer-controls">
           <div class="timer-select">
             <label class="timer-input-label" for="task-picker">Current task</label>
+            <div class="timer-question">What are you working on?</div>
             <div class="timer-input-group">
               <input
                 id="task-picker"
@@ -32,6 +33,23 @@
                 <button type="button">Recent: Refactor Navigation</button>
                 <button type="button">Inventory Legacy Services</button>
                 <button type="button">Accessibility QA</button>
+              </div>
+            </div>
+          </div>
+          <div class="daily-target-inline">
+            <label class="timer-input-label" for="focus-compact-time">Today's Target</label>
+            <div class="focus-compact">
+              <div class="focus-time" id="focus-compact-time">
+                <span class="focus-segment is-active" data-segment="hours">00</span>
+                <span class="focus-separator">:</span>
+                <span class="focus-segment" data-segment="minutes">00</span>
+              </div>
+              <div class="focus-compact-actions">
+                <button class="btn btn-outline-secondary btn-xs" type="button" id="focus-compact-minus" aria-label="Decrease target">-</button>
+                <button class="btn btn-outline-secondary btn-xs" type="button" id="focus-compact-plus" aria-label="Increase target">+</button>
+                <button class="btn btn-outline-primary btn-sm" type="button" id="daily-target-set" aria-label="Save target">
+                  <i class="bi bi-check2"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -74,6 +92,12 @@
     </section>
     <section class="timer-range-section">
       <div class="card pomodoro-card" data-tour-id="pomodoro">
+        {% set progress = today_target_seconds and (today_total_seconds / today_target_seconds * 100) | round(1) or 0 %}
+        <div class="focus-progress" aria-live="polite">
+          <div class="focus-progress-bar" aria-label="Daily focus progress">
+            <div class="focus-progress-fill" style="width: {{ [progress,100]|min }}%"></div>
+          </div>
+        </div>
         <div class="pomodoro-header">
           <div class="pomodoro-copy">
             <p class="pomodoro-label">Pomodoro</p>
@@ -226,6 +250,21 @@
             <div>
               <h3 class="timesheet-title">Timesheet</h3>
               <p class="timesheet-subtitle">Grouped by day for the selected range.</p>
+              {% if today_target_seconds %}
+                {% set target_reached = today_total_seconds >= today_target_seconds %}
+                <div class="timesheet-target-banner {% if target_reached %}is-success{% endif %}">
+                  <span class="timesheet-target-label">
+                    <i class="bi {% if target_reached %}bi-emoji-smile{% else %}bi-flag{% endif %}"></i>
+                    Today's target: {{ today_target_seconds | format_seconds }}
+                  </span>
+                  <span class="timesheet-target-progress">
+                    {{ today_total_seconds | format_seconds }} / {{ today_target_seconds | format_seconds }}
+                  </span>
+                  {% if target_reached %}
+                    <span class="timesheet-target-congrats">Great job! You hit today's focus goal.</span>
+                  {% endif %}
+                </div>
+              {% endif %}
             </div>
           </div>
           <div class="timesheet-table">
@@ -274,6 +313,43 @@
 {% block scripts %}
   <script src="{{ url_for('static', filename='vendor/litepicker/litepicker.js') }}"></script>
   <script>
+    window.todayTotalSeconds = {{ today_total_seconds | int }};
+    window.todayTargetSeconds = {{ today_target_seconds | int }};
+    window.todayDate = "{{ today_date }}";
+    const maxTargetSeconds = 3 * 60 * 60; // 3 hours cap
+    let targetSeconds = Math.min(
+      maxTargetSeconds,
+      Math.max(0, Number(window.todayTargetSeconds || 2 * 3600))
+    );
+
+    const formatSeconds = (seconds) => {
+      const safe = Math.max(0, Math.floor(seconds || 0));
+      const h = Math.floor(safe / 3600);
+      const m = Math.floor((safe % 3600) / 60);
+      const s = safe % 60;
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    };
+
+    const formatHM = (seconds) => {
+      const safe = Math.max(0, Math.floor(seconds || 0));
+      const h = Math.floor(safe / 3600);
+      const m = Math.floor((safe % 3600) / 60);
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    };
+
+    const setProgressFill = () => {
+      const fill = document.querySelector(".focus-progress-fill");
+      if (!fill) return;
+      const target = Math.max(0, Number(targetSeconds || 0));
+      if (!target) {
+        fill.style.width = "0%";
+        return;
+      }
+      const current = Number(window.todayTotalSeconds || 0);
+      const percent = Math.min(100, (current / target) * 100);
+      fill.style.width = `${percent}%`;
+    };
+
     document.addEventListener("DOMContentLoaded", () => {
       const rangeInput = document.getElementById("timer-range");
       if (rangeInput && typeof Litepicker !== "undefined") {
@@ -314,6 +390,45 @@
       const taskDropdown = document.querySelector(".timer-dropdown");
       const taskList = document.querySelector(".timer-list");
       let cachedTasks = [];
+
+      const setTimeDisplay = () => {
+        const timeLabel = document.getElementById("focus-compact-time");
+        const sec = Math.max(0, Number(targetSeconds || 0));
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        if (timeLabel) {
+          const [hoursEl, minutesEl] = timeLabel.querySelectorAll(".focus-segment");
+          if (hoursEl) hoursEl.textContent = String(h).padStart(2, "0");
+          if (minutesEl) minutesEl.textContent = String(m).padStart(2, "0");
+        }
+      };
+
+      const submitDailyTarget = () => {
+        const seconds = Math.max(0, Math.min(maxTargetSeconds, targetSeconds));
+        if (!seconds) return;
+        fetch("/api/daily-target", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ target_seconds: seconds }),
+        })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((payload) => {
+            if (!payload) return;
+            window.todayTargetSeconds = Number(payload.today_target_seconds || 0);
+            targetSeconds = window.todayTargetSeconds;
+            document.getElementById("focus-progress-total").textContent = formatHM(
+              window.todayTargetSeconds,
+            );
+            const pct = (
+              (Number(window.todayTotalSeconds || 0) / (window.todayTargetSeconds || 1)) *
+              100
+            ).toFixed(1);
+            document.getElementById("focus-progress-percent").textContent = pct;
+            setTimeDisplay();
+            setProgressFill();
+          })
+          .catch(() => {});
+      };
 
       viewTabs.forEach((tab) => {
         tab.addEventListener("click", () => {
@@ -359,6 +474,58 @@
         event.preventDefault();
         toggleTaskDetails(toggle);
       });
+
+      const dailyTargetSet = document.getElementById("daily-target-set");
+      setTimeDisplay();
+
+      if (dailyTargetSet) {
+        dailyTargetSet.addEventListener("click", submitDailyTarget);
+      }
+      // Fill daily target progress bar
+      setProgressFill();
+      const focusTimeLabel = document.getElementById("focus-compact-time");
+
+      const updateRangeUI = () => {
+        setTimeDisplay();
+        const totalText = document.getElementById("focus-progress-total");
+        if (totalText) {
+          totalText.textContent = formatHM(targetSeconds);
+        }
+        const pct = (
+          (Number(window.todayTotalSeconds || 0) / (targetSeconds || 1)) *
+          100
+        ).toFixed(1);
+        const pctEl = document.getElementById("focus-progress-percent");
+        if (pctEl) {
+          pctEl.textContent = pct;
+        }
+        setProgressFill();
+      };
+
+      let activeSegment = "hours";
+      const hoursEl = document.querySelector('.focus-segment[data-segment="hours"]');
+      const minutesEl = document.querySelector('.focus-segment[data-segment="minutes"]');
+
+      const setActive = (segment) => {
+        activeSegment = segment;
+        if (hoursEl) hoursEl.classList.toggle("is-active", segment === "hours");
+        if (minutesEl) minutesEl.classList.toggle("is-active", segment === "minutes");
+      };
+
+      const adjustTarget = (delta) => {
+        const step = activeSegment === "hours" ? 3600 : 60;
+        targetSeconds = Math.min(maxTargetSeconds, Math.max(0, targetSeconds + delta * step));
+        updateRangeUI();
+      };
+
+      if (hoursEl) hoursEl.addEventListener("click", () => setActive("hours"));
+      if (minutesEl) minutesEl.addEventListener("click", () => setActive("minutes"));
+
+      const minusBtn = document.getElementById("focus-compact-minus");
+      const plusBtn = document.getElementById("focus-compact-plus");
+      if (minusBtn) minusBtn.addEventListener("click", () => adjustTarget(-1));
+      if (plusBtn) plusBtn.addEventListener("click", () => adjustTarget(1));
+      updateRangeUI();
 
       const pomodoroDisplay = document.getElementById("pomodoro-display");
       const pomodoroMode = document.getElementById("pomodoro-mode");

@@ -1193,6 +1193,26 @@ class TaskService:
         local_dt = value.astimezone(tz)
         return local_dt.strftime("%I:%M %p").lstrip("0")
 
+    # Daily focus target (per-user, per-day)
+    def get_daily_target(self, day):
+        key = f"daily_target:{day.isoformat()}"
+        value = self.repository.get_setting(key)
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return 0
+
+    def set_daily_target(self, seconds, day=None):
+        try:
+            seconds = int(seconds)
+        except (TypeError, ValueError):
+            return
+        if seconds <= 0:
+            return
+        day = day or self.current_local_date()
+        key = f"daily_target:{day.isoformat()}"
+        self.repository.set_setting(key, str(seconds))
+
     def list_labels(self):
         labels = self.repository.fetch_labels()
         return [dict(label) for label in labels]
