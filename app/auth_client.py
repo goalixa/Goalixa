@@ -89,15 +89,36 @@ def _load_user_from_request():
 
                 token_repo = RefreshTokenRepository(current_app.config.get("DATABASE_URL"))
                 if token_repo.is_token_valid(payload["jti"], user_id):
-                    # Auto-issue new access token
+                    # Auto-issue new access token and rotate refresh token
                     new_access_token = create_access_token(
                         user_id=user_id,
                         email=payload.get("email", ""),
                         secret=secret,
                         ttl_minutes=access_ttl,
                     )
-                    # Signal to set new access token cookie in after_request
+
+                    # Rotate refresh token: create new one and revoke old
+                    from datetime import datetime, timedelta
+                    new_refresh_token_str = create_refresh_token_string()
+                    new_refresh_token_jwt = create_refresh_token_jwt(
+                        user_id=user_id,
+                        token_id=new_refresh_token_str,
+                        secret=secret,
+                        ttl_days=refresh_ttl,
+                    )
+
+                    new_refresh_expires = datetime.utcnow() + timedelta(days=refresh_ttl)
+                    token_repo.rotate_refresh_token(
+                        old_token_id=payload["jti"],
+                        new_token_str=new_refresh_token_str,
+                        user_id=user_id,
+                        expires_at=new_refresh_expires,
+                        g=g,
+                    )
+
+                    # Signal to set new access AND refresh token cookies in after_request
                     g.new_access_token = new_access_token
+                    g.new_refresh_token = new_refresh_token_jwt
                     return AuthUser(user_id=user_id, email=payload.get("email", ""))
 
     # Fall back to legacy single-token format for backward compatibility
@@ -156,15 +177,27 @@ def init_auth(app):
             g.demo_mode = False
 
     @app.after_request
-    def set_new_access_token(response):
-        """Set new access token cookie if it was auto-refreshed."""
-        if hasattr(g, "new_access_token"):
-            _, access_cookie_name, _, secret, access_ttl, _, samesite, cookie_domain, cookie_secure = _auth_settings()
+    def set_new_tokens(response):
+        """Set new access and/or refresh token cookies if they were auto-refreshed."""
+        _, access_cookie_name, refresh_cookie_name, _, access_ttl, refresh_ttl, samesite, cookie_domain, cookie_secure = _auth_settings()
 
+        if hasattr(g, "new_access_token"):
             response.set_cookie(
                 access_cookie_name,
                 g.new_access_token,
                 max_age=access_ttl * 60,
+                httponly=True,
+                samesite=samesite,
+                secure=cookie_secure,
+                path="/",
+                domain=cookie_domain,
+            )
+
+        if hasattr(g, "new_refresh_token"):
+            response.set_cookie(
+                refresh_cookie_name,
+                g.new_refresh_token,
+                max_age=refresh_ttl * 86400,
                 httponly=True,
                 samesite=samesite,
                 secure=cookie_secure,
