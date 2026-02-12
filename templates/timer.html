@@ -316,11 +316,7 @@
     window.todayTotalSeconds = {{ today_total_seconds | int }};
     window.todayTargetSeconds = {{ today_target_seconds | int }};
     window.todayDate = "{{ today_date }}";
-    const maxTargetSeconds = 3 * 60 * 60; // 3 hours cap
-    let targetSeconds = Math.min(
-      maxTargetSeconds,
-      Math.max(0, Number(window.todayTargetSeconds || 2 * 3600))
-    );
+    let targetSeconds = Math.max(0, Number(window.todayTargetSeconds || 2 * 3600));
 
     const formatSeconds = (seconds) => {
       const safe = Math.max(0, Math.floor(seconds || 0));
@@ -404,7 +400,7 @@
       };
 
       const submitDailyTarget = () => {
-        const seconds = Math.max(0, Math.min(maxTargetSeconds, targetSeconds));
+        const seconds = Math.max(0, targetSeconds);
         if (!seconds) return;
         fetch("/api/daily-target", {
           method: "POST",
@@ -514,7 +510,7 @@
 
       const adjustTarget = (delta) => {
         const step = activeSegment === "hours" ? 3600 : 60;
-        targetSeconds = Math.min(maxTargetSeconds, Math.max(0, targetSeconds + delta * step));
+        targetSeconds = Math.max(0, targetSeconds + delta * step);
         updateRangeUI();
       };
 
