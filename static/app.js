@@ -206,17 +206,25 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                              <i class="bi bi-play-fill"></i>
                            </button>
                          </form>`}
+                    <form method="post" action="/tasks/${task.id}/complete" data-action="complete" data-task-id="${task.id}">
+                      <button class="btn btn-outline-success btn-sm menu-item complete-btn" type="submit" aria-label="Complete" title="Complete task">
+                        <i class="bi bi-check-lg"></i>
+                      </button>
+                    </form>
                     <div class="menu">
                       <button class="menu-button icon-button" type="button" aria-label="More">
-                        <i class="bi bi-three-dots"></i>
+                        <i class="bi bi-three-dots-vertical"></i>
                       </button>
                       <div class="menu-panel">
-                        <button class="menu-item" type="button" data-edit-target="${editFormId}">Edit task</button>
-                        <form method="post" action="/tasks/${task.id}/complete" data-action="complete" data-task-id="${task.id}">
-                          <button class="menu-item" type="submit">Complete</button>
-                        </form>
+                        <button class="menu-item menu-item-with-icon" type="button" data-edit-target="${editFormId}">
+                          <i class="bi bi-pencil-square"></i>
+                          Edit task
+                        </button>
                         <form method="post" action="/tasks/${task.id}/delete" data-action="delete" data-task-id="${task.id}">
-                          <button class="menu-item danger" type="submit">Delete task</button>
+                          <button class="menu-item danger menu-item-with-icon" type="submit">
+                            <i class="bi bi-trash"></i>
+                            Delete task
+                          </button>
                         </form>
                       </div>
                     </div>
@@ -310,17 +318,25 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                                <i class="bi bi-play-fill"></i>
                              </button>
                            </form>`}
+                      <form method="post" action="/tasks/${task.id}/complete" data-action="complete" data-task-id="${task.id}">
+                        <button class="btn btn-outline-success btn-sm menu-item complete-btn" type="submit" aria-label="Complete" title="Complete task">
+                          <i class="bi bi-check-lg"></i>
+                        </button>
+                      </form>
                       <div class="menu">
                         <button class="menu-button icon-button" type="button" aria-label="More">
-                          <i class="bi bi-three-dots"></i>
+                          <i class="bi bi-three-dots-vertical"></i>
                         </button>
                         <div class="menu-panel">
-                          <button class="menu-item" type="button" data-edit-target="${editFormId}">Edit task</button>
-                          <form method="post" action="/tasks/${task.id}/complete" data-action="complete" data-task-id="${task.id}">
-                            <button class="menu-item" type="submit">Complete</button>
-                          </form>
+                          <button class="menu-item menu-item-with-icon" type="button" data-edit-target="${editFormId}">
+                            <i class="bi bi-pencil-square"></i>
+                            Edit task
+                          </button>
                           <form method="post" action="/tasks/${task.id}/delete" data-action="delete" data-task-id="${task.id}">
-                            <button class="menu-item danger" type="submit">Delete task</button>
+                            <button class="menu-item danger menu-item-with-icon" type="submit">
+                              <i class="bi bi-trash"></i>
+                              Delete task
+                            </button>
                           </form>
                         </div>
                       </div>
