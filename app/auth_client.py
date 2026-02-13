@@ -39,9 +39,10 @@ def _auth_settings():
     refresh_ttl = current_app.config.get("AUTH_REFRESH_TOKEN_TTL_DAYS", 7)
     # Convert string "None" to Python None for Flask's set_cookie()
     # Flask needs None (not "None") to set SameSite=None correctly
+    # Use 'Lax' by default for better browser compatibility
     samesite_config = current_app.config.get("AUTH_COOKIE_SAMESITE", "Lax")
     samesite = None if samesite_config == "None" else samesite_config
-    return base_url, access_cookie_name, refresh_cookie_name, secret, access_ttl, refresh_ttl, samesite, current_app.config.get("AUTH_COOKIE_DOMAIN"), current_app.config.get("AUTH_COOKIE_SECURE", False)
+    return base_url, access_cookie_name, refresh_cookie_name, secret, access_ttl, refresh_ttl, samesite, current_app.config.get("AUTH_COOKIE_DOMAIN"), current_app.config.get("AUTH_COOKIE_SECURE", True)
 
 
 def _decode_token(token, secret):
