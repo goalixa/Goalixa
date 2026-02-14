@@ -36,8 +36,8 @@
             <div class="label-options">
               {% if labels %}
                 {% for label in labels %}
-                  <label class="label-option">
-                    <input type="checkbox" name="label_ids" value="{{ label['id'] }}" />
+                  <label class="label-option" for="create-task-label-{{ label['id'] }}">
+                    <input id="create-task-label-{{ label['id'] }}" type="checkbox" name="label_ids" value="{{ label['id'] }}" />
                     <span class="label-pill">
                       <span class="label-swatch" style="background-color: {{ label['color'] }}"></span>
                       <span class="label-name">{{ label['name'] }}</span>

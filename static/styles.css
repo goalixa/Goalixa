@@ -3556,7 +3556,6 @@ body[data-page="calendar"] .calendar-subtitle {
 .label-option input {
   position: absolute;
   opacity: 0;
-  pointer-events: none;
 }
 
 .label-pill {
@@ -11196,7 +11195,7 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
     0 1px 4px rgba(0, 0, 0, 0.02),
     inset 0 1px 0 rgba(255, 255, 255, 1);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .card:has(.task-form)::before {
