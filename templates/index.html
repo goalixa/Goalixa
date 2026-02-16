@@ -24,6 +24,11 @@
             <option value="{{ goal['id'] }}">{{ goal['name'] }}</option>
           {% endfor %}
         </select>
+        <select id="task-priority" name="priority">
+          <option value="low">Low Priority</option>
+          <option value="medium" selected>Medium Priority</option>
+          <option value="high">High Priority</option>
+        </select>
         <div class="label-picker-wrap">
           <button class="btn btn-light btn-sm label-toggle icon-button" id="create-label-toggle" type="button" aria-label="Labels">
             <i class="bi bi-tags"></i>
@@ -58,7 +63,19 @@
     </section>
 
     <section class="card" data-tour-id="tasks-list">
-      <h2>Tasks</h2>
+      <div class="section-header">
+        <h2>Tasks</h2>
+        <div class="task-controls">
+          <select id="task-sort" data-task-sort>
+            <option value="priority-desc">Priority (High to Low)</option>
+            <option value="priority-asc">Priority (Low to High)</option>
+            <option value="newest" selected>Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+          </select>
+        </div>
+      </div>
       <div class="task-columns">
         <div id="task-list" class="task-column">
           <h3>In progress</h3>

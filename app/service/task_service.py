@@ -472,6 +472,7 @@ class TaskService:
                     "goals": task_goals,
                     "goal_id": primary_goal["id"] if primary_goal else None,
                     "goal_name": primary_goal["name"] if primary_goal else None,
+                    "priority": data.get("priority") or "medium",
                 }
             )
         return hydrated
@@ -558,12 +559,15 @@ class TaskService:
             "completed_tasks": completed_tasks,
         }
 
-    def add_task(self, name, project_id, label_ids=None, goal_id=None):
+    def add_task(self, name, project_id, label_ids=None, goal_id=None, priority="medium"):
         name = (name or "").strip()
+        priority = (priority or "medium").strip().lower() if priority else "medium"
+        if priority not in {"high", "medium", "low"}:
+            priority = "medium"
         if name:
             project_value = int(project_id) if project_id else None
             task_id = self.repository.create_task(
-                name, datetime.utcnow().isoformat(), project_value
+                name, datetime.utcnow().isoformat(), project_value, priority
             )
             for label_id in label_ids or []:
                 self.repository.add_label_to_task(task_id, int(label_id))
@@ -1488,6 +1492,14 @@ class TaskService:
 
     def stop_task(self, task_id):
         self.repository.stop_task(task_id, datetime.utcnow().isoformat())
+
+    def complete_overdue_timers(self, max_duration_seconds=1500):
+        """
+        Automatically complete timers that have been running for longer than max_duration_seconds.
+        Default is 1500 seconds (25 minutes for Pomodoro).
+        Returns the number of timers completed.
+        """
+        return self.repository.complete_overdue_time_entries(max_duration_seconds)
 
     def delete_task(self, task_id):
         self.repository.delete_task(task_id)

@@ -100,7 +100,37 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
   const doneTodayList = Array.isArray(doneTodayTasks) ? doneTodayTasks : [];
   const completedList = Array.isArray(completedTasks) ? completedTasks : [];
 
-  const combined = activeList.concat(doneTodayList);
+  // Apply sorting
+  const sortValue = document.querySelector("[data-task-sort]")?.value || "newest";
+  const priorityOrder = { high: 3, medium: 2, low: 1 };
+
+  const sortTasks = (taskList) => {
+    return [...taskList].sort((a, b) => {
+      if (sortValue === "priority-desc") {
+        const priorityA = priorityOrder[a.priority || "medium"] || 2;
+        const priorityB = priorityOrder[b.priority || "medium"] || 2;
+        return priorityB - priorityA;
+      }
+      if (sortValue === "priority-asc") {
+        const priorityA = priorityOrder[a.priority || "medium"] || 2;
+        const priorityB = priorityOrder[b.priority || "medium"] || 2;
+        return priorityA - priorityB;
+      }
+      if (sortValue === "name-asc") {
+        return (a.name || "").localeCompare(b.name || "");
+      }
+      if (sortValue === "name-desc") {
+        return (b.name || "").localeCompare(a.name || "");
+      }
+      // Default: newest first (by id descending, assuming newer tasks have higher IDs)
+      return (b.id || 0) - (a.id || 0);
+    });
+  };
+
+  const sortedActiveList = sortTasks(activeList);
+  const sortedDoneTodayList = sortTasks(doneTodayList);
+
+  const combined = sortedActiveList.concat(sortedDoneTodayList);
   if (!combined.length) {
     container.innerHTML =
       '<h3>In progress</h3><p class="empty">No tasks yet.</p>';
@@ -109,11 +139,11 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
     setTasksState(combined);
   }
 
-  if (!activeList.length) {
+  if (!sortedActiveList.length) {
     container.innerHTML =
       '<h3>In progress</h3><p class="empty">No tasks yet.</p>';
   } else {
-    const items = activeList
+    const items = sortedActiveList
       .map((task) => {
         const name = escapeHtml(task.name);
         const project = escapeHtml(task.project_name || "Unassigned");
@@ -121,6 +151,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
         const time = formatSeconds(task.today_seconds || 0);
         const labels = Array.isArray(task.labels) ? task.labels : [];
         const doneCount = Number(task.daily_checks || 0);
+        const priority = task.priority || "medium";
         const tooltip =
           labels.length > 0
             ? `${name} · ${project} · ${goal} · ${labels.map((label) => label.name).join(", ")}`
@@ -143,6 +174,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                    .join("")}
                </div>`
             : '<span class="task-labels task-labels-empty">No labels</span>';
+        const priorityBadge = `<span class="priority-badge priority-${priority}">${priority.charAt(0).toUpperCase() + priority.slice(1)}</span>`;
         const donePill = `<span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>${doneCount}</span>`;
         const goalPill = `<span class="meta-pill meta-goal"><i class="bi bi-bullseye"></i>${goal}</span>`;
         const projectPill = `<span class="meta-pill meta-project"><i class="bi bi-folder2-open"></i>${project}</span>`;
@@ -158,11 +190,12 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                </div>`
             : '<span class="meta-pill meta-label-empty"><i class="bi bi-tag"></i>No labels</span>';
 
-        return `<li class="task-item">
+        return `<li class="task-item" data-priority="${priority}">
                   <div class="task-content">
                     <div class="task-header">
                       <div class="editable-field task-title-row">
                         <span class="task-title" title="${escapeHtml(tooltip)}">${name}</span>
+                        ${priorityBadge}
                         <button class="edit-toggle icon-button" type="button" aria-label="Edit task" data-edit-target="${editFormId}">
                           <i class="bi bi-pencil"></i>
                         </button>
@@ -237,11 +270,11 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
   }
 
   if (doneTodayContainer) {
-    if (!doneTodayList.length) {
+    if (!sortedDoneTodayList.length) {
       doneTodayContainer.innerHTML =
         '<h3>Done today</h3><p class="empty">No tasks done today.</p>';
     } else {
-      const items = doneTodayList
+      const items = sortedDoneTodayList
         .map((task) => {
           const name = escapeHtml(task.name);
           const project = escapeHtml(task.project_name || "Unassigned");
@@ -249,6 +282,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
           const time = formatSeconds(task.today_seconds || 0);
           const labels = Array.isArray(task.labels) ? task.labels : [];
           const doneCount = Number(task.daily_checks || 0);
+          const priority = task.priority || "medium";
           const tooltip =
             labels.length > 0
               ? `${name} · ${project} · ${goal} · ${labels.map((label) => label.name).join(", ")}`
@@ -260,6 +294,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                 `<option value="${label.id}">${escapeHtml(label.name)}</option>`,
             )
             .join("");
+          const priorityBadge = `<span class="priority-badge priority-${priority}">${priority.charAt(0).toUpperCase() + priority.slice(1)}</span>`;
           const donePill = `<span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>${doneCount}</span>`;
           const goalPill = `<span class="meta-pill meta-goal"><i class="bi bi-bullseye"></i>${goal}</span>`;
           const projectPill = `<span class="meta-pill meta-project"><i class="bi bi-folder2-open"></i>${project}</span>`;
@@ -275,11 +310,12 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                  </div>`
               : '<span class="meta-pill meta-label-empty"><i class="bi bi-tag"></i>No labels</span>';
 
-          return `<li class="task-item is-done-today">
+          return `<li class="task-item is-done-today" data-priority="${priority}">
                     <div class="task-content">
                       <div class="task-header">
                         <div class="editable-field task-title-row">
                           <span class="task-title" title="${escapeHtml(tooltip)}">${name}</span>
+                          ${priorityBadge}
                           <button class="edit-toggle icon-button" type="button" aria-label="Edit task" data-edit-target="${editFormId}">
                             <i class="bi bi-pencil"></i>
                           </button>
@@ -360,10 +396,12 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
           const time = formatSeconds(task.total_seconds || 0);
           const labels = Array.isArray(task.labels) ? task.labels : [];
           const doneCount = Number(task.daily_checks || 0);
+          const priority = task.priority || "medium";
           const tooltip =
             labels.length > 0
               ? `${name} · ${project} · ${goal} · ${labels.map((label) => label.name).join(", ")}`
               : `${name} · ${project} · ${goal}`;
+          const priorityBadge = `<span class="priority-badge priority-${priority}">${priority.charAt(0).toUpperCase() + priority.slice(1)}</span>`;
           const donePill = `<span class="task-done-count" title="Times marked done"><i class="bi bi-check2-circle"></i>${doneCount}</span>`;
           const goalPill = `<span class="meta-pill meta-goal"><i class="bi bi-bullseye"></i>${goal}</span>`;
           const projectPill = `<span class="meta-pill meta-project"><i class="bi bi-folder2-open"></i>${project}</span>`;
@@ -379,11 +417,12 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
                  </div>`
               : '<span class="meta-pill meta-label-empty"><i class="bi bi-tag"></i>No labels</span>';
 
-          return `<li class="task-item is-completed">
+          return `<li class="task-item is-completed" data-priority="${priority}">
                     <div class="task-content">
                       <div class="task-header">
                         <div class="task-title-row">
                           <span class="task-title" title="${escapeHtml(tooltip)}">${name}</span>
+                          ${priorityBadge}
                         </div>
                         <span class="task-time">${time}</span>
                       </div>
@@ -416,7 +455,7 @@ function renderTasks(tasks, doneTodayTasks, completedTasks) {
   }
 }
 
-async function createTask(name, projectId, labelIds, goalId) {
+async function createTask(name, projectId, labelIds, goalId, priority = "medium") {
   const response = await fetch("/api/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -425,6 +464,7 @@ async function createTask(name, projectId, labelIds, goalId) {
       project_id: projectId,
       label_ids: labelIds,
       goal_id: goalId,
+      priority: priority,
     }),
   });
 
@@ -531,13 +571,14 @@ document.addEventListener("DOMContentLoaded", () => {
     return form?.dataset.goalId || null;
   };
 
-  if (form && input) {
-    if (createLabelToggle && createLabelPicker) {
-      createLabelToggle.addEventListener("click", () => {
-        createLabelPicker.classList.toggle("is-open");
-      });
-    }
+  // Label picker toggle should work even if form doesn't exist
+  if (createLabelToggle && createLabelPicker) {
+    createLabelToggle.addEventListener("click", () => {
+      createLabelPicker.classList.toggle("is-open");
+    });
+  }
 
+  if (form && input) {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const name = input.value.trim();
@@ -545,12 +586,14 @@ document.addEventListener("DOMContentLoaded", () => {
         (projectSelect && projectSelect.value) || form.dataset.projectId;
       const labelIds = getSelectedLabelIds();
       const goalId = getSelectedGoalId();
+      const prioritySelect = document.getElementById("task-priority");
+      const priority = prioritySelect ? prioritySelect.value : "medium";
       if (!name || !projectId) {
         return;
       }
 
       try {
-        const taskPayload = await createTask(name, projectId, labelIds, goalId);
+        const taskPayload = await createTask(name, projectId, labelIds, goalId, priority);
         renderTasks(
           taskPayload.tasks,
           taskPayload.doneTodayTasks,
@@ -561,6 +604,9 @@ document.addEventListener("DOMContentLoaded", () => {
         clearSelectedLabels();
         if (goalSelect) {
           goalSelect.selectedIndex = 0;
+        }
+        if (prioritySelect) {
+          prioritySelect.value = "medium";
         }
       } catch (error) {
         form.submit();
@@ -767,5 +813,33 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
     updateLabelList();
+  }
+
+  // Add sort dropdown event listener
+  const taskSort = document.querySelector("[data-task-sort]");
+  if (taskSort) {
+    taskSort.addEventListener("change", () => {
+      loadTasks()
+        .then((taskPayload) => {
+          renderTasks(
+            taskPayload.tasks,
+            taskPayload.doneTodayTasks,
+            taskPayload.completedTasks,
+          );
+        })
+        .catch(() => {});
+    });
+  }
+
+  // Close label picker when a label is selected
+  const createLabelPicker = document.getElementById("create-label-picker");
+  if (createLabelPicker) {
+    createLabelPicker.addEventListener("change", (event) => {
+      if (event.target.matches("input[type='checkbox']")) {
+        setTimeout(() => {
+          createLabelPicker.classList.remove("is-open");
+        }, 150);
+      }
+    });
   }
 });

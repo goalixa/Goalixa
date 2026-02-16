@@ -7,5 +7,6 @@ scripts/seed_db.py
 .env
 .claude_cache/
 .claude
-__pyca
+__pycache__/
+*.pyc
 .venv
