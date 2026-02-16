@@ -1,6 +1,7 @@
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
+from threading import Lock
 from urllib.parse import urlencode
 
 from flask import current_app, g, jsonify, redirect, request
@@ -13,6 +14,11 @@ from app.auth.jwt import (
     decode_access_token,
     decode_refresh_token,
 )
+
+# Global lock for token refresh to prevent race conditions
+_token_refresh_lock = Lock()
+# Track pending token refreshes by user_id
+_pending_refreshes = {}
 
 
 class AuthUser:
@@ -89,38 +95,106 @@ def _load_user_from_request():
                 from app.auth.token_repository import RefreshTokenRepository
 
                 token_repo = RefreshTokenRepository(current_app.config.get("DATABASE_URL"))
+
+                # Check if there's already a pending refresh for this user
+                if user_id in _pending_refreshes:
+                    # Wait for the pending refresh to complete and use its result
+                    pending_tokens = _pending_refreshes[user_id]
+                    if pending_tokens and pending_tokens.get("access_token"):
+                        g.new_access_token = pending_tokens["access_token"]
+                        g.new_refresh_token = pending_tokens.get("refresh_token")
+                        return AuthUser(user_id=user_id, email=payload.get("email", ""))
+
                 if token_repo.is_token_valid(payload["jti"], user_id):
-                    # Auto-issue new access token and rotate refresh token
-                    new_access_token = create_access_token(
-                        user_id=user_id,
-                        email=payload.get("email", ""),
-                        secret=secret,
-                        ttl_minutes=access_ttl,
-                    )
+                    # Acquire lock to prevent concurrent refreshes
+                    acquired = _token_refresh_lock.acquire(blocking=True, timeout=5)
+                    if not acquired:
+                        # If we can't acquire the lock, wait and retry
+                        import time
+                        time.sleep(0.1)
+                        # Check again if refresh completed while we waited
+                        if user_id in _pending_refreshes:
+                            pending_tokens = _pending_refreshes[user_id]
+                            if pending_tokens and pending_tokens.get("access_token"):
+                                g.new_access_token = pending_tokens["access_token"]
+                                g.new_refresh_token = pending_tokens.get("refresh_token")
+                                del _pending_refreshes[user_id]
+                                return AuthUser(user_id=user_id, email=payload.get("email", ""))
 
-                    # Rotate refresh token: create new one and revoke old
-                    from datetime import datetime, timedelta
-                    new_refresh_token_str = create_refresh_token_string()
-                    new_refresh_token_jwt = create_refresh_token_jwt(
-                        user_id=user_id,
-                        token_id=new_refresh_token_str,
-                        secret=secret,
-                        ttl_days=refresh_ttl,
-                    )
+                    try:
+                        # Double-check after acquiring lock
+                        if not token_repo.is_token_valid(payload["jti"], user_id):
+                            # Token was already rotated, fetch the new one from database
+                            new_token = token_repo.get_refresh_token(payload["jti"], user_id)
+                            if new_token and new_token.get("replaced_by"):
+                                # Get the replacement token
+                                replaced_by_id = new_token["replaced_by"]
+                                # We need to get the replacement token's token_id
+                                row = token_repo._get_db(g).execute(
+                                    "SELECT token_id FROM refresh_token WHERE id = %s",
+                                    (replaced_by_id,)
+                                ).fetchone()
+                                if row:
+                                    # The token was rotated, create new tokens based on the replacement
+                                    new_access_token = create_access_token(
+                                        user_id=user_id,
+                                        email=payload.get("email", ""),
+                                        secret=secret,
+                                        ttl_minutes=access_ttl,
+                                    )
+                                    g.new_access_token = new_access_token
+                                    return AuthUser(user_id=user_id, email=payload.get("email", ""))
+                            return AnonymousUser()
 
-                    new_refresh_expires = datetime.utcnow() + timedelta(days=refresh_ttl)
-                    token_repo.rotate_refresh_token(
-                        old_token_id=payload["jti"],
-                        new_token_str=new_refresh_token_str,
-                        user_id=user_id,
-                        expires_at=new_refresh_expires,
-                        g=g,
-                    )
+                        # Auto-issue new access token and rotate refresh token
+                        new_access_token = create_access_token(
+                            user_id=user_id,
+                            email=payload.get("email", ""),
+                            secret=secret,
+                            ttl_minutes=access_ttl,
+                        )
 
-                    # Signal to set new access AND refresh token cookies in after_request
-                    g.new_access_token = new_access_token
-                    g.new_refresh_token = new_refresh_token_jwt
-                    return AuthUser(user_id=user_id, email=payload.get("email", ""))
+                        # Rotate refresh token: create new one and revoke old
+                        from datetime import datetime, timedelta
+                        new_refresh_token_str = create_refresh_token_string()
+                        new_refresh_token_jwt = create_refresh_token_jwt(
+                            user_id=user_id,
+                            token_id=new_refresh_token_str,
+                            secret=secret,
+                            ttl_days=refresh_ttl,
+                        )
+
+                        new_refresh_expires = datetime.now(timezone.utc) + timedelta(days=refresh_ttl)
+                        token_repo.rotate_refresh_token(
+                            old_token_id=payload["jti"],
+                            new_token_str=new_refresh_token_str,
+                            user_id=user_id,
+                            expires_at=new_refresh_expires,
+                            g=g,
+                        )
+
+                        # Store the new tokens for other concurrent requests
+                        _pending_refreshes[user_id] = {
+                            "access_token": new_access_token,
+                            "refresh_token": new_refresh_token_jwt
+                        }
+
+                        # Signal to set new access AND refresh token cookies in after_request
+                        g.new_access_token = new_access_token
+                        g.new_refresh_token = new_refresh_token_jwt
+                        return AuthUser(user_id=user_id, email=payload.get("email", ""))
+
+                    finally:
+                        _token_refresh_lock.release()
+                        # Clean up pending refresh after a short delay
+                        import threading
+                        def cleanup_pending_refresh():
+                            import time
+                            time.sleep(0.5)
+                            if user_id in _pending_refreshes:
+                                del _pending_refreshes[user_id]
+                        cleanup_thread = threading.Thread(target=cleanup_pending_refresh, daemon=True)
+                        cleanup_thread.start()
 
     # Fall back to legacy single-token format for backward compatibility
     legacy_cookie_name = current_app.config.get("AUTH_COOKIE_NAME", "goalixa_auth")
@@ -309,7 +383,7 @@ def issue_auth_response(user, next_url=None):
     )
 
     # Store refresh token in database
-    refresh_expires = datetime.utcnow() + timedelta(days=refresh_ttl)
+    refresh_expires = datetime.now(timezone.utc) + timedelta(days=refresh_ttl)
     token_repo.create_refresh_token(user.id, refresh_token_str, refresh_expires, g)
 
     # Determine response type based on request

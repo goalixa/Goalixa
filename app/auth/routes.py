@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from flask import Blueprint, current_app, g, jsonify, make_response, request
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -131,7 +131,7 @@ def api_refresh():
     )
 
     # Create new refresh token record
-    new_refresh_expires = datetime.utcnow() + timedelta(days=refresh_ttl)
+    new_refresh_expires = datetime.now(timezone.utc) + timedelta(days=refresh_ttl)
     token_repo.rotate_refresh_token(
         old_token_id=payload["jti"],
         new_token_str=new_refresh_token_str,

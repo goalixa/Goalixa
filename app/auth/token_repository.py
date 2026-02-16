@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import psycopg
 from psycopg.rows import dict_row
@@ -54,7 +54,7 @@ class RefreshTokenRepository:
         db = self._get_db(g)
         db.execute(
             "UPDATE refresh_token SET revoked_at = %s WHERE token_id = %s",
-            (datetime.utcnow(), token_id),
+            (datetime.now(timezone.utc), token_id),
         )
         db.commit()
         logger.info("refresh token revoked", extra={"token_id": token_id})
@@ -64,7 +64,7 @@ class RefreshTokenRepository:
         db = self._get_db(g)
         cursor = db.execute(
             "UPDATE refresh_token SET revoked_at = %s WHERE user_id = %s AND revoked_at IS NULL",
-            (datetime.utcnow(), user_id),
+            (datetime.now(timezone.utc), user_id),
         )
         count = cursor.rowcount
         db.commit()
@@ -90,13 +90,20 @@ class RefreshTokenRepository:
         if row["revoked_at"] is not None:
             return False
 
-        # Check if expired
+        # Check if expired - use timezone-aware datetime
+        now = datetime.now(timezone.utc)
         if isinstance(row["expires_at"], str):
             expires_at = datetime.fromisoformat(row["expires_at"])
+            # If the parsed datetime is naive, assume it's UTC
+            if expires_at.tzinfo is None:
+                expires_at = expires_at.replace(tzinfo=timezone.utc)
         else:
             expires_at = row["expires_at"]
+            # If database returns naive datetime, assume it's UTC
+            if expires_at.tzinfo is None:
+                expires_at = expires_at.replace(tzinfo=timezone.utc)
 
-        return expires_at >= datetime.utcnow()
+        return expires_at >= now
 
     def rotate_refresh_token(self, old_token_id, new_token_str, user_id, expires_at, g=None):
         """
@@ -125,7 +132,7 @@ class RefreshTokenRepository:
                 SET revoked_at = %s, replaced_by = %s
                 WHERE token_id = %s
                 """,
-                (datetime.utcnow(), new_id, old_token_id),
+                (datetime.now(timezone.utc), new_id, old_token_id),
             )
 
         db.commit()
@@ -151,7 +158,7 @@ class RefreshTokenRepository:
             VALUES (%s, %s, %s)
             ON CONFLICT (id) DO NOTHING
             """,
-            (user_id, email, datetime.utcnow().isoformat()),
+            (user_id, email, datetime.now(timezone.utc).isoformat()),
         )
         db.commit()
         logger.info("user created in app db", extra={"user_id": user_id, "email": email})
