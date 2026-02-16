@@ -183,6 +183,65 @@ self.addEventListener('activate', (event) => {
             )
         return week_days
 
+    BULK_TASK_ACTIONS = {
+        "start",
+        "stop",
+        "delete",
+        "daily-check",
+        "complete",
+        "reopen",
+    }
+
+    def _parse_task_ids(values):
+        if values is None:
+            return []
+        if isinstance(values, str):
+            raw_values = [value.strip() for value in values.split(",")]
+        elif isinstance(values, (list, tuple, set)):
+            raw_values = values
+        else:
+            raw_values = [values]
+
+        task_ids = []
+        seen = set()
+        for raw_value in raw_values:
+            try:
+                task_id = int(raw_value)
+            except (TypeError, ValueError):
+                continue
+            if task_id <= 0 or task_id in seen:
+                continue
+            seen.add(task_id)
+            task_ids.append(task_id)
+        return task_ids
+
+    def _run_task_action(task_id, action):
+        if action == "start":
+            service.start_task(task_id)
+            return
+        if action == "stop":
+            service.stop_task(task_id)
+            return
+        if action == "delete":
+            service.delete_task(task_id)
+            return
+        if action == "daily-check":
+            service.set_task_daily_check(task_id, True)
+            return
+        if action == "complete":
+            service.set_task_status(task_id, "completed")
+            return
+        if action == "reopen":
+            service.set_task_status(task_id, "active")
+
+    def _run_bulk_task_action(task_ids, action):
+        normalized_action = (action or "").strip().lower()
+        if normalized_action not in BULK_TASK_ACTIONS:
+            return False
+        for task_id in task_ids:
+            _run_task_action(task_id, normalized_action)
+        return True
+
     @app.before_request
     def load_user_context():
         if current_user.is_authenticated:
@@ -731,6 +790,14 @@ self.addEventListener('activate', (event) => {
             request.form.get("priority", "medium"),
         )
         return redirect("/demo/tasks")
+
+    @app.route("/demo/tasks/bulk", methods=["POST"])
+    @auth_required()
+    def demo_bulk_task_action():
+        task_ids = _parse_task_ids(request.form.getlist("task_ids"))
+        if task_ids:
+            _run_bulk_task_action(task_ids, request.form.get("action", ""))
+        return redirect(request.referrer or "/demo/tasks")
 
     @app.route("/demo/labels", methods=["POST"])
     @auth_required()
@@ -1876,6 +1943,17 @@ self.addEventListener('activate', (event) => {
         service.set_task_status(task_id, "active")
         return list_tasks()
 
+    @app.route("/api/tasks/bulk", methods=["POST"])
+    @auth_required()
+    def bulk_task_action_api():
+        payload = request.get_json(silent=True) or {}
+        task_ids = _parse_task_ids(payload.get("task_ids", []))
+        if not task_ids:
+            return list_tasks()
+        if not _run_bulk_task_action(task_ids, payload.get("action", "")):
+            return jsonify({"error": "Invalid task action"}), 400
+        return list_tasks()
+
     @app.route("/tasks/<int:task_id>/start", methods=["POST"])
     @auth_required()
     def start_task(task_id):
@@ -1910,6 +1988,14 @@ self.addEventListener('activate', (event) => {
     @auth_required()
     def reopen_task(task_id):
         service.set_task_status(task_id, "active")
+        return redirect(request.referrer or url_for("index"))
+
+    @app.route("/tasks/bulk", methods=["POST"])
+    @auth_required()
+    def bulk_task_action():
+        task_ids = _parse_task_ids(request.form.getlist("task_ids"))
+        if task_ids:
+            _run_bulk_task_action(task_ids, request.form.get("action", ""))
         return redirect(request.referrer or url_for("index"))
 
     @app.route("/tasks/<int:task_id>/edit", methods=["POST"])
