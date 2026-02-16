@@ -8936,6 +8936,20 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
   color: var(--text);
 }
 
+.timer-bulk-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.timer-bulk-count {
+  font-size: 0.82rem;
+  color: var(--muted);
+  min-width: 74px;
+}
+
 .timer-list {
   display: grid;
   gap: 8px;
@@ -8943,7 +8957,41 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
   overflow: auto;
 }
 
-.timer-list button {
+.timer-task-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 2px 4px;
+}
+
+.timer-task-option.is-selected {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+}
+
+[data-theme="dark"] .timer-task-option.is-selected {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.timer-task-check-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.timer-task-check {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.timer-task-pick {
   text-align: left;
   padding: 8px 10px;
   border-radius: 10px;
@@ -8951,14 +8999,31 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
   background: transparent;
   color: var(--text);
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.timer-list button:hover {
+.timer-task-meta {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.timer-task-pick.is-completed {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.timer-task-pick:disabled {
+  pointer-events: none;
+}
+
+.timer-task-pick:hover {
   background: var(--soft);
   border-color: var(--border);
 }
 
-.timer-list button:focus-visible {
+.timer-task-pick:focus-visible {
   outline: 2px solid rgba(31, 111, 235, 0.4);
   outline-offset: 2px;
 }
@@ -9089,8 +9154,21 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
     min-height: 44px;
   }
 
-  .timer-list button {
-    padding: 12px;
+  .timer-bulk-controls {
+    gap: 6px;
+  }
+
+  .timer-bulk-controls .btn {
+    flex: 1 1 auto;
+    min-height: 40px;
+  }
+
+  .timer-bulk-count {
+    flex: 1 1 100%;
+  }
+
+  .timer-task-pick {
+    padding: 10px 12px;
     min-height: 48px;
     font-size: 0.95rem;
   }

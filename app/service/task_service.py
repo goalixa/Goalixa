@@ -432,6 +432,29 @@ class TaskService:
         end_utc = end_local.astimezone(timezone.utc).replace(tzinfo=None)
         return start_utc, end_utc
 
+    def _merged_interval_seconds(self, intervals):
+        if not intervals:
+            return 0
+        normalized = [
+            (start, end)
+            for start, end in intervals
+            if start is not None and end is not None and end > start
+        ]
+        if not normalized:
+            return 0
+        normalized.sort(key=lambda item: item[0])
+        current_start, current_end = normalized[0]
+        total_seconds = 0
+        for start, end in normalized[1:]:
+            if start <= current_end:
+                if end > current_end:
+                    current_end = end
+                continue
+            total_seconds += int((current_end - current_start).total_seconds())
+            current_start, current_end = start, end
+        total_seconds += int((current_end - current_start).total_seconds())
+        return total_seconds
+
     def _rollover_running_entries(self):
         today = self.current_local_date()
         today_start, _ = self._local_day_bounds(today)
@@ -646,6 +669,7 @@ class TaskService:
                     "start": day_start,
                     "end": day_end,
                     "seconds": 0,
+                    "intervals": [],
                 }
             )
 
@@ -660,10 +684,10 @@ class TaskService:
                 overlap_start = max(entry_start, bucket["start"])
                 overlap_end = min(entry_end, bucket["end"])
                 if overlap_end > overlap_start:
-                    bucket["seconds"] += int(
-                        (overlap_end - overlap_start).total_seconds()
-                    )
+                    bucket["intervals"].append((overlap_start, overlap_end))
 
+        for bucket in buckets:
+            bucket["seconds"] = self._merged_interval_seconds(bucket["intervals"])
         max_seconds = max((bucket["seconds"] for bucket in buckets), default=0)
         for bucket in buckets:
             bucket["percent"] = (
@@ -671,6 +695,7 @@ class TaskService:
                 if max_seconds
                 else 0
             )
+            del bucket["intervals"]
             del bucket["start"]
             del bucket["end"]
 
@@ -697,6 +722,7 @@ class TaskService:
                     "start": day_start,
                     "end": day_end,
                     "seconds": 0,
+                    "intervals": [],
                 }
             )
 
@@ -711,10 +737,10 @@ class TaskService:
                 overlap_start = max(entry_start, bucket["start"])
                 overlap_end = min(entry_end, bucket["end"])
                 if overlap_end > overlap_start:
-                    bucket["seconds"] += int(
-                        (overlap_end - overlap_start).total_seconds()
-                    )
+                    bucket["intervals"].append((overlap_start, overlap_end))
 
+        for bucket in buckets:
+            bucket["seconds"] = self._merged_interval_seconds(bucket["intervals"])
         max_seconds = max((bucket["seconds"] for bucket in buckets), default=0)
         for bucket in buckets:
             bucket["percent"] = (
@@ -722,6 +748,7 @@ class TaskService:
                 if max_seconds
                 else 0
             )
+            del bucket["intervals"]
             del bucket["start"]
             del bucket["end"]
 
@@ -980,6 +1007,7 @@ class TaskService:
                     "end": day_end,
                     "tasks": {},
                     "total_seconds": 0,
+                    "intervals": [],
                 }
             )
 
@@ -1000,7 +1028,7 @@ class TaskService:
                 if overlap_end <= overlap_start:
                     continue
                 duration = int((overlap_end - overlap_start).total_seconds())
-                bucket["total_seconds"] += duration
+                bucket["intervals"].append((overlap_start, overlap_end))
                 task = bucket["tasks"].get(entry["task_id"])
                 if not task:
                     task = {
@@ -1038,8 +1066,10 @@ class TaskService:
             for task in tasks:
                 task.pop("sort_ts", None)
             bucket["tasks"] = tasks
+            bucket["total_seconds"] = self._merged_interval_seconds(bucket["intervals"])
             bucket.pop("start", None)
             bucket.pop("end", None)
+            bucket.pop("intervals", None)
             result.append(bucket)
 
         return result
@@ -1051,7 +1081,7 @@ class TaskService:
             start_day.isoformat(), end_day.isoformat()
         )
         now = datetime.utcnow()
-        total_seconds = 0
+        intervals = []
         for entry in entries:
             entry_start = self._parse_datetime(entry["started_at"])
             entry_end = (
@@ -1063,8 +1093,8 @@ class TaskService:
             overlap_end = min(entry_end, end_day)
             if overlap_end <= overlap_start:
                 continue
-            total_seconds += int((overlap_end - overlap_start).total_seconds())
-        return total_seconds
+            intervals.append((overlap_start, overlap_end))
+        return self._merged_interval_seconds(intervals)
 
     def current_week_range(self):
         today = self.current_local_date()
