@@ -125,6 +125,29 @@ self.addEventListener('activate', (event) => {
             # User is in demo mode but accessing non-demo path - redirect to login
             return redirect(url_for_security("login"))
 
+    @app.before_request
+    def auto_complete_overdue_timers():
+        """
+        Automatically complete timers that have been running for 25+ minutes.
+        This ensures that Pomodoro timers complete even if the user's session expires.
+        Runs on every request to catch overdue timers whenever the user makes any request.
+        """
+        # Skip for health checks and static files
+        if request.path in {"/health", "/sw.js", "/favicon.ico", "/robots.txt"}:
+            return
+
+        # Skip for static files
+        if request.path.startswith("/static/"):
+            return
+
+        # Only run if user is authenticated
+        if current_user and current_user.is_authenticated:
+            try:
+                service.complete_overdue_timers(max_duration_seconds=1500)
+            except Exception:
+                # Silently fail to not disrupt the request
+                pass
+
     def parse_iso(value):
         if not value:
             return None
@@ -705,6 +728,7 @@ self.addEventListener('activate', (event) => {
             request.form.get("project_id"),
             request.form.getlist("label_ids"),
             request.form.get("goal_id"),
+            request.form.get("priority", "medium"),
         )
         return redirect("/demo/tasks")
 
@@ -1726,6 +1750,7 @@ self.addEventListener('activate', (event) => {
             request.form.get("project_id"),
             request.form.getlist("label_ids"),
             request.form.get("goal_id"),
+            request.form.get("priority", "medium"),
         )
         return redirect(request.referrer or url_for("index"))
 
@@ -1752,6 +1777,7 @@ self.addEventListener('activate', (event) => {
                     "checked_today": bool(task.get("checked_today")),
                     "daily_checks": int(task.get("daily_checks") or 0),
                     "completed_at": task.get("completed_at"),
+                    "priority": task.get("priority") or "medium",
                 }
                 for task in task_view["tasks"]
             ],
@@ -1773,6 +1799,7 @@ self.addEventListener('activate', (event) => {
                     "checked_today": bool(task.get("checked_today")),
                     "daily_checks": int(task.get("daily_checks") or 0),
                     "completed_at": task.get("completed_at"),
+                    "priority": task.get("priority") or "medium",
                 }
                 for task in task_view["done_today_tasks"]
             ],
@@ -1794,6 +1821,7 @@ self.addEventListener('activate', (event) => {
                     "checked_today": bool(task.get("checked_today")),
                     "daily_checks": int(task.get("daily_checks") or 0),
                     "completed_at": task.get("completed_at"),
+                    "priority": task.get("priority") or "medium",
                 }
                 for task in task_view["completed_tasks"]
             ],
@@ -1808,6 +1836,7 @@ self.addEventListener('activate', (event) => {
             payload.get("project_id"),
             payload.get("label_ids", []),
             payload.get("goal_id"),
+            payload.get("priority", "medium"),
         )
         return list_tasks()
 

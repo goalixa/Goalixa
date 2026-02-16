@@ -280,6 +280,7 @@ class PostgresTaskRepository:
             "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active'"
         )
         db.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS completed_at TEXT")
+        db.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'medium'")
         db.execute("ALTER TABLE time_entries ADD COLUMN IF NOT EXISTS user_id INTEGER")
         db.execute("ALTER TABLE goals ADD COLUMN IF NOT EXISTS user_id INTEGER")
         db.execute("ALTER TABLE goal_subgoals ADD COLUMN IF NOT EXISTS label TEXT")
@@ -486,7 +487,7 @@ class PostgresTaskRepository:
                     %s::bigint AS rolling_start,
                     %s::bigint AS day_start
             )
-            SELECT t.id, t.name, t.project_id, t.status, t.completed_at,
+            SELECT t.id, t.name, t.project_id, t.status, t.completed_at, t.priority,
                    p.name AS project_name,
                    COALESCE(SUM(
                        CASE
@@ -536,7 +537,7 @@ class PostgresTaskRepository:
             LEFT JOIN projects p ON p.id = t.project_id
             LEFT JOIN time_entries te ON te.task_id = t.id AND te.user_id = %s
             WHERE t.user_id = %s
-            GROUP BY t.id, t.name, t.project_id, t.status, t.completed_at, p.name
+            GROUP BY t.id, t.name, t.project_id, t.status, t.completed_at, t.priority, p.name
             ORDER BY t.created_at DESC
             """,
             (now_ts, rolling_start, day_start, user_id, user_id),
@@ -560,7 +561,7 @@ class PostgresTaskRepository:
                     %s::bigint AS rolling_start,
                     %s::bigint AS day_start
             )
-            SELECT t.id, t.name, t.project_id, t.status, t.completed_at,
+            SELECT t.id, t.name, t.project_id, t.status, t.completed_at, t.priority,
                    p.name AS project_name,
                    COALESCE(SUM(
                        CASE
@@ -610,7 +611,7 @@ class PostgresTaskRepository:
             LEFT JOIN projects p ON p.id = t.project_id
             LEFT JOIN time_entries te ON te.task_id = t.id AND te.user_id = %s
             WHERE t.user_id = %s AND t.project_id = %s
-            GROUP BY t.id, t.name, t.project_id, t.status, t.completed_at, p.name
+            GROUP BY t.id, t.name, t.project_id, t.status, t.completed_at, t.priority, p.name
             ORDER BY t.created_at DESC
             """,
             (now_ts, rolling_start, day_start, user_id, user_id, project_id),
@@ -625,16 +626,16 @@ class PostgresTaskRepository:
             (project_id, user_id),
         ).fetchone()
 
-    def create_task(self, name, created_at, project_id):
+    def create_task(self, name, created_at, project_id, priority="medium"):
         db = self._get_db()
         user_id = self._require_user_id()
         cursor = db.execute(
             """
-            INSERT INTO tasks (user_id, name, created_at, project_id)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO tasks (user_id, name, created_at, project_id, priority)
+            VALUES (%s, %s, %s, %s, %s)
             RETURNING id
             """,
-            (user_id, name, created_at, project_id),
+            (user_id, name, created_at, project_id, priority),
         )
         row = cursor.fetchone()
         db.commit()
@@ -1952,6 +1953,40 @@ class PostgresTaskRepository:
             (ended_at, entry_id, user_id),
         )
         db.commit()
+
+    def complete_overdue_time_entries(self, max_duration_seconds=1500):
+        """
+        Automatically complete time entries that have been running for longer than max_duration_seconds.
+        Default is 1500 seconds (25 minutes for Pomodoro).
+        Returns the number of entries completed.
+        """
+        db = self._get_db()
+        user_id = self._require_user_id()
+        now_ts = datetime.utcnow().timestamp()
+        # Calculate the timestamp before which entries should be completed
+        cutoff_ts = now_ts - max_duration_seconds
+
+        # Find and complete overdue entries
+        # We set ended_at to started_at + max_duration_seconds to cap the time at the Pomodoro length
+        result = db.execute(
+            """
+            UPDATE time_entries
+            SET ended_at = (
+                CAST(started_at AS TIMESTAMP) + INTERVAL '1 second' * %s
+            )
+            WHERE id IN (
+                SELECT id FROM time_entries
+                WHERE user_id = %s
+                  AND ended_at IS NULL
+                  AND EXTRACT(EPOCH FROM (CAST(started_at AS TIMESTAMP))) < %s
+            )
+            RETURNING id, task_id, started_at, ended_at
+            """,
+            (max_duration_seconds, user_id, cutoff_ts),
+        )
+        completed = result.fetchall()
+        db.commit()
+        return len(completed)
 
     def delete_task(self, task_id):
         db = self._get_db()
