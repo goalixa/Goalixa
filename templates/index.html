@@ -18,8 +18,8 @@
             <option value="{{ project['id'] }}" {% if loop.first %}selected{% endif %}>{{ project['name'] }}</option>
           {% endfor %}
         </select>
-        <select id="task-goal" name="goal_id" {% if goals %}required{% endif %}>
-          <option value="" selected>Select goal</option>
+        <select id="task-goal" name="goal_id">
+          <option value="" selected>Select goal (optional)</option>
           {% for goal in goals %}
             <option value="{{ goal['id'] }}">{{ goal['name'] }}</option>
           {% endfor %}

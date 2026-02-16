@@ -3478,7 +3478,7 @@ body[data-page="calendar"] .calendar-subtitle {
   visibility: hidden;
   pointer-events: none;
   transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
-  z-index: 30;
+  z-index: 9999;
 }
 
 [data-theme="dark"] .label-picker {
