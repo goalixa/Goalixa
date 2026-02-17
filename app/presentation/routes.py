@@ -664,12 +664,14 @@ self.addEventListener('activate', (event) => {
         goals_list = service.list_goals()
         projects = service.list_projects()
         tasks = service.list_tasks()
+        labels = service.list_labels()
         active_goals = [goal for goal in goals_list if goal.get("status") in {"active", "at_risk"}]
         return render_template(
             "long_term_goals.html",
             goals=goals_list,
             projects=projects,
             tasks=tasks,
+            labels=labels,
             active_goals_count=len(active_goals),
         )
 
@@ -677,6 +679,8 @@ self.addEventListener('activate', (event) => {
     @auth_required()
     def demo_weekly_goals():
         week_start, week_end = service.current_week_range()
+        long_term_goals = service.list_goals()
+        labels = service.list_labels()
         weekly_current = service.list_weekly_goals(
             week_start=week_start.isoformat(),
             week_end=week_end.isoformat(),
@@ -689,6 +693,8 @@ self.addEventListener('activate', (event) => {
             weekly_range_label=f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}",
             week_start=week_start.isoformat(),
             week_end=week_end.isoformat(),
+            long_term_goals=long_term_goals,
+            labels=labels,
         )
 
     @app.route("/demo/tasks", methods=["GET"])
@@ -1475,12 +1481,14 @@ self.addEventListener('activate', (event) => {
         goals_list = service.list_goals()
         projects = service.list_projects()
         tasks = service.list_tasks()
+        labels = service.list_labels()
         active_goals = [goal for goal in goals_list if goal.get("status") in {"active", "at_risk"}]
         return render_template(
             "long_term_goals.html",
             goals=goals_list,
             projects=projects,
             tasks=tasks,
+            labels=labels,
             active_goals_count=len(active_goals),
         )
 
@@ -1502,10 +1510,12 @@ self.addEventListener('activate', (event) => {
     def new_goal():
         projects = service.list_projects()
         tasks = service.list_tasks()
+        labels = service.list_labels()
         return render_template(
             "goals_new.html",
             projects=projects,
             tasks=tasks,
+            labels=labels,
         )
 
     @app.route("/goals", methods=["POST"])
@@ -1518,6 +1528,7 @@ self.addEventListener('activate', (event) => {
             request.form.get("priority", "medium"),
             request.form.get("target_date", ""),
             request.form.get("target_hours", 0),
+            request.form.get("label_id"),
             request.form.get("subgoals", ""),
             request.form.getlist("project_ids"),
             request.form.getlist("task_ids"),
@@ -1535,6 +1546,7 @@ self.addEventListener('activate', (event) => {
             request.form.get("priority", "medium"),
             request.form.get("target_date", ""),
             request.form.get("target_hours", 0),
+            request.form.get("label_id"),
             request.form.get("subgoals"),
             request.form.getlist("project_ids"),
             request.form.getlist("task_ids"),
@@ -1570,6 +1582,8 @@ self.addEventListener('activate', (event) => {
     @auth_required()
     def weekly_goals():
         week_start, week_end = service.current_week_range()
+        long_term_goals = service.list_goals()
+        labels = service.list_labels()
         weekly_current = service.list_weekly_goals(
             week_start=week_start.isoformat(),
             week_end=week_end.isoformat(),
@@ -1582,6 +1596,8 @@ self.addEventListener('activate', (event) => {
             weekly_range_label=f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}",
             week_start=week_start.isoformat(),
             week_end=week_end.isoformat(),
+            long_term_goals=long_term_goals,
+            labels=labels,
         )
 
     @app.route("/weekly-goals", methods=["POST"])
@@ -1598,6 +1614,8 @@ self.addEventListener('activate', (event) => {
             request.form.get("target_hours", 0),
             week_start,
             week_end,
+            request.form.get("long_term_goal_id"),
+            request.form.get("label_id"),
         )
         return redirect(request.referrer or url_for("weekly_goals"))
 

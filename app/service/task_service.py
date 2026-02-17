@@ -3,11 +3,24 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-#test
 class TaskService:
     DEMO_SEED_LOCK_ID = 922337203685477500
     def __init__(self, repository):
         self.repository = repository
+
+    def _coerce_int(self, value):
+        if value is None or str(value).strip() == "":
+            return None
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+
+    def _hours_to_seconds(self, value):
+        try:
+            return int(float(value or 0) * 3600)
+        except (TypeError, ValueError):
+            return 0
 
     def _parse_subgoals(self, raw_value):
         lines = (raw_value or "").splitlines()
@@ -1129,21 +1142,40 @@ class TaskService:
             progress = int((total_seconds / target_seconds) * 100) if target_seconds else 0
             progress = min(progress, 100)
             week_label = f"{start_date.strftime('%b %d')} - {end_date.strftime('%b %d')}"
+            label_data = None
+            if goal.get("label_id") and goal.get("label_name"):
+                label_data = {
+                    "id": goal["label_id"],
+                    "name": goal["label_name"],
+                    "color": goal.get("label_color"),
+                }
             goal_list.append(
                 {
                     **dict(goal),
                     "progress_seconds": total_seconds,
                     "progress_percent": progress,
                     "week_label": week_label,
+                    "label": label_data,
                 }
             )
         return goal_list
 
-    def add_weekly_goal(self, title, target_hours, week_start, week_end):
+    def add_weekly_goal(
+        self,
+        title,
+        target_hours,
+        week_start,
+        week_end,
+        long_term_goal_id=None,
+        label_id=None,
+    ):
         title = (title or "").strip()
         if not title:
             return
-        target_seconds = int(float(target_hours or 0) * 3600)
+        target_seconds = self._hours_to_seconds(target_hours)
+        label_id = self._coerce_int(label_id)
+        if label_id is None:
+            return
         created_at = datetime.utcnow().isoformat()
         self.repository.create_weekly_goal(
             title,
@@ -1152,15 +1184,27 @@ class TaskService:
             week_end,
             "active",
             created_at,
+            self._coerce_int(long_term_goal_id),
+            label_id,
         )
 
-    def update_weekly_goal(self, goal_id, title, target_hours, status):
+    def update_weekly_goal(self, goal_id, title, target_hours, status, long_term_goal_id=None, label_id=None):
         title = (title or "").strip()
         status = (status or "active").strip()
-        target_seconds = int(float(target_hours or 0) * 3600)
+        target_seconds = self._hours_to_seconds(target_hours)
+        label_id = self._coerce_int(label_id)
+        if label_id is None:
+            return
         if not title:
             return
-        self.repository.update_weekly_goal(goal_id, title, target_seconds, status)
+        self.repository.update_weekly_goal(
+            goal_id,
+            title,
+            target_seconds,
+            status,
+            self._coerce_int(long_term_goal_id),
+            label_id,
+        )
 
     def toggle_weekly_goal_status(self, goal_id, status):
         status = (status or "active").strip()
@@ -1169,7 +1213,12 @@ class TaskService:
         if not match:
             return
         self.repository.update_weekly_goal(
-            goal_id, match["title"], match["target_seconds"], status
+            goal_id,
+            match["title"],
+            match["target_seconds"],
+            status,
+            match.get("long_term_goal_id"),
+            match.get("label_id"),
         )
 
     def delete_weekly_goal(self, goal_id):
@@ -1363,6 +1412,13 @@ class TaskService:
                 progress = int((total_seconds / target_seconds) * 100) if target_seconds else 0
                 progress = min(progress, 100)
                 display_status = goal["status"]
+            label_data = None
+            if goal.get("label_id") and goal.get("label_name"):
+                label_data = {
+                    "id": goal["label_id"],
+                    "name": goal["label_name"],
+                    "color": goal.get("label_color"),
+                }
 
             goal_list.append(
                 {
@@ -1381,6 +1437,7 @@ class TaskService:
                     "deadline_total_days": deadline_total_days,
                     "deadline_remaining_days": deadline_remaining_days,
                     "deadline_percent": deadline_percent,
+                    "label": label_data,
                 }
             )
         return goal_list
@@ -1393,7 +1450,16 @@ class TaskService:
         for item in goals:
             if item["id"] == goal_id:
                 return item
-        return dict(goal)
+        fallback = dict(goal)
+        if fallback.get("label_id") and fallback.get("label_name"):
+            fallback["label"] = {
+                "id": fallback["label_id"],
+                "name": fallback["label_name"],
+                "color": fallback.get("label_color"),
+            }
+        else:
+            fallback["label"] = None
+        return fallback
 
     def add_goal(
         self,
@@ -1403,6 +1469,7 @@ class TaskService:
         priority,
         target_date,
         target_hours,
+        label_id,
         subgoals_text=None,
         project_ids=None,
         task_ids=None,
@@ -1412,9 +1479,10 @@ class TaskService:
         status = (status or "active").strip()
         priority = (priority or "medium").strip()
         target_date = (target_date or "").strip() or None
-        target_seconds = int(float(target_hours or 0) * 3600)
+        target_seconds = self._hours_to_seconds(target_hours)
+        label_id = self._coerce_int(label_id)
         subgoals = self._parse_subgoals(subgoals_text)
-        if not name:
+        if not name or label_id is None:
             return
         created_at = datetime.utcnow().isoformat()
         goal_id = self.repository.create_goal(
@@ -1424,6 +1492,7 @@ class TaskService:
             priority,
             target_date,
             target_seconds,
+            label_id,
             created_at,
         )
         filtered_project_ids = [int(pid) for pid in project_ids or [] if str(pid).strip()]
@@ -1441,6 +1510,7 @@ class TaskService:
         priority,
         target_date,
         target_hours,
+        label_id,
         subgoals_text=None,
         project_ids=None,
         task_ids=None,
@@ -1450,8 +1520,9 @@ class TaskService:
         status = (status or "active").strip()
         priority = (priority or "medium").strip()
         target_date = (target_date or "").strip() or None
-        target_seconds = int(float(target_hours or 0) * 3600)
-        if not name:
+        target_seconds = self._hours_to_seconds(target_hours)
+        label_id = self._coerce_int(label_id)
+        if not name or label_id is None:
             return
         self.repository.update_goal(
             int(goal_id),
@@ -1461,6 +1532,7 @@ class TaskService:
             priority,
             target_date,
             target_seconds,
+            label_id,
         )
         filtered_project_ids = [int(pid) for pid in project_ids or [] if str(pid).strip()]
         filtered_task_ids = [int(tid) for tid in task_ids or [] if str(tid).strip()]
@@ -1498,6 +1570,7 @@ class TaskService:
             goal["priority"],
             goal["target_date"],
             int(goal["target_seconds"] or 0),
+            goal.get("label_id"),
         )
 
     def add_goal_subgoal(self, goal_id, title, label, target_date, project_id):

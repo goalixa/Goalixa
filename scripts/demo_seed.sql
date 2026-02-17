@@ -196,10 +196,30 @@ SELECT t.id, TO_CHAR(CURRENT_DATE - INTERVAL '3 days', 'YYYY-MM-DD'), (NOW() AT 
 FROM tasks t WHERE t.user_id = {{user_id}} AND t.name IN ('Strength workout');
 
 -- Goals
-INSERT INTO goals (user_id, name, description, status, priority, target_date, target_seconds, created_at)
+INSERT INTO goals (user_id, name, description, status, priority, target_date, target_seconds, label_id, created_at)
 VALUES
-  ({{user_id}}, 'Launch Goalixa Beta', 'Ship a polished beta and collect early feedback.', 'active', 'high', TO_CHAR(CURRENT_DATE + INTERVAL '30 days', 'YYYY-MM-DD'), 72000, (NOW() AT TIME ZONE 'UTC') - INTERVAL '10 days'),
-  ({{user_id}}, 'Build Consistent Focus Routine', 'Establish a repeatable focus rhythm each week.', 'active', 'medium', TO_CHAR(CURRENT_DATE + INTERVAL '60 days', 'YYYY-MM-DD'), 108000, (NOW() AT TIME ZONE 'UTC') - INTERVAL '15 days');
+  (
+    {{user_id}},
+    'Launch Goalixa Beta',
+    'Ship a polished beta and collect early feedback.',
+    'active',
+    'high',
+    TO_CHAR(CURRENT_DATE + INTERVAL '30 days', 'YYYY-MM-DD'),
+    72000,
+    (SELECT id FROM labels WHERE user_id = {{user_id}} AND name = 'Deep Work' LIMIT 1),
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '10 days'
+  ),
+  (
+    {{user_id}},
+    'Build Consistent Focus Routine',
+    'Establish a repeatable focus rhythm each week.',
+    'active',
+    'medium',
+    TO_CHAR(CURRENT_DATE + INTERVAL '60 days', 'YYYY-MM-DD'),
+    108000,
+    (SELECT id FROM labels WHERE user_id = {{user_id}} AND name = 'Research' LIMIT 1),
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '15 days'
+  );
 
 -- Goal projects
 INSERT INTO goal_projects (goal_id, project_id)
@@ -298,12 +318,28 @@ INSERT INTO daily_todos (user_id, name, log_date, created_at) VALUES
   ({{user_id}}, 'Review calendar blocks', TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD'), (NOW() AT TIME ZONE 'UTC'));
 
 -- Weekly goals
-INSERT INTO weekly_goals (user_id, title, target_seconds, week_start, week_end, status, created_at) VALUES
-  ({{user_id}}, '10 hours of deep work', 36000,
-   TO_CHAR(DATE_TRUNC('week', CURRENT_DATE)::date, 'YYYY-MM-DD'),
-   TO_CHAR((DATE_TRUNC('week', CURRENT_DATE)::date + INTERVAL '6 days')::date, 'YYYY-MM-DD'),
-   'active', (NOW() AT TIME ZONE 'UTC') - INTERVAL '2 days'),
-  ({{user_id}}, 'Ship one new feature', 0,
-   TO_CHAR(DATE_TRUNC('week', CURRENT_DATE)::date, 'YYYY-MM-DD'),
-   TO_CHAR((DATE_TRUNC('week', CURRENT_DATE)::date + INTERVAL '6 days')::date, 'YYYY-MM-DD'),
-   'active', (NOW() AT TIME ZONE 'UTC') - INTERVAL '2 days');
+INSERT INTO weekly_goals (
+  user_id, title, target_seconds, week_start, week_end, long_term_goal_id, label_id, status, created_at
+) VALUES
+  (
+    {{user_id}},
+    '10 hours of deep work',
+    36000,
+    TO_CHAR(DATE_TRUNC('week', CURRENT_DATE)::date, 'YYYY-MM-DD'),
+    TO_CHAR((DATE_TRUNC('week', CURRENT_DATE)::date + INTERVAL '6 days')::date, 'YYYY-MM-DD'),
+    (SELECT id FROM goals WHERE user_id = {{user_id}} AND name = 'Launch Goalixa Beta' LIMIT 1),
+    (SELECT id FROM labels WHERE user_id = {{user_id}} AND name = 'Deep Work' LIMIT 1),
+    'active',
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '2 days'
+  ),
+  (
+    {{user_id}},
+    'Ship one new feature',
+    0,
+    TO_CHAR(DATE_TRUNC('week', CURRENT_DATE)::date, 'YYYY-MM-DD'),
+    TO_CHAR((DATE_TRUNC('week', CURRENT_DATE)::date + INTERVAL '6 days')::date, 'YYYY-MM-DD'),
+    (SELECT id FROM goals WHERE user_id = {{user_id}} AND name = 'Launch Goalixa Beta' LIMIT 1),
+    (SELECT id FROM labels WHERE user_id = {{user_id}} AND name = 'Quick Win' LIMIT 1),
+    'active',
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '2 days'
+  );

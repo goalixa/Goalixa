@@ -5,7 +5,7 @@ import uuid
 
 
 def create_access_token(user_id, email, secret, ttl_minutes=15):
-    """Create a short-lived access token for dual-token authentication."""
+    """Create a short-lived access token for dual-token authentication. """
     now = datetime.now(timezone.utc)
     payload = {
         "sub": str(user_id),

@@ -41,6 +41,34 @@ class PostgresTaskRepository:
         self._table_columns_cache[table_name] = columns
         return columns
 
+    def _coerce_owned_label_id(self, label_id, user_id):
+        if label_id is None or str(label_id).strip() == "":
+            return None
+        try:
+            label_value = int(label_id)
+        except (TypeError, ValueError):
+            return None
+        db = self._get_db()
+        owned_label = db.execute(
+            "SELECT id FROM labels WHERE id = %s AND user_id = %s",
+            (label_value, user_id),
+        ).fetchone()
+        return owned_label["id"] if owned_label else None
+
+    def _coerce_owned_goal_id(self, goal_id, user_id):
+        if goal_id is None or str(goal_id).strip() == "":
+            return None
+        try:
+            goal_value = int(goal_id)
+        except (TypeError, ValueError):
+            return None
+        db = self._get_db()
+        owned_goal = db.execute(
+            "SELECT id FROM goals WHERE id = %s AND user_id = %s",
+            (goal_value, user_id),
+        ).fetchone()
+        return owned_goal["id"] if owned_goal else None
+
     def close_db(self, exception=None):
         db = g.pop("db", None)
         if db is not None:
@@ -145,8 +173,10 @@ class PostgresTaskRepository:
                 priority TEXT NOT NULL,
                 target_date TEXT,
                 target_seconds INTEGER NOT NULL DEFAULT 0,
+                label_id INTEGER,
                 created_at TEXT NOT NULL,
-                FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE
+                FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE,
+                FOREIGN KEY (label_id) REFERENCES labels (id) ON DELETE SET NULL
             )
             """,
             """
@@ -244,9 +274,13 @@ class PostgresTaskRepository:
                 target_seconds INTEGER NOT NULL DEFAULT 0,
                 week_start TEXT NOT NULL,
                 week_end TEXT NOT NULL,
+                long_term_goal_id INTEGER,
+                label_id INTEGER,
                 status TEXT NOT NULL DEFAULT 'active',
                 created_at TEXT NOT NULL,
-                FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE
+                FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE,
+                FOREIGN KEY (long_term_goal_id) REFERENCES goals (id) ON DELETE SET NULL,
+                FOREIGN KEY (label_id) REFERENCES labels (id) ON DELETE SET NULL
             )
             """,
             """
@@ -283,6 +317,7 @@ class PostgresTaskRepository:
         db.execute("ALTER TABLE tasks ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'medium'")
         db.execute("ALTER TABLE time_entries ADD COLUMN IF NOT EXISTS user_id INTEGER")
         db.execute("ALTER TABLE goals ADD COLUMN IF NOT EXISTS user_id INTEGER")
+        db.execute("ALTER TABLE goals ADD COLUMN IF NOT EXISTS label_id INTEGER")
         db.execute("ALTER TABLE goal_subgoals ADD COLUMN IF NOT EXISTS label TEXT")
         db.execute("ALTER TABLE goal_subgoals ADD COLUMN IF NOT EXISTS target_date TEXT")
         db.execute("ALTER TABLE goal_subgoals ADD COLUMN IF NOT EXISTS project_id INTEGER")
@@ -290,6 +325,8 @@ class PostgresTaskRepository:
         db.execute("ALTER TABLE habits ADD COLUMN IF NOT EXISTS goal_name TEXT")
         db.execute("ALTER TABLE habits ADD COLUMN IF NOT EXISTS subgoal_name TEXT")
         db.execute("ALTER TABLE weekly_goals ADD COLUMN IF NOT EXISTS user_id INTEGER")
+        db.execute("ALTER TABLE weekly_goals ADD COLUMN IF NOT EXISTS long_term_goal_id INTEGER")
+        db.execute("ALTER TABLE weekly_goals ADD COLUMN IF NOT EXISTS label_id INTEGER")
         # Add user table columns for auth compatibility
         db.execute("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)")
         db.execute("ALTER TABLE \"user\" ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT TRUE")
@@ -335,35 +372,73 @@ class PostgresTaskRepository:
         if week_start and week_end:
             rows = db.execute(
                 """
-                SELECT id, title, target_seconds, week_start, week_end, status, created_at
-                FROM weekly_goals
-                WHERE user_id = %s AND week_start = %s AND week_end = %s
-                ORDER BY created_at DESC
+                SELECT
+                    wg.id,
+                    wg.title,
+                    wg.target_seconds,
+                    wg.week_start,
+                    wg.week_end,
+                    wg.long_term_goal_id,
+                    g.name AS long_term_goal_name,
+                    wg.label_id,
+                    l.name AS label_name,
+                    l.color AS label_color,
+                    wg.status,
+                    wg.created_at
+                FROM weekly_goals wg
+                LEFT JOIN goals g ON g.id = wg.long_term_goal_id AND g.user_id = wg.user_id
+                LEFT JOIN labels l ON l.id = wg.label_id AND l.user_id = wg.user_id
+                WHERE wg.user_id = %s AND wg.week_start = %s AND wg.week_end = %s
+                ORDER BY wg.created_at DESC
                 """,
                 (user_id, week_start, week_end),
             ).fetchall()
         else:
             rows = db.execute(
                 """
-                SELECT id, title, target_seconds, week_start, week_end, status, created_at
-                FROM weekly_goals
-                WHERE user_id = %s
-                ORDER BY week_start DESC, created_at DESC
+                SELECT
+                    wg.id,
+                    wg.title,
+                    wg.target_seconds,
+                    wg.week_start,
+                    wg.week_end,
+                    wg.long_term_goal_id,
+                    g.name AS long_term_goal_name,
+                    wg.label_id,
+                    l.name AS label_name,
+                    l.color AS label_color,
+                    wg.status,
+                    wg.created_at
+                FROM weekly_goals wg
+                LEFT JOIN goals g ON g.id = wg.long_term_goal_id AND g.user_id = wg.user_id
+                LEFT JOIN labels l ON l.id = wg.label_id AND l.user_id = wg.user_id
+                WHERE wg.user_id = %s
+                ORDER BY wg.week_start DESC, wg.created_at DESC
                 """,
                 (user_id,),
             ).fetchall()
         return rows
 
     def create_weekly_goal(
-        self, title, target_seconds, week_start, week_end, status, created_at
+        self,
+        title,
+        target_seconds,
+        week_start,
+        week_end,
+        status,
+        created_at,
+        long_term_goal_id=None,
+        label_id=None,
     ):
         user_id = self._require_user_id()
         db = self._get_db()
+        valid_long_term_goal_id = self._coerce_owned_goal_id(long_term_goal_id, user_id)
+        valid_label_id = self._coerce_owned_label_id(label_id, user_id)
         cursor = db.execute(
             """
             INSERT INTO weekly_goals
-                (user_id, title, target_seconds, week_start, week_end, status, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                (user_id, title, target_seconds, week_start, week_end, long_term_goal_id, label_id, status, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
             (
@@ -372,6 +447,8 @@ class PostgresTaskRepository:
                 int(target_seconds or 0),
                 week_start,
                 week_end,
+                valid_long_term_goal_id,
+                valid_label_id,
                 status,
                 created_at,
             ),
@@ -380,16 +457,26 @@ class PostgresTaskRepository:
         db.commit()
         return row["id"] if row else None
 
-    def update_weekly_goal(self, goal_id, title, target_seconds, status):
+    def update_weekly_goal(self, goal_id, title, target_seconds, status, long_term_goal_id=None, label_id=None):
         user_id = self._require_user_id()
         db = self._get_db()
+        valid_long_term_goal_id = self._coerce_owned_goal_id(long_term_goal_id, user_id)
+        valid_label_id = self._coerce_owned_label_id(label_id, user_id)
         db.execute(
             """
             UPDATE weekly_goals
-            SET title = %s, target_seconds = %s, status = %s
+            SET title = %s, target_seconds = %s, long_term_goal_id = %s, label_id = %s, status = %s
             WHERE id = %s AND user_id = %s
             """,
-            (title, int(target_seconds or 0), status, int(goal_id), user_id),
+            (
+                title,
+                int(target_seconds or 0),
+                valid_long_term_goal_id,
+                valid_label_id,
+                status,
+                int(goal_id),
+                user_id,
+            ),
         )
         db.commit()
 
@@ -943,6 +1030,14 @@ class PostgresTaskRepository:
     def delete_label(self, label_id):
         db = self._get_db()
         user_id = self._require_user_id()
+        db.execute(
+            "UPDATE goals SET label_id = NULL WHERE label_id = %s AND user_id = %s",
+            (label_id, user_id),
+        )
+        db.execute(
+            "UPDATE weekly_goals SET label_id = NULL WHERE label_id = %s AND user_id = %s",
+            (label_id, user_id),
+        )
         db.execute("DELETE FROM task_labels WHERE label_id = %s", (label_id,))
         db.execute("DELETE FROM project_labels WHERE label_id = %s", (label_id,))
         db.execute("DELETE FROM labels WHERE id = %s AND user_id = %s", (label_id, user_id))
@@ -1004,10 +1099,22 @@ class PostgresTaskRepository:
         user_id = self._require_user_id()
         return db.execute(
             """
-            SELECT id, name, description, status, priority, target_date, target_seconds, created_at
-            FROM goals
-            WHERE user_id = %s
-            ORDER BY created_at DESC
+            SELECT
+                g.id,
+                g.name,
+                g.description,
+                g.status,
+                g.priority,
+                g.target_date,
+                g.target_seconds,
+                g.label_id,
+                l.name AS label_name,
+                l.color AS label_color,
+                g.created_at
+            FROM goals g
+            LEFT JOIN labels l ON l.id = g.label_id AND l.user_id = g.user_id
+            WHERE g.user_id = %s
+            ORDER BY g.created_at DESC
             """,
             (user_id,),
         ).fetchall()
@@ -1017,44 +1124,92 @@ class PostgresTaskRepository:
         user_id = self._require_user_id()
         return db.execute(
             """
-            SELECT id, name, description, status, priority, target_date, target_seconds, created_at
-            FROM goals
-            WHERE id = %s AND user_id = %s
+            SELECT
+                g.id,
+                g.name,
+                g.description,
+                g.status,
+                g.priority,
+                g.target_date,
+                g.target_seconds,
+                g.label_id,
+                l.name AS label_name,
+                l.color AS label_color,
+                g.created_at
+            FROM goals g
+            LEFT JOIN labels l ON l.id = g.label_id AND l.user_id = g.user_id
+            WHERE g.id = %s AND g.user_id = %s
             """,
             (goal_id, user_id),
         ).fetchone()
 
-    def create_goal(self, name, description, status, priority, target_date, target_seconds, created_at):
+    def create_goal(
+        self,
+        name,
+        description,
+        status,
+        priority,
+        target_date,
+        target_seconds,
+        label_id,
+        created_at,
+    ):
         db = self._get_db()
         user_id = self._require_user_id()
+        valid_label_id = self._coerce_owned_label_id(label_id, user_id)
         cursor = db.execute(
             """
-            INSERT INTO goals (user_id, name, description, status, priority, target_date, target_seconds, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO goals (user_id, name, description, status, priority, target_date, target_seconds, label_id, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
-            (user_id, name, description, status, priority, target_date, target_seconds, created_at),
+            (
+                user_id,
+                name,
+                description,
+                status,
+                priority,
+                target_date,
+                target_seconds,
+                valid_label_id,
+                created_at,
+            ),
         )
         row = cursor.fetchone()
         db.commit()
         return row["id"] if row else None
 
-    def update_goal(self, goal_id, name, description, status, priority, target_date, target_seconds):
+    def update_goal(self, goal_id, name, description, status, priority, target_date, target_seconds, label_id):
         db = self._get_db()
         user_id = self._require_user_id()
+        valid_label_id = self._coerce_owned_label_id(label_id, user_id)
         db.execute(
             """
             UPDATE goals
-            SET name = %s, description = %s, status = %s, priority = %s, target_date = %s, target_seconds = %s
+            SET name = %s, description = %s, status = %s, priority = %s, target_date = %s, target_seconds = %s, label_id = %s
             WHERE id = %s AND user_id = %s
             """,
-            (name, description, status, priority, target_date, target_seconds, goal_id, user_id),
+            (
+                name,
+                description,
+                status,
+                priority,
+                target_date,
+                target_seconds,
+                valid_label_id,
+                goal_id,
+                user_id,
+            ),
         )
         db.commit()
 
     def delete_goal(self, goal_id):
         db = self._get_db()
         user_id = self._require_user_id()
+        db.execute(
+            "UPDATE weekly_goals SET long_term_goal_id = NULL WHERE long_term_goal_id = %s AND user_id = %s",
+            (goal_id, user_id),
+        )
         db.execute(
             """
             DELETE FROM goal_tasks

@@ -33,6 +33,28 @@
           Target hours
           <input type="number" name="target_hours" min="0" step="0.5" placeholder="10" />
         </label>
+        <label>
+          Long-term goal (optional)
+          <select name="long_term_goal_id">
+            <option value="">No long-term goal</option>
+            {% for long_term_goal in long_term_goals %}
+              <option value="{{ long_term_goal['id'] }}">{{ long_term_goal['name'] }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          Label
+          <select name="label_id" required>
+            {% if labels %}
+              <option value="" disabled selected>Select a label</option>
+              {% for label in labels %}
+                <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+              {% endfor %}
+            {% else %}
+              <option value="">Create a label first</option>
+            {% endif %}
+          </select>
+        </label>
         <button class="btn btn-primary btn-sm" type="submit">
           <i class="bi bi-plus-lg"></i>
           Add weekly goal
@@ -48,22 +70,37 @@
                   <p>
                     {{ goal["progress_seconds"] | format_seconds }} logged ·
                     Target {{ ((goal["target_seconds"] / 3600) | round(1)) if goal["target_seconds"] else 0 }}h
+                    {% if goal["long_term_goal_name"] %}
+                      · Long-term: {{ goal["long_term_goal_name"] }}
+                    {% endif %}
+                    {% if goal["label"] %}
+                      · Label: {{ goal["label"]["name"] }}
+                    {% endif %}
                   </p>
                 </div>
                 <div class="weekly-goal-actions">
                   {% if goal["status"] != "completed" %}
                     <form method="post" action="{{ url_for('toggle_weekly_goal', goal_id=goal['id']) }}">
                       <input type="hidden" name="status" value="completed" />
-                      <button class="btn btn-outline-success btn-sm" type="submit">Done</button>
+                      <button class="btn btn-outline-success btn-sm" type="submit">
+                        <i class="bi bi-check2-circle"></i>
+                        Done
+                      </button>
                     </form>
                   {% else %}
                     <form method="post" action="{{ url_for('toggle_weekly_goal', goal_id=goal['id']) }}">
                       <input type="hidden" name="status" value="active" />
-                      <button class="btn btn-outline-secondary btn-sm" type="submit">Reopen</button>
+                      <button class="btn btn-outline-secondary btn-sm" type="submit">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        Reopen
+                      </button>
                     </form>
                   {% endif %}
                   <form method="post" action="{{ url_for('delete_weekly_goal', goal_id=goal['id']) }}">
-                    <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+                    <button class="btn btn-outline-danger btn-sm" type="submit">
+                      <i class="bi bi-trash3"></i>
+                      Delete
+                    </button>
                   </form>
                 </div>
               </div>
@@ -105,22 +142,37 @@
                         <p>
                           {{ goal["progress_seconds"] | format_seconds }} logged ·
                           Target {{ ((goal["target_seconds"] / 3600) | round(1)) if goal["target_seconds"] else 0 }}h
+                          {% if goal["long_term_goal_name"] %}
+                            · Long-term: {{ goal["long_term_goal_name"] }}
+                          {% endif %}
+                          {% if goal["label"] %}
+                            · Label: {{ goal["label"]["name"] }}
+                          {% endif %}
                         </p>
                       </div>
                       <div class="weekly-goal-actions">
                         {% if goal["status"] != "completed" %}
                           <form method="post" action="{{ url_for('toggle_weekly_goal', goal_id=goal['id']) }}">
                             <input type="hidden" name="status" value="completed" />
-                            <button class="btn btn-outline-success btn-sm" type="submit">Done</button>
+                            <button class="btn btn-outline-success btn-sm" type="submit">
+                              <i class="bi bi-check2-circle"></i>
+                              Done
+                            </button>
                           </form>
                         {% else %}
                           <form method="post" action="{{ url_for('toggle_weekly_goal', goal_id=goal['id']) }}">
                             <input type="hidden" name="status" value="active" />
-                            <button class="btn btn-outline-secondary btn-sm" type="submit">Reopen</button>
+                            <button class="btn btn-outline-secondary btn-sm" type="submit">
+                              <i class="bi bi-arrow-counterclockwise"></i>
+                              Reopen
+                            </button>
                           </form>
                         {% endif %}
                         <form method="post" action="{{ url_for('delete_weekly_goal', goal_id=goal['id']) }}">
-                          <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+                          <button class="btn btn-outline-danger btn-sm" type="submit">
+                            <i class="bi bi-trash3"></i>
+                            Delete
+                          </button>
                         </form>
                       </div>
                     </div>

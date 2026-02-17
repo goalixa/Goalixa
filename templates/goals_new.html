@@ -68,6 +68,21 @@
           </label>
         </div>
         <label>
+          Label
+          <div class="goal-select">
+            <select name="label_id" required>
+              {% if labels %}
+                <option value="" disabled selected>Select a label</option>
+                {% for label in labels %}
+                  <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+                {% endfor %}
+              {% else %}
+                <option value="">Create a label first</option>
+              {% endif %}
+            </select>
+          </div>
+        </label>
+        <label>
           Link tasks
           <div class="goal-select">
             <select name="task_ids">
@@ -88,7 +103,10 @@
         </label>
         <div class="goal-form-actions">
           <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('goals') }}">Cancel</a>
-          <button class="btn btn-primary btn-sm" type="submit">Create goal</button>
+          <button class="btn btn-primary btn-sm" type="submit">
+            <i class="bi bi-plus-lg"></i>
+            Create goal
+          </button>
         </div>
       </form>
     </section>

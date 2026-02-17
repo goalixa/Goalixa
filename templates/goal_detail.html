@@ -69,6 +69,7 @@
             <li>Projects linked: {{ goal['projects_count'] }}</li>
             <li>Tasks linked: {{ goal['tasks_count'] }}</li>
             <li>Time logged: {{ goal['total_seconds'] | format_seconds }}</li>
+            <li>Label: {{ goal['label']['name'] if goal['label'] else 'Unlabeled' }}</li>
           </ul>
         </div>
         <div class="goal-detail-card">

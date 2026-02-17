@@ -55,6 +55,13 @@
               {% if goal['description'] %}
                 <p class="goal-desc">{{ goal['description'] }}</p>
               {% endif %}
+              {% if goal['label'] %}
+                <div class="label-list">
+                  <span class="label-chip" style="background-color: {{ goal['label']['color'] or '#6c757d' }}">
+                    {{ goal['label']['name'] }}
+                  </span>
+                </div>
+              {% endif %}
               {% if goal['subgoals'] %}
                 <ul class="goal-subgoals">
                   {% for subgoal in goal['subgoals'][:3] %}
@@ -111,19 +118,36 @@
                     <input type="number" name="target_hours" min="0" step="0.5" value="{{ (goal['target_seconds'] / 3600) if goal['target_seconds'] else '' }}" />
                   </label>
                   <label>
-                    Link projects
+                    Label
                     <div class="goal-select">
-                      <select name="project_ids">
-                        <option value="">Select a project</option>
-                        {% for project in projects %}
-                          <option value="{{ project['id'] }}" {% if project['id'] in goal['project_ids'] %}selected{% endif %}>
-                            {{ project['name'] }}
-                          </option>
-                        {% endfor %}
+                      <select name="label_id" required>
+                        {% if labels %}
+                          <option value="" disabled {% if not goal['label_id'] %}selected{% endif %}>Select a label</option>
+                          {% for label in labels %}
+                            <option value="{{ label['id'] }}" {% if label['id'] == goal['label_id'] %}selected{% endif %}>
+                              {{ label['name'] }}
+                            </option>
+                          {% endfor %}
+                        {% else %}
+                          <option value="">Create a label first</option>
+                        {% endif %}
                       </select>
                     </div>
                   </label>
                 </div>
+                <label>
+                  Link projects
+                  <div class="goal-select">
+                    <select name="project_ids">
+                      <option value="">Select a project</option>
+                      {% for project in projects %}
+                        <option value="{{ project['id'] }}" {% if project['id'] in goal['project_ids'] %}selected{% endif %}>
+                          {{ project['name'] }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </label>
                 <label>
                   Link tasks
                   <div class="goal-select">
@@ -142,11 +166,17 @@
                   <textarea rows="2" name="description">{{ goal['description'] or '' }}</textarea>
                 </label>
                 <div class="goal-form-actions">
-                  <button class="btn btn-outline-secondary btn-sm" type="submit">Save changes</button>
+                  <button class="btn btn-outline-secondary btn-sm" type="submit">
+                    <i class="bi bi-check2"></i>
+                    Save changes
+                  </button>
                 </div>
               </form>
               <form class="goal-delete-form" method="post" action="{{ url_for('delete_goal', goal_id=goal['id']) }}">
-                <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+                <button class="btn btn-outline-danger btn-sm" type="submit">
+                  <i class="bi bi-trash3"></i>
+                  Delete
+                </button>
               </form>
             </article>
           {% endfor %}
