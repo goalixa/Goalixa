@@ -10,7 +10,7 @@ db = SQLAlchemy()
 fsqla.FsModels.set_db_info(db)
 user_datastore = None
 
-
+#
 class Role(db.Model, fsqla.FsRoleMixin):
     __tablename__ = "role"
     id = db.Column(db.Integer, primary_key=True)
