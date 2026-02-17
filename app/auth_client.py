@@ -97,54 +97,48 @@ def _load_user_from_request():
                 token_repo = RefreshTokenRepository(current_app.config.get("DATABASE_URL"))
 
                 # Check if there's already a pending refresh for this user
-                if user_id in _pending_refreshes:
-                    # Wait for the pending refresh to complete and use its result
-                    pending_tokens = _pending_refreshes[user_id]
-                    if pending_tokens and pending_tokens.get("access_token"):
-                        g.new_access_token = pending_tokens["access_token"]
-                        g.new_refresh_token = pending_tokens.get("refresh_token")
-                        return AuthUser(user_id=user_id, email=payload.get("email", ""))
+                # This handles concurrent requests that arrive after token expiration
+                pending_tokens = _pending_refreshes.get(user_id)
+                if pending_tokens and pending_tokens.get("access_token"):
+                    # Use the tokens from the pending refresh
+                    g.new_access_token = pending_tokens["access_token"]
+                    g.new_refresh_token = pending_tokens.get("refresh_token")
+                    return AuthUser(user_id=user_id, email=payload.get("email", ""))
 
                 if token_repo.is_token_valid(payload["jti"], user_id):
-                    # Acquire lock to prevent concurrent refreshes
+                    # Try to acquire lock with a reasonable timeout
                     acquired = _token_refresh_lock.acquire(blocking=True, timeout=5)
+
                     if not acquired:
-                        # If we can't acquire the lock, wait and retry
+                        # Lock acquisition timed out - wait a bit and check for pending refresh again
+                        # This handles the case where another request is doing the refresh
                         import time
-                        time.sleep(0.1)
-                        # Check again if refresh completed while we waited
-                        if user_id in _pending_refreshes:
-                            pending_tokens = _pending_refreshes[user_id]
+                        for _ in range(10):  # Try up to 10 times (1 second total)
+                            time.sleep(0.1)
+                            pending_tokens = _pending_refreshes.get(user_id)
                             if pending_tokens and pending_tokens.get("access_token"):
                                 g.new_access_token = pending_tokens["access_token"]
                                 g.new_refresh_token = pending_tokens.get("refresh_token")
-                                del _pending_refreshes[user_id]
                                 return AuthUser(user_id=user_id, email=payload.get("email", ""))
 
+                        # If we still don't have tokens, try to proceed with rotation
+                        # The token might have been rotated but we missed the pending window
+                        # Fall through to the double-check below
+
                     try:
-                        # Double-check after acquiring lock
+                        # Double-check after acquiring lock (or if we couldn't acquire it)
+                        # If token was already rotated, create a new access token based on user info
                         if not token_repo.is_token_valid(payload["jti"], user_id):
-                            # Token was already rotated, fetch the new one from database
-                            new_token = token_repo.get_refresh_token(payload["jti"], user_id)
-                            if new_token and new_token.get("replaced_by"):
-                                # Get the replacement token
-                                replaced_by_id = new_token["replaced_by"]
-                                # We need to get the replacement token's token_id
-                                row = token_repo._get_db(g).execute(
-                                    "SELECT token_id FROM refresh_token WHERE id = %s",
-                                    (replaced_by_id,)
-                                ).fetchone()
-                                if row:
-                                    # The token was rotated, create new tokens based on the replacement
-                                    new_access_token = create_access_token(
-                                        user_id=user_id,
-                                        email=payload.get("email", ""),
-                                        secret=secret,
-                                        ttl_minutes=access_ttl,
-                                    )
-                                    g.new_access_token = new_access_token
-                                    return AuthUser(user_id=user_id, email=payload.get("email", ""))
-                            return AnonymousUser()
+                            # Token was already rotated by another request
+                            # Just create a new access token - user is still valid
+                            new_access_token = create_access_token(
+                                user_id=user_id,
+                                email=payload.get("email", ""),
+                                secret=secret,
+                                ttl_minutes=access_ttl,
+                            )
+                            g.new_access_token = new_access_token
+                            return AuthUser(user_id=user_id, email=payload.get("email", ""))
 
                         # Auto-issue new access token and rotate refresh token
                         new_access_token = create_access_token(
@@ -165,19 +159,32 @@ def _load_user_from_request():
                         )
 
                         new_refresh_expires = datetime.now(timezone.utc) + timedelta(days=refresh_ttl)
-                        token_repo.rotate_refresh_token(
-                            old_token_id=payload["jti"],
-                            new_token_str=new_refresh_token_str,
-                            user_id=user_id,
-                            expires_at=new_refresh_expires,
-                            g=g,
-                        )
 
-                        # Store the new tokens for other concurrent requests
+                        # Store in pending refreshes BEFORE database operation
+                        # This allows other concurrent requests to use the new tokens immediately
                         _pending_refreshes[user_id] = {
                             "access_token": new_access_token,
                             "refresh_token": new_refresh_token_jwt
                         }
+
+                        # Perform the database rotation
+                        try:
+                            token_repo.rotate_refresh_token(
+                                old_token_id=payload["jti"],
+                                new_token_str=new_refresh_token_str,
+                                user_id=user_id,
+                                expires_at=new_refresh_expires,
+                                g=g,
+                            )
+                        except Exception as e:
+                            # If rotation fails, remove from pending and log the error
+                            # But still return authenticated with the access token we created
+                            current_app.logger.error(
+                                "token rotation failed, but user is still authenticated",
+                                extra={"user_id": user_id, "error": str(e)}
+                            )
+                            # Remove from pending so next request can try again
+                            _pending_refreshes.pop(user_id, None)
 
                         # Signal to set new access AND refresh token cookies in after_request
                         g.new_access_token = new_access_token
@@ -185,14 +192,17 @@ def _load_user_from_request():
                         return AuthUser(user_id=user_id, email=payload.get("email", ""))
 
                     finally:
-                        _token_refresh_lock.release()
-                        # Clean up pending refresh after a short delay
+                        # Only release if we acquired the lock
+                        if acquired:
+                            _token_refresh_lock.release()
+
+                        # Clean up pending refresh after a longer delay (2 seconds)
+                        # This gives concurrent requests more time to use the pending tokens
                         import threading
                         def cleanup_pending_refresh():
                             import time
-                            time.sleep(0.5)
-                            if user_id in _pending_refreshes:
-                                del _pending_refreshes[user_id]
+                            time.sleep(2.0)
+                            _pending_refreshes.pop(user_id, None)
                         cleanup_thread = threading.Thread(target=cleanup_pending_refresh, daemon=True)
                         cleanup_thread.start()
 
