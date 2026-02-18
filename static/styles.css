@@ -5622,6 +5622,10 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
   padding: 16px 24px 0;
 }
 
+.timer-task-create-section {
+  padding-top: 0;
+}
+
 .timer-range-card {
   display: grid;
   grid-template-columns: minmax(200px, 1fr) auto auto;
@@ -5907,6 +5911,82 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
   background: rgba(90, 141, 255, 0.16);
   border-color: rgba(90, 141, 255, 0.3);
   color: #b6ccff;
+}
+
+.timer-task-create-card {
+  max-width: none;
+  margin: 0;
+  padding: 12px 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.timer-task-create-header {
+  display: none;
+}
+
+.timer-task-create-title {
+  margin: 2px 0 0;
+  font-size: 0.98rem;
+}
+
+.timer-quick-task-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.25fr) repeat(3, minmax(130px, 0.55fr)) auto;
+  align-items: center;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  gap: 8px;
+}
+
+.timer-quick-task-form input {
+  min-width: 0;
+}
+
+.timer-task-create-card .timer-quick-task-form input,
+.timer-task-create-card .timer-quick-task-form select {
+  height: 1cm;
+  min-height: 1cm;
+  max-height: 1cm;
+  box-sizing: border-box;
+  padding: 0 10px;
+  font-size: 0.86rem;
+  border-radius: 10px;
+  line-height: 1.1;
+}
+
+.timer-task-create-card .timer-quick-task-form button {
+  height: 1cm;
+  min-height: 1cm;
+  max-height: 1cm;
+  box-sizing: border-box;
+  padding: 0 12px;
+  font-size: 0.86rem;
+  border-radius: 10px;
+}
+
+.timer-quick-task-feedback {
+  margin: 0;
+  min-height: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.timer-quick-task-feedback.is-success {
+  color: #15803d;
+}
+
+.timer-quick-task-feedback.is-error {
+  color: #b91c1c;
+}
+
+[data-theme="dark"] .timer-quick-task-feedback.is-success {
+  color: #4ade80;
+}
+
+[data-theme="dark"] .timer-quick-task-feedback.is-error {
+  color: #fca5a5;
 }
 
 @media (max-width: 768px) {
@@ -8251,6 +8331,7 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
 
 .timer-range-card,
 .pomodoro-card,
+.timer-task-create-card,
 .timer-calendar-card,
 .timer-list-card,
 .timer-timesheet-card {
@@ -9178,10 +9259,30 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
     padding: 12px 16px 0;
   }
 
+  .timer-task-create-section {
+    padding-top: 0;
+  }
+
   .timer-range-card {
     grid-template-columns: 1fr;
     gap: 12px;
     padding: 14px 16px;
+  }
+
+  .timer-task-create-card {
+    max-width: none;
+    padding: 12px 14px;
+  }
+
+  .timer-quick-task-form {
+    grid-template-columns: 1fr;
+    padding: 0;
+    gap: 8px;
+  }
+
+  .timer-quick-task-form .btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .timer-range-left,
@@ -10297,6 +10398,7 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
 
   .timer-range-card,
   .pomodoro-card,
+  .timer-task-create-card,
   .timer-calendar-card,
   .timer-list-card,
   .timer-timesheet-card {

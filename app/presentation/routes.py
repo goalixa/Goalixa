@@ -480,6 +480,8 @@ self.addEventListener('activate', (event) => {
     @app.route("/demo/timer", methods=["GET"])
     @auth_required()
     def demo_timer():
+        projects = service.list_projects()
+        labels = service.list_labels()
         start = request.args.get("start")
         end = request.args.get("end")
         if start and end:
@@ -535,6 +537,8 @@ self.addEventListener('activate', (event) => {
             week_days=week_days,
             task_rows=task_rows,
             today_date=today.isoformat(),
+            projects=projects,
+            labels=labels,
         )
 
     @app.route("/demo/calendar", methods=["GET"])
@@ -1156,6 +1160,8 @@ self.addEventListener('activate', (event) => {
     @app.route("/timer", methods=["GET"])
     @auth_required()
     def timer():
+        projects = service.list_projects()
+        labels = service.list_labels()
         start = request.args.get("start")
         end = request.args.get("end")
         if start and end:
@@ -1213,6 +1219,8 @@ self.addEventListener('activate', (event) => {
             week_days=week_days,
             task_rows=task_rows,
             today_date=today.isoformat(),
+            projects=projects,
+            labels=labels,
         )
 
     @app.route("/calendar", methods=["GET"])
