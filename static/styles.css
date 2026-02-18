@@ -8771,6 +8771,9 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
   border-radius: 12px;
   background: var(--card);
   border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .timesheet-task-summary {
@@ -8796,6 +8799,141 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
   font-weight: 600;
   color: var(--timer-accent);
   font-variant-numeric: tabular-nums;
+}
+
+.timesheet-task.is-completed {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.timesheet-task.is-completed .timesheet-task-title {
+  color: #64748b;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: #94a3b8;
+}
+
+.timesheet-task.is-completed .timesheet-task-meta,
+.timesheet-task.is-completed .timer-task-entry-time,
+.timesheet-task.is-completed .timer-task-entry-duration {
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.timesheet-task.is-completed .timesheet-task-duration {
+  color: #15803d;
+}
+
+.timesheet-task-right {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timesheet-task-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timesheet-task-actions form {
+  margin: 0;
+}
+
+.timesheet-complete-btn {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  line-height: 1;
+}
+
+.timesheet-task-state {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.timesheet-task-state i {
+  margin-right: 5px;
+  font-size: 0.85rem;
+}
+
+.timesheet-task-state.is-completed {
+  color: #166534;
+  background: #ecfdf3;
+  border: 1px solid #bbf7d0;
+}
+
+[data-theme="dark"] .timesheet-task-state.is-completed {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.16);
+  border-color: rgba(74, 222, 128, 0.35);
+}
+
+[data-theme="dark"] .timesheet-task.is-completed {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(74, 222, 128, 0.35);
+}
+
+[data-theme="dark"] .timesheet-task.is-completed .timesheet-task-title,
+[data-theme="dark"] .timesheet-task.is-completed .timesheet-task-meta,
+[data-theme="dark"] .timesheet-task.is-completed .timer-task-entry-time,
+[data-theme="dark"] .timesheet-task.is-completed .timer-task-entry-duration {
+  color: #94a3b8;
+  text-decoration-color: #64748b;
+}
+
+.timesheet-task.is-complete-animating {
+  animation: timesheet-complete-glow 1s ease;
+}
+
+.timesheet-task.is-complete-animating .timesheet-task-state.is-completed {
+  animation: timesheet-complete-bounce 0.9s ease;
+}
+
+.timesheet-task.is-complete-animating::after {
+  content: "";
+  position: absolute;
+  inset: -20% -10%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 32%, rgba(16, 185, 129, 0.42) 0 6px, transparent 7px),
+    radial-gradient(circle at 36% 18%, rgba(59, 130, 246, 0.32) 0 5px, transparent 6px),
+    radial-gradient(circle at 62% 30%, rgba(234, 179, 8, 0.36) 0 5px, transparent 6px),
+    radial-gradient(circle at 78% 18%, rgba(16, 185, 129, 0.42) 0 6px, transparent 7px);
+  animation: timesheet-confetti-fade 1s ease forwards;
+}
+
+@keyframes timesheet-complete-bounce {
+  0% { transform: scale(0.88) rotate(-6deg); opacity: 0.7; }
+  35% { transform: scale(1.08) rotate(4deg); opacity: 1; }
+  65% { transform: scale(0.98) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes timesheet-complete-glow {
+  0% { box-shadow: 0 0 0 rgba(34, 197, 94, 0); }
+  45% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.22); }
+  100% { box-shadow: 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+@keyframes timesheet-confetti-fade {
+  0% { opacity: 0; transform: translateY(8px) scale(0.94); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-14px) scale(1.04); }
+}
+
+@media (max-width: 768px) {
+  .timesheet-task-right {
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 6px;
+  }
 }
 
 .timesheet-task-details {
@@ -10410,6 +10548,12 @@ body[data-page="calendar"] .calendar-week-body::-webkit-scrollbar-thumb {
   }
 
   .timer-dropdown.is-open {
+    animation: none;
+  }
+
+  .timesheet-task.is-complete-animating,
+  .timesheet-task.is-complete-animating .timesheet-task-state.is-completed,
+  .timesheet-task.is-complete-animating::after {
     animation: none;
   }
 }

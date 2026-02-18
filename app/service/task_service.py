@@ -1047,6 +1047,7 @@ class TaskService:
                     task = {
                         "task_id": entry["task_id"],
                         "task_name": entry["task_name"] or "Unnamed Task",
+                        "status": entry.get("task_status") or "active",
                         "project_name": entry["project_name"] or "Unassigned",
                         "labels": entry_labels,
                         "total_seconds": 0,

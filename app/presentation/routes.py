@@ -514,7 +514,10 @@ self.addEventListener('activate', (event) => {
         for group in week_groups:
             week_total_seconds += group["total_seconds"]
 
-        tasks = service.list_tasks()
+        tasks = [
+            task for task in service.list_tasks()
+            if (task.get("status") or "active") != "completed"
+        ]
         week_days = build_week_days(week_start, today)
         task_ids = [task["id"] for task in tasks]
         checks_map = service.list_task_daily_checks(task_ids, week_start, week_end)
@@ -545,7 +548,10 @@ self.addEventListener('activate', (event) => {
     @auth_required()
     def demo_calendar():
         projects = service.list_projects()
-        tasks = service.list_tasks()
+        tasks = [
+            task for task in service.list_tasks()
+            if (task.get("status") or "active") != "completed"
+        ]
         week_start, week_end = service.current_week_range()
         today = service.current_local_date()
         week_days = build_week_days(week_start, today)
@@ -1196,7 +1202,10 @@ self.addEventListener('activate', (event) => {
         for group in week_groups:
             week_total_seconds += group["total_seconds"]
 
-        tasks = service.list_tasks()
+        tasks = [
+            task for task in service.list_tasks()
+            if (task.get("status") or "active") != "completed"
+        ]
         week_days = build_week_days(week_start, today)
         task_ids = [task["id"] for task in tasks]
         checks_map = service.list_task_daily_checks(task_ids, week_start, week_end)
@@ -1227,7 +1236,10 @@ self.addEventListener('activate', (event) => {
     @auth_required()
     def calendar():
         projects = service.list_projects()
-        tasks = service.list_tasks()
+        tasks = [
+            task for task in service.list_tasks()
+            if (task.get("status") or "active") != "completed"
+        ]
         week_start, week_end = service.current_week_range()
         today = service.current_local_date()
         week_days = build_week_days(week_start, today)
