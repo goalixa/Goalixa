@@ -1,6 +1,9 @@
+import os
+import time
+from datetime import datetime
+
 import psycopg
 from psycopg.rows import dict_row
-from datetime import datetime
 
 from flask import g
 
@@ -10,6 +13,15 @@ class PostgresTaskRepository:
         self.database_url = database_url
         self.user_id = None
         self._table_columns_cache = {}
+        self.connect_timeout_seconds = max(
+            1, int(os.getenv("DB_CONNECT_TIMEOUT_SECONDS", "5"))
+        )
+        self.connect_max_retries = max(
+            1, int(os.getenv("DB_CONNECT_MAX_RETRIES", "12"))
+        )
+        self.connect_retry_delay_seconds = max(
+            0.1, float(os.getenv("DB_CONNECT_RETRY_DELAY_SECONDS", "1"))
+        )
 
     def set_user_id(self, user_id):
         self.user_id = int(user_id) if user_id is not None else None
@@ -20,9 +32,25 @@ class PostgresTaskRepository:
         return self.user_id
 
     def _get_db(self):
-        if "db" not in g:
-            g.db = psycopg.connect(self.database_url, row_factory=dict_row)
-        return g.db
+        existing = g.get("db")
+        if existing is not None and not getattr(existing, "closed", False):
+            return existing
+
+        last_error = None
+        for attempt in range(1, self.connect_max_retries + 1):
+            try:
+                g.db = psycopg.connect(
+                    self.database_url,
+                    row_factory=dict_row,
+                    connect_timeout=self.connect_timeout_seconds,
+                )
+                return g.db
+            except psycopg.OperationalError as error:
+                last_error = error
+                if attempt >= self.connect_max_retries:
+                    break
+                time.sleep(self.connect_retry_delay_seconds)
+        raise last_error
 
     def _get_table_columns(self, table_name):
         cached = self._table_columns_cache.get(table_name)

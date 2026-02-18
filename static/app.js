@@ -637,11 +637,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const action = target.dataset.action;
       const taskId = target.dataset.taskId;
-      if (!action || !taskId) {
+      const isTaskEditForm = target.classList.contains("edit-form");
+      if ((!action || !taskId) && !isTaskEditForm) {
         return;
       }
 
       event.preventDefault();
+
+      if (isTaskEditForm) {
+        try {
+          const response = await fetch(target.action, {
+            method: target.method || "POST",
+            body: new FormData(target),
+          });
+          if (!response.ok) {
+            throw new Error("Failed to edit task");
+          }
+          const taskPayload = await loadTasks();
+          renderTasks(
+            taskPayload.tasks,
+            taskPayload.doneTodayTasks,
+            taskPayload.completedTasks,
+          );
+        } catch (error) {
+          HTMLFormElement.prototype.submit.call(target);
+        }
+        return;
+      }
+
       if (action === "delete" && !window.confirm("Delete this task?")) {
         return;
       }
@@ -653,7 +676,7 @@ document.addEventListener("DOMContentLoaded", () => {
           taskPayload.completedTasks,
         );
       } catch (error) {
-        target.submit();
+        HTMLFormElement.prototype.submit.call(target);
       }
     });
   };
@@ -832,7 +855,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Close label picker when a label is selected
-  const createLabelPicker = document.getElementById("create-label-picker");
   if (createLabelPicker) {
     createLabelPicker.addEventListener("change", (event) => {
       if (event.target.matches("input[type='checkbox']")) {
