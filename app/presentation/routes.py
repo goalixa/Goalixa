@@ -242,6 +242,12 @@ self.addEventListener('activate', (event) => {
             _run_task_action(task_id, normalized_action)
         return True
 
+    def _resolve_redirect_target(default_target):
+        next_target = (request.form.get("next") or request.args.get("next") or "").strip()
+        if next_target.startswith("/") and not next_target.startswith("//"):
+            return next_target
+        return request.referrer or default_target
+
     @app.before_request
     def load_user_context():
         if current_user.is_authenticated:
@@ -832,7 +838,7 @@ self.addEventListener('activate', (event) => {
             request.form.get("goal_name", ""),
             request.form.get("subgoal_name", ""),
         )
-        return redirect("/demo/habits")
+        return redirect(_resolve_redirect_target("/demo/habits"))
 
     @app.route("/demo/reminders", methods=["POST"])
     @auth_required()
@@ -955,7 +961,7 @@ self.addEventListener('activate', (event) => {
         log_date = request.form.get("date") or service.current_local_date().isoformat()
         done = request.form.get("done") in {"1", "on", "true"}
         service.set_habit_done(habit_id, log_date, done)
-        return redirect(request.referrer or "/demo/habits")
+        return redirect(_resolve_redirect_target("/demo/habits"))
 
     @app.route("/demo/habits/<int:habit_id>/update", methods=["POST"])
     @auth_required()
@@ -970,13 +976,13 @@ self.addEventListener('activate', (event) => {
             request.form.get("goal_name", ""),
             request.form.get("subgoal_name", ""),
         )
-        return redirect(request.referrer or "/demo/habits")
+        return redirect(_resolve_redirect_target("/demo/habits"))
 
     @app.route("/demo/habits/<int:habit_id>/delete", methods=["POST"])
     @auth_required()
     def demo_delete_habit(habit_id):
         service.delete_habit(habit_id)
-        return redirect(request.referrer or "/demo/habits")
+        return redirect(_resolve_redirect_target("/demo/habits"))
 
     # Demo reminder action routes
     @app.route("/demo/reminders/<int:reminder_id>/update", methods=["POST"])
@@ -1403,7 +1409,7 @@ self.addEventListener('activate', (event) => {
             request.form.get("goal_name", ""),
             request.form.get("subgoal_name", ""),
         )
-        return redirect(request.referrer or url_for("habits"))
+        return redirect(_resolve_redirect_target(url_for("habits")))
 
     @app.route("/habits/<int:habit_id>/toggle", methods=["POST"])
     @auth_required()
@@ -1411,7 +1417,7 @@ self.addEventListener('activate', (event) => {
         log_date = request.form.get("date") or service.current_local_date().isoformat()
         done = request.form.get("done") in {"1", "on", "true"}
         service.set_habit_done(habit_id, log_date, done)
-        return redirect(request.referrer or url_for("habits"))
+        return redirect(_resolve_redirect_target(url_for("habits")))
 
     @app.route("/habits/<int:habit_id>/update", methods=["POST"])
     @auth_required()
@@ -1426,13 +1432,13 @@ self.addEventListener('activate', (event) => {
             request.form.get("goal_name", ""),
             request.form.get("subgoal_name", ""),
         )
-        return redirect(request.referrer or url_for("habits"))
+        return redirect(_resolve_redirect_target(url_for("habits")))
 
     @app.route("/habits/<int:habit_id>/delete", methods=["POST"])
     @auth_required()
     def delete_habit(habit_id):
         service.delete_habit(habit_id)
-        return redirect(request.referrer or url_for("habits"))
+        return redirect(_resolve_redirect_target(url_for("habits")))
 
     @app.route("/todos", methods=["POST"])
     @auth_required()

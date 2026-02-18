@@ -183,9 +183,55 @@
 {% endblock %}
 
 {% block scripts %}
+  {{ super() }}
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script id="habit-series-data" type="application/json">{{ habit_series | tojson }}</script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
+      const habitsPage = document.querySelector(".habits-page");
+      if (!habitsPage) {
+        return;
+      }
+
+      const deleteGoalUrlTemplate = {{ url_for('delete_goal', goal_id=0) | tojson }};
+      const buildGoalDeleteUrl = (goalId) =>
+        deleteGoalUrlTemplate.replace("/0/delete", `/${goalId}/delete`);
+
+      const parseHabitSeries = (rootDocument = document) => {
+        const seriesEl = rootDocument.getElementById("habit-series-data");
+        if (!seriesEl) {
+          return { labels: [], values: [] };
+        }
+        try {
+          const parsed = JSON.parse(seriesEl.textContent || "{}");
+          return {
+            labels: Array.isArray(parsed.labels) ? parsed.labels : [],
+            values: Array.isArray(parsed.values) ? parsed.values : [],
+          };
+        } catch (error) {
+          return { labels: [], values: [] };
+        }
+      };
+
+      const updateHabitsContentFromDocument = (nextDoc) => {
+        const nextHero = nextDoc.querySelector(".habits-hero");
+        const nextList = nextDoc.querySelector("#habit-list");
+        const currentHero = habitsPage.querySelector(".habits-hero");
+        const currentList = habitsPage.querySelector("#habit-list");
+        if (!nextHero || !nextList || !currentHero || !currentList) {
+          throw new Error("Habit content not found");
+        }
+
+        currentHero.replaceWith(nextHero);
+        currentList.replaceWith(nextList);
+        renderHabitChart(parseHabitSeries(nextDoc));
+      };
+
+      const updateHabitsContentFromHtml = (html) => {
+        const nextDoc = new DOMParser().parseFromString(html, "text/html");
+        updateHabitsContentFromDocument(nextDoc);
+      };
+
       document.addEventListener("click", (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) {
@@ -204,11 +250,26 @@
           if (!confirmed) {
             return;
           }
-          const form = document.createElement("form");
-          form.method = "post";
-          form.action = `/goals/${goalId}/delete`;
-          document.body.appendChild(form);
-          form.submit();
+          const actionUrl = buildGoalDeleteUrl(goalId);
+          (async () => {
+            try {
+              const response = await fetch(actionUrl, {
+                method: "POST",
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+              });
+              if (!response.ok) {
+                throw new Error("Goal delete failed");
+              }
+              const html = await response.text();
+              updateHabitsContentFromHtml(html);
+            } catch (error) {
+              const form = document.createElement("form");
+              form.method = "post";
+              form.action = actionUrl;
+              document.body.appendChild(form);
+              form.submit();
+            }
+          })();
           return;
         }
         const editButton = target.closest("[data-edit-target]");
@@ -283,70 +344,133 @@
         chart.options.plugins.tooltip.bodyColor = theme.text;
         chart.update();
       };
-      if (chartEl && typeof Chart !== "undefined") {
-        const labels = {{ habit_series["labels"] | tojson }};
-        const values = {{ habit_series["values"] | tojson }};
+      const renderHabitChart = (series) => {
+        if (!chartEl || typeof Chart === "undefined") {
+          return;
+        }
+        const labels = Array.isArray(series?.labels) ? series.labels : [];
+        const values = Array.isArray(series?.values) ? series.values : [];
         const theme = getChartTheme();
-        const ctx = chartEl.getContext("2d");
-        habitChart = new Chart(ctx, {
-          type: "line",
-          data: {
-            labels,
-            datasets: [
-              {
-                label: "Completion %",
-                data: values,
-                borderColor: theme.line,
-                backgroundColor: theme.fill,
-                fill: true,
-                tension: 0.35,
-                pointRadius: 3,
-                pointBackgroundColor: theme.point,
+        if (!habitChart) {
+          const ctx = chartEl.getContext("2d");
+          habitChart = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "Completion %",
+                  data: values,
+                  borderColor: theme.line,
+                  backgroundColor: theme.fill,
+                  fill: true,
+                  tension: 0.35,
+                  pointRadius: 3,
+                  pointBackgroundColor: theme.point,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: {
+                  ticks: {
+                    color: theme.text,
+                  },
+                  grid: {
+                    color: theme.grid,
+                  },
+                },
+                y: {
+                  min: 0,
+                  max: 100,
+                  ticks: {
+                    color: theme.text,
+                    callback: (value) => `${value}%`,
+                  },
+                  grid: {
+                    color: theme.grid,
+                  },
+                },
               },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              x: {
-                ticks: {
-                  color: theme.text,
+              plugins: {
+                legend: {
+                  display: false,
                 },
-                grid: {
-                  color: theme.grid,
-                },
-              },
-              y: {
-                min: 0,
-                max: 100,
-                ticks: {
-                  color: theme.text,
-                  callback: (value) => `${value}%`,
-                },
-                grid: {
-                  color: theme.grid,
+                tooltip: {
+                  backgroundColor: theme.tooltipBg,
+                  borderColor: theme.tooltipBorder,
+                  borderWidth: 1,
+                  titleColor: theme.text,
+                  bodyColor: theme.text,
+                  callbacks: {
+                    label: (context) => `${context.parsed.y}% complete`,
+                  },
                 },
               },
             },
-            plugins: {
-              legend: {
-                display: false,
-              },
-              tooltip: {
-                backgroundColor: theme.tooltipBg,
-                borderColor: theme.tooltipBorder,
-                borderWidth: 1,
-                titleColor: theme.text,
-                bodyColor: theme.text,
-                callbacks: {
-                  label: (context) => `${context.parsed.y}% complete`,
-                },
-              },
-            },
-          },
-        });
-      }
+          });
+          return;
+        }
+
+        habitChart.data.labels = labels;
+        habitChart.data.datasets[0].data = values;
+        applyChartTheme(habitChart);
+      };
+
+      renderHabitChart(parseHabitSeries());
+
+      let isSubmitting = false;
+      document.addEventListener("submit", async (event) => {
+        const form = event.target;
+        if (!(form instanceof HTMLFormElement)) {
+          return;
+        }
+        if (!form.closest(".habits-page")) {
+          return;
+        }
+        if ((form.method || "").toUpperCase() !== "POST") {
+          return;
+        }
+
+        event.preventDefault();
+        if (isSubmitting) {
+          return;
+        }
+        if (form.action.includes("/habits/") && form.action.includes("/delete")) {
+          if (!window.confirm("Delete this habit?")) {
+            return;
+          }
+        }
+
+        isSubmitting = true;
+        const submitter = event.submitter;
+        if (submitter instanceof HTMLButtonElement) {
+          submitter.disabled = true;
+        }
+
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+          });
+          if (!response.ok) {
+            throw new Error("Habit action failed");
+          }
+          const html = await response.text();
+          updateHabitsContentFromHtml(html);
+        } catch (error) {
+          HTMLFormElement.prototype.submit.call(form);
+        } finally {
+          isSubmitting = false;
+          if (submitter instanceof HTMLButtonElement) {
+            submitter.disabled = false;
+          }
+        }
+      });
+
       document.addEventListener("click", (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) {
