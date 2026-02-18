@@ -85,16 +85,23 @@ def _load_user_from_request():
     refresh_token = request.cookies.get(refresh_cookie_name)
     if refresh_token:
         payload, err = decode_refresh_token(refresh_token, secret)
-        if not err and payload and "sub" in payload and "jti" in payload:
+        if err:
+            current_app.logger.warning("Refresh token decode failed", extra={"error": err, "path": request.path})
+        elif not payload or "sub" not in payload or "jti" not in payload:
+            current_app.logger.warning("Refresh token invalid payload", extra={"has_payload": bool(payload), "path": request.path})
+        elif payload and "sub" in payload and "jti" in payload:
             try:
                 user_id = int(payload.get("sub"))
             except (TypeError, ValueError):
-                pass
+                current_app.logger.warning("Refresh token has invalid user_id", extra={"sub": payload.get("sub")})
             else:
                 # Check if refresh token is valid in database
                 from app.auth.token_repository import RefreshTokenRepository
 
-                token_repo = RefreshTokenRepository(current_app.config.get("AUTH_DATABASE_URL", current_app.config.get("DATABASE_URL")))
+                auth_db_url = current_app.config.get("AUTH_DATABASE_URL", current_app.config.get("DATABASE_URL"))
+                current_app.logger.info("Attempting refresh token validation", extra={"user_id": user_id, "jti": payload.get("jti"), "auth_db": auth_db_url[:50] + "..." if auth_db_url else "None"})
+
+                token_repo = RefreshTokenRepository(auth_db_url)
 
                 # Check if there's already a pending refresh for this user
                 # This handles concurrent requests that arrive after token expiration
@@ -105,7 +112,10 @@ def _load_user_from_request():
                     g.new_refresh_token = pending_tokens.get("refresh_token")
                     return AuthUser(user_id=user_id, email=payload.get("email", ""))
 
-                if token_repo.is_token_valid(payload["jti"], user_id):
+                is_valid = token_repo.is_token_valid(payload["jti"], user_id)
+                current_app.logger.info("Refresh token validation result", extra={"user_id": user_id, "jti": payload.get("jti"), "is_valid": is_valid})
+
+                if is_valid:
                     # Try to acquire lock with a reasonable timeout
                     acquired = _token_refresh_lock.acquire(blocking=True, timeout=5)
 
@@ -239,6 +249,8 @@ def _load_user_from_request():
             else:
                 return AuthUser(user_id=user_id, email=payload.get("email", ""))
 
+    current_app.logger.warning("No valid token found, returning AnonymousUser",
+        extra={"path": request.path, "has_access_cookie": bool(request.cookies.get(access_cookie_name)), "has_refresh_cookie": bool(refresh_token)})
     return AnonymousUser()
 
 
