@@ -216,7 +216,7 @@
           {% if task_rows %}
             <div class="calendar-week-body">
               {% for task in task_rows %}
-                <div class="calendar-week-grid calendar-week-row">
+                <div class="calendar-week-grid calendar-week-row" data-task-id="{{ task['id'] }}">
                   <div class="calendar-task-cell">
                     <span class="calendar-task-name">{{ task["name"] }}</span>
                     <span class="calendar-task-meta">
@@ -333,13 +333,35 @@
                 <div class="timesheet-entries">
                   {% if group["tasks"] %}
                     {% for task in group["tasks"] %}
-                      <div class="timesheet-task" data-task-id="{{ task['task_id'] }}">
+                      <div class="timesheet-task{% if task['status'] == 'completed' %} is-completed{% endif %}" data-task-id="{{ task['task_id'] }}">
                         <div class="timesheet-task-summary" role="button" tabindex="0" aria-expanded="false" data-task-toggle>
                           <div>
                             <div class="timesheet-task-title">{{ task["task_name"] }}</div>
                             <div class="timesheet-task-meta">{{ task["project_name"] }}</div>
                           </div>
-                          <div class="timesheet-task-duration">{{ task["total_seconds"] | format_seconds }}</div>
+                          <div class="timesheet-task-right">
+                            <div class="timesheet-task-duration">{{ task["total_seconds"] | format_seconds }}</div>
+                            <div class="timesheet-task-actions">
+                              {% if task["status"] == "completed" %}
+                                <span class="timesheet-task-state is-completed">
+                                  <i class="bi bi-emoji-smile"></i>
+                                  Completed
+                                </span>
+                              {% else %}
+                                <form
+                                  method="post"
+                                  action="{{ url_for('complete_task', task_id=task['task_id']) }}"
+                                  data-action="complete"
+                                  data-task-id="{{ task['task_id'] }}"
+                                >
+                                  <button class="btn btn-outline-success btn-sm timesheet-complete-btn" type="submit" aria-label="Complete task">
+                                    <i class="bi bi-check-lg"></i>
+                                    Complete
+                                  </button>
+                                </form>
+                              {% endif %}
+                            </div>
+                          </div>
                         </div>
                         <div class="timesheet-task-details">
                           {% for entry in task["entries"] %}
@@ -529,7 +551,10 @@
         if (!toggle) {
           return;
         }
-        if (event.target.closest(".timer-list-actions")) {
+        if (
+          event.target.closest(".timer-list-actions") ||
+          event.target.closest(".timesheet-task-actions")
+        ) {
           return;
         }
         toggleTaskDetails(toggle);
@@ -1190,6 +1215,9 @@
         const filterTasks = (tasks, query) => {
           const term = (query || "").toLowerCase().trim();
           return tasks.filter((task) => {
+            if ((task.status || "active") === "completed") {
+              return false;
+            }
             const name = (task.name || "").toLowerCase();
             const project = (task.project_name || "").toLowerCase();
             return !term || name.includes(term) || project.includes(term);
@@ -1262,6 +1290,96 @@
             .join("");
           updateBulkControls(filtered);
         };
+
+        const removeTaskFromTimerCalendar = (taskId) => {
+          const escapedTaskId = String(taskId).replace(/"/g, '\\"');
+          document
+            .querySelectorAll(`.calendar-week-row[data-task-id="${escapedTaskId}"]`)
+            .forEach((row) => row.remove());
+
+          const calendarBody = document.querySelector(".calendar-week-body");
+          if (calendarBody && !calendarBody.querySelector(".calendar-week-row")) {
+            calendarBody.remove();
+            const calendarBoard = document.querySelector(".calendar-week-board");
+            if (calendarBoard && !calendarBoard.querySelector(".empty")) {
+              const empty = document.createElement("p");
+              empty.className = "empty";
+              empty.textContent = "No tasks yet.";
+              calendarBoard.appendChild(empty);
+            }
+          }
+        };
+
+        const markTimesheetTasksCompleted = (taskId) => {
+          const escapedTaskId = String(taskId).replace(/"/g, '\\"');
+          const taskNodes = document.querySelectorAll(
+            `.timesheet-task[data-task-id="${escapedTaskId}"]`,
+          );
+          taskNodes.forEach((taskNode) => {
+            const actions = taskNode.querySelector(".timesheet-task-actions");
+            if (!actions) {
+              return;
+            }
+            taskNode.classList.add("is-completed");
+            taskNode.classList.remove("is-complete-animating");
+            void taskNode.offsetWidth;
+            taskNode.classList.add("is-complete-animating");
+            actions.innerHTML = `
+              <span class="timesheet-task-state is-completed">
+                <i class="bi bi-emoji-smile"></i>
+                Completed
+              </span>
+            `;
+            window.setTimeout(() => {
+              taskNode.classList.remove("is-complete-animating");
+            }, 1100);
+          });
+          removeTaskFromTimerCalendar(taskId);
+        };
+
+        document.addEventListener("submit", async (event) => {
+          const form = event.target;
+          if (!(form instanceof HTMLFormElement)) {
+            return;
+          }
+          if (!form.matches('.timesheet-task-actions form[data-action="complete"]')) {
+            return;
+          }
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          const taskId = normalizeTaskId(form.dataset.taskId || "");
+          if (!taskId) {
+            return;
+          }
+
+          const submitButton = form.querySelector('button[type="submit"]');
+          if (submitButton) {
+            submitButton.disabled = true;
+          }
+
+          try {
+            const response = await fetch(`/api/tasks/${taskId}/complete`, {
+              method: "POST",
+            });
+            if (!response.ok) {
+              throw new Error("Failed to complete task");
+            }
+            const payload = await response.json();
+            cachedTasks = mergeTaskPayload(payload);
+            selectedTaskIds.delete(taskId);
+            renderTasks(cachedTasks, taskPicker ? taskPicker.value : "");
+            markTimesheetTasksCompleted(taskId);
+          } catch (error) {
+            console.error(error);
+            HTMLFormElement.prototype.submit.call(form);
+          } finally {
+            if (submitButton) {
+              submitButton.disabled = false;
+            }
+          }
+        });
 
         if (timerQuickTaskForm && timerQuickTaskName) {
           timerQuickTaskForm.addEventListener("submit", async (event) => {

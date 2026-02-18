@@ -2256,7 +2256,7 @@ class PostgresTaskRepository:
         return db.execute(
             """
             SELECT te.id, te.task_id, te.started_at, te.ended_at,
-                   t.name AS task_name, p.name AS project_name
+                   t.name AS task_name, t.status AS task_status, p.name AS project_name
             FROM time_entries te
             JOIN tasks t ON t.id = te.task_id
             LEFT JOIN projects p ON p.id = t.project_id
