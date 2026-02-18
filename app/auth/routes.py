@@ -103,7 +103,7 @@ def api_refresh():
         logger.warning("api refresh invalid user_id", extra={"sub": payload.get("sub")})
         return jsonify({"success": False, "error": "Invalid refresh token."}), 401
 
-    token_repo = RefreshTokenRepository(current_app.config.get("DATABASE_URL"))
+    token_repo = RefreshTokenRepository(current_app.config.get("AUTH_DATABASE_URL", current_app.config.get("DATABASE_URL")))
     refresh_token = token_repo.get_refresh_token(payload["jti"], user_id)
 
     if not refresh_token or not token_repo.is_token_valid(payload["jti"], user_id):
@@ -188,7 +188,7 @@ def api_logout():
     if refresh_token_jwt:
         payload, err = decode_refresh_token(refresh_token_jwt, secret)
         if not err and payload and "jti" in payload:
-            token_repo = RefreshTokenRepository(current_app.config.get("DATABASE_URL"))
+            token_repo = RefreshTokenRepository(current_app.config.get("AUTH_DATABASE_URL", current_app.config.get("DATABASE_URL")))
             token = token_repo.get_refresh_token(payload["jti"], int(payload.get("sub", 0)))
             if token and token.get("revoked_at") is None:
                 token_repo.revoke_refresh_token(payload["jti"])

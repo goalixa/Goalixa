@@ -94,7 +94,7 @@ def _load_user_from_request():
                 # Check if refresh token is valid in database
                 from app.auth.token_repository import RefreshTokenRepository
 
-                token_repo = RefreshTokenRepository(current_app.config.get("DATABASE_URL"))
+                token_repo = RefreshTokenRepository(current_app.config.get("AUTH_DATABASE_URL", current_app.config.get("DATABASE_URL")))
 
                 # Check if there's already a pending refresh for this user
                 # This handles concurrent requests that arrive after token expiration
@@ -379,7 +379,7 @@ def issue_auth_response(user, next_url=None):
     # Create refresh token
     from app.auth.token_repository import RefreshTokenRepository
 
-    token_repo = RefreshTokenRepository(current_app.config.get("DATABASE_URL"))
+    token_repo = RefreshTokenRepository(current_app.config.get("AUTH_DATABASE_URL", current_app.config.get("DATABASE_URL")))
 
     # Ensure user exists in app database
     token_repo.ensure_user_exists(user.id, user.email, g)
