@@ -149,6 +149,58 @@
         </div>
       </div>
     </section>
+    <section class="timer-range-section timer-task-create-section">
+      <div class="card timer-task-create-card">
+        <div class="timer-task-create-header">
+          <div>
+            <p class="timer-input-label">Quick add</p>
+            <h3 class="timer-task-create-title">Add task</h3>
+          </div>
+        </div>
+        <form
+          class="task-form timer-quick-task-form"
+          id="timer-quick-task-form"
+          method="post"
+          action="{{ url_for('create_task') }}"
+        >
+          <input
+            id="timer-quick-task-name"
+            type="text"
+            name="name"
+            placeholder="Task name"
+            required
+          />
+          <select id="timer-quick-task-project" name="project_id">
+            <option value="" selected>No project</option>
+            {% for project in projects %}
+              <option value="{{ project['id'] }}">{{ project['name'] }}</option>
+            {% endfor %}
+          </select>
+          <select id="timer-quick-task-priority" name="priority">
+            <option value="low">Low priority</option>
+            <option value="medium" selected>Medium priority</option>
+            <option value="high">High priority</option>
+          </select>
+          <select id="timer-quick-task-label" name="label_ids">
+            <option value="" selected>Label (optional)</option>
+            {% for label in labels %}
+              <option value="{{ label['id'] }}">{{ label['name'] }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-primary btn-sm" type="submit">
+            <i class="bi bi-plus-lg"></i>
+            Add task
+          </button>
+        </form>
+        <p
+          class="timer-quick-task-feedback"
+          id="timer-quick-task-feedback"
+          role="status"
+          aria-live="polite"
+          hidden
+        ></p>
+      </div>
+    </section>
     <section class="timer-calendar-section timer-view-panel" data-view-panel="calendar">
       <div class="card timer-calendar-card">
         <div class="calendar-week-board">
@@ -392,8 +444,24 @@
       const timerBulkCount = document.getElementById("timer-bulk-count");
       const timerBulkClear = document.getElementById("timer-bulk-clear");
       const timerBulkApply = document.getElementById("timer-bulk-apply");
+      const timerQuickTaskForm = document.getElementById("timer-quick-task-form");
+      const timerQuickTaskName = document.getElementById("timer-quick-task-name");
+      const timerQuickTaskProject = document.getElementById("timer-quick-task-project");
+      const timerQuickTaskPriority = document.getElementById("timer-quick-task-priority");
+      const timerQuickTaskLabel = document.getElementById("timer-quick-task-label");
+      const timerQuickTaskFeedback = document.getElementById("timer-quick-task-feedback");
       let cachedTasks = [];
       let selectedTaskIds = new Set();
+
+      const setQuickTaskFeedback = (message, state = "") => {
+        if (!timerQuickTaskFeedback) {
+          return;
+        }
+        timerQuickTaskFeedback.textContent = message || "";
+        timerQuickTaskFeedback.hidden = !message;
+        timerQuickTaskFeedback.classList.toggle("is-success", state === "success");
+        timerQuickTaskFeedback.classList.toggle("is-error", state === "error");
+      };
 
       const setTimeDisplay = () => {
         const timeLabel = document.getElementById("focus-compact-time");
@@ -1194,6 +1262,70 @@
             .join("");
           updateBulkControls(filtered);
         };
+
+        if (timerQuickTaskForm && timerQuickTaskName) {
+          timerQuickTaskForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const name = timerQuickTaskName.value.trim();
+            if (!name) {
+              return;
+            }
+
+            const submitButton = timerQuickTaskForm.querySelector('button[type="submit"]');
+            if (submitButton) {
+              submitButton.disabled = true;
+            }
+            setQuickTaskFeedback("");
+
+            try {
+              const selectedLabelId =
+                timerQuickTaskLabel && timerQuickTaskLabel.value
+                  ? timerQuickTaskLabel.value
+                  : "";
+              const response = await fetch("/api/tasks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  name,
+                  project_id:
+                    timerQuickTaskProject && timerQuickTaskProject.value
+                      ? timerQuickTaskProject.value
+                      : null,
+                  priority:
+                    timerQuickTaskPriority && timerQuickTaskPriority.value
+                      ? timerQuickTaskPriority.value
+                      : "medium",
+                  label_ids: selectedLabelId ? [selectedLabelId] : [],
+                }),
+              });
+              if (!response.ok) {
+                throw new Error("Failed to add task");
+              }
+              const payload = await response.json();
+              cachedTasks = mergeTaskPayload(payload);
+              selectedTaskIds.clear();
+              renderTasks(cachedTasks, taskPicker ? taskPicker.value : "");
+              timerQuickTaskName.value = "";
+              timerQuickTaskName.focus();
+              if (timerQuickTaskPriority) {
+                timerQuickTaskPriority.value = "medium";
+              }
+              if (timerQuickTaskLabel) {
+                timerQuickTaskLabel.value = "";
+              }
+              setQuickTaskFeedback("Task added.", "success");
+            } catch (error) {
+              console.error(error);
+              setQuickTaskFeedback("Saving failed. Falling back to full submit.", "error");
+              HTMLFormElement.prototype.submit.call(timerQuickTaskForm);
+            } finally {
+              if (submitButton) {
+                submitButton.disabled = false;
+              }
+            }
+          });
+        }
 
         const selectTask = (selected) => {
           if (!selected) {
