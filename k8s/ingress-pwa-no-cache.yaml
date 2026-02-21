@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: goalixa-ingress-pwa-nocache
+  namespace: goalixa-app
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: goalixa-app-disable-pwa-cache@kubernetescrd
+    traefik.ingress.kubernetes.io/router.priority: "11"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: app.goalixa.com
+      http:
+        paths:
+          - path: /sw.js
+            pathType: Exact
+            backend:
+              service:
+                name: goalixa
+                port:
+                  number: 80
+          - path: /manifest.webmanifest
+            pathType: Exact
+            backend:
+              service:
+                name: goalixa
+                port:
+                  number: 80
+          - path: /manifest.json
+            pathType: Exact
+            backend:
+              service:
+                name: goalixa
+                port:
+                  number: 80

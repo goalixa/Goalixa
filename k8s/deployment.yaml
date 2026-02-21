@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goalixa
+  namespace: goalixa-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: goalixa
+  template:
+    metadata:
+      labels:
+        app: goalixa
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull
+      containers:
+        - name: goalixa
+          image: ghcr.io/goalixa/goalixa-app:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: goalixa-config
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: goalixa-secrets
+                  key: SECRET_KEY
+            - name: AUTH_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: goalixa-secrets
+                  key: AUTH_JWT_SECRET
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: goalixa-secrets
+                  key: GOOGLE_CLIENT_ID
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: goalixa-secrets
+                  key: GOOGLE_CLIENT_SECRET
+            - name: ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: goalixa-secrets
+                  key: ADMIN_EMAIL
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: goalixa-secrets
+                  key: ADMIN_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: goalixa-data

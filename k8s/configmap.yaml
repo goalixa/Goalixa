@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: goalixa-config
+  namespace: goalixa-app
+data:
+  NODE_ENV: "production"
+  AUTH_INTERNAL_URL: "http://auth.goalixa-auth.svc.cluster.local"
+  AUTH_SERVICE_URL: "https://auth.goalixa.com"
+  DATABASE_URL: "postgresql://goalixa:Qazwsxedc54321@goalixa-app-db.goalixa-db.svc.cluster.local:5432/goalixa"
+  # Auth service database for validating refresh tokens (must match auth service)
+  AUTH_DATABASE_URL: "postgresql://goalixa:Qazwsxedc54321@postgres.goalixa-db.svc.cluster.local:5432/authdb"
+  PORT: "80"
+  FLASK_DEBUG: "0"
+  FORCE_SSL: "true"
+  PREFERRED_URL_SCHEME: "https"
+  DEMO_MODE_ENABLED: "0"
+  DEMO_USER_ID: "995656"
+  # Cookie names (must match auth service)
+  AUTH_ACCESS_COOKIE_NAME: "goalixa_access"
+  AUTH_REFRESH_COOKIE_NAME: "goalixa_refresh"
+  # Domain cookie allows sharing across subdomains (auth.goalixa.com and app.goalixa.com)
+  AUTH_COOKIE_DOMAIN: ".goalixa.com"
+  AUTH_COOKIE_SECURE: "1"
+  # Use Lax for same-site subdomain compatibility
+  AUTH_COOKIE_SAMESITE: "Lax"
+  # Token TTL configuration (must match auth service)
+  AUTH_ACCESS_TOKEN_TTL_MINUTES: "15"
+  AUTH_REFRESH_TOKEN_TTL_DAYS: "7"
