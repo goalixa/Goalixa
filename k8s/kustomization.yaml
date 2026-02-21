@@ -3,7 +3,6 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - configmap.yaml
-  - secret.yaml
   - pvc.yaml
   - service.yaml
   - deployment.yaml
@@ -15,3 +14,5 @@ images:
   - name: ghcr.io/goalixa/app
     newName: harbor.goalixa.com/goalixa-app/app
     newTag: latest  # Change this to specific commit SHA for each deployment
+
+# Secret is managed separately - create using kubectl create secret generic
