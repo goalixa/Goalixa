@@ -11,7 +11,7 @@ resources:
   - ingress-pwa-no-cache.yaml
 
 images:
-  - name: ghcr.io/goalixa/app
+  - name: ghcr.io/goalixa/goalixa-app
     newName: harbor.goalixa.com/goalixa-app/app
     newTag: latest  # Change this to specific commit SHA for each deployment
 

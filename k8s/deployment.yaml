@@ -14,7 +14,7 @@ spec:
         app: goalixa
     spec:
       imagePullSecrets:
-        - name: ghcr-pull
+        - name: harbor-pull
       containers:
         - name: goalixa
           image: ghcr.io/goalixa/goalixa-app:latest
