@@ -1,11 +1,12 @@
 # Goalixa
 
-Simple Flask app to track tasks and time spent per task. Uses PostgreSQL for storage and follows a 3-layer structure (presentation, service, repository) to demonstrate basic dependency injection.
+Backend-only Flask API for tracking tasks, time entries, goals, projects, habits, reminders, and reports. Uses PostgreSQL for storage and follows a 3-layer structure (presentation, service, repository).
 
 ## Features
-- Create tasks
-- Start/stop timer per task
-- See total time per task
+- JSON APIs under `/api/*`
+- Auth endpoints under `/api/auth/*`
+- Task timer tracking, goals, habits, reminders, reports, and settings
+- Prometheus metrics endpoint at `/metrics`
 
 ## Tech Stack
 - Python 3.11
@@ -14,11 +15,9 @@ Simple Flask app to track tasks and time spent per task. Uses PostgreSQL for sto
 - Docker / Docker Compose
 
 ## Project Structure
-- `app/presentation/` routes and template filters
+- `app/presentation/` API routes
 - `app/service/` business logic
 - `app/repository/` data access (PostgreSQL)
-- `templates/` HTML templates
-- `static/` CSS
 - `main.py` app entrypoint and wiring (DI)
 
 ## Local Setup
@@ -39,7 +38,16 @@ export DATABASE_URL="postgresql://goalixa:goalixa@localhost:5432/goalixa"
 python3 main.py
 ```
 
-Open `http://localhost:5000`.
+Check `http://localhost:5000/health` and call API routes at `http://localhost:5000/api/...`.
+Prometheus metrics are available at `http://localhost:5000/metrics`.
+
+## Logging Configuration
+The application logs to stdout and supports these environment variables:
+
+- `LOG_LEVEL` (default: `INFO`)
+- `LOG_FORMAT` (default: `%(asctime)s %(levelname)s [%(name)s] %(message)s`)
+- `LOG_DATE_FORMAT` (default: `%Y-%m-%dT%H:%M:%S%z`)
+- `LOG_REQUESTS_ENABLED` (`1`/`0`, default: `1`)
 
 ## Google OAuth (optional)
 To enable "Continue with Google" sign-in, set these environment variables before starting the app:
@@ -58,7 +66,7 @@ Build and run:
 docker compose up --build
 ```
 
-Open `http://localhost:5000`.
+Check `http://localhost:5000/health`.
 
 ## Database
 PostgreSQL is used for storage. Configure the connection via `DATABASE_URL`.

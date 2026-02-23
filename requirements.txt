@@ -5,3 +5,4 @@ requests==2.32.3
 python-dotenv==1.0.1
 gunicorn==21.2.0
 pyjwt==2.9.0
+prometheus-client==0.20.0

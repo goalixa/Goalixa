@@ -79,7 +79,7 @@ def api_register():
 @bp.route("/refresh", methods=["POST"])
 def api_refresh():
     """Exchange refresh token for new access token (with rotation)."""
-    _, refresh_cookie_name, _, secret, access_ttl, refresh_ttl = _get_auth_settings()
+    refresh_cookie_name, _, secret, access_ttl, refresh_ttl = _get_auth_settings()
     refresh_token_jwt = request.cookies.get(refresh_cookie_name)
 
     if not refresh_token_jwt:
@@ -182,7 +182,7 @@ def api_refresh():
 @bp.route("/logout", methods=["POST"])
 def api_logout():
     """Revoke refresh token and clear cookies."""
-    _, refresh_cookie_name, _, secret, _, _ = _get_auth_settings()
+    refresh_cookie_name, _, secret, _, _ = _get_auth_settings()
     refresh_token_jwt = request.cookies.get(refresh_cookie_name)
 
     if refresh_token_jwt:
@@ -223,7 +223,6 @@ def api_me():
 def _get_auth_settings():
     """Helper to get auth settings."""
     return (
-        current_app.config.get("AUTH_SERVICE_URL", "https://goalixa.com/auth").rstrip("/"),
         current_app.config.get("AUTH_ACCESS_COOKIE_NAME", "goalixa_access"),
         current_app.config.get("AUTH_REFRESH_COOKIE_NAME", "goalixa_refresh"),
         current_app.config.get("AUTH_JWT_SECRET", "dev-jwt-secret"),

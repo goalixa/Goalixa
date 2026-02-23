@@ -1,9 +1,0 @@
-{% macro render_field(field, placeholder="") %}
-  <div class="mb-3">
-    {{ field.label(class="form-label") }}
-    {{ field(class="form-control", placeholder=placeholder) }}
-    {% if field.errors %}
-      <div class="text-danger small">{{ field.errors[0] }}</div>
-    {% endif %}
-  </div>
-{% endmacro %}
