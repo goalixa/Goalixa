@@ -580,18 +580,33 @@ class PostgresTaskRepository:
 
         placeholders = ", ".join(["%s"] * len(columns))
         column_list = ", ".join(columns)
-        try:
-            db.execute(
-                f'''INSERT INTO "user" ({column_list})
-                VALUES ({placeholders})
-                ON CONFLICT (id) DO NOTHING''',
-                tuple(values),
-            )
-        except psycopg.errors.UniqueViolation as exc:
+        db.execute(
+            f'''INSERT INTO "user" ({column_list})
+            VALUES ({placeholders})
+            ON CONFLICT DO NOTHING''',
+            tuple(values),
+        )
+
+        # Re-check after upsert to avoid race windows without DB-level unique errors.
+        post_email_row = db.execute(
+            'SELECT id FROM "user" WHERE email = %s',
+            (normalized_email,),
+        ).fetchone()
+        if post_email_row and int(post_email_row["id"]) != user_id:
             db.rollback()
             raise UserEmailConflictError(
                 f'Email "{normalized_email}" is already registered.'
-            ) from exc
+            )
+
+        post_id_row = db.execute(
+            'SELECT email FROM "user" WHERE id = %s',
+            (user_id,),
+        ).fetchone()
+        if not post_id_row or (post_id_row.get("email") or "").strip().lower() != normalized_email:
+            db.rollback()
+            raise UserEmailConflictError(
+                f"user_id={user_id} is already mapped to a different email."
+            )
         db.commit()
         return user_id
 
