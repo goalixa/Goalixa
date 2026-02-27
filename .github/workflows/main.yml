@@ -5,7 +5,6 @@ on:
     branches:
       - main
     paths-ignore:
-      - 'k8s/kustomization.yaml'
       - '.github/**'
       - '**.md'
       - '.argo/**'
@@ -13,7 +12,6 @@ on:
     branches:
       - main
     paths-ignore:
-      - 'k8s/kustomization.yaml'
       - '.github/**'
       - '**.md'
       - '.argo/**'
@@ -52,7 +50,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix=
+            type=raw,value={{date 'YYYYMMDD-HHmmss'}}-{{sha}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -67,30 +65,17 @@ jobs:
             org.opencontainers.image.source=${{ github.repositoryUrl }}
             org.opencontainers.image.revision=${{ github.sha }}
 
-      - name: Update Kustomize image tag
+      - name: Update kustomization with new image tag
+        if: github.ref == 'refs/heads/main'
         run: |
-          # Get the short SHA without prefix (matches Docker metadata tag format)
-          IMAGE_TAG="${GITHUB_SHA:0:7}"
-          # Update the kustomization file with the new image tag
-          sed -i.bak "s/newTag: .*/newTag: ${IMAGE_TAG}/" k8s/kustomization.yaml
-          rm -f k8s/kustomization.yaml.bak
-          echo "✓ Updated k8s/kustomization.yaml with newTag: ${IMAGE_TAG}"
-          grep "newTag:" k8s/kustomization.yaml
+          TAG=$(echo ${{ steps.meta.outputs.version }} | head -n1)
+          sed -i "s/newTag:.*/newTag: $TAG/" k8s/kustomization.yaml
 
-      - name: Commit and push Kustomize changes
+      - name: Commit and push kustomization update
+        if: github.ref == 'refs/heads/main'
         run: |
-          IMAGE_TAG="${GITHUB_SHA:0:7}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add k8s/kustomization.yaml
-          git commit -m "chore: update image tag to ${IMAGE_TAG} [skip ci]"
-          git push origin main
-          echo "✓ Pushed changes - ArgoCD will now deploy the new image"
-
-      - name: Summary
-        run: |
-          echo "## ✅ Build & Deploy Complete" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image Tag:** \`${GITHUB_SHA:0:7}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Registry:** \`${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **ArgoCD:** Syncing..." >> $GITHUB_STEP_SUMMARY
+          git diff --staged --quiet || git commit -m "chore: update image tag to ${{ steps.meta.outputs.version }}"
+          git push
