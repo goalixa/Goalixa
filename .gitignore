@@ -10,3 +10,4 @@ scripts/seed_db.py
 __pycache__/
 *.pyc
 .venv
+k8s/secret.yaml

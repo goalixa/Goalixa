@@ -15,4 +15,4 @@ images:
     newName: harbor.goalixa.com/goalixa-app/app
     newTag: 99ca64b
 
-# Secret is managed separately - create using kubectl create secret generic
+# Secret is managed separately in the cluster
