@@ -8,7 +8,7 @@ from flask import Response, g, request
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, Gauge, Summary, Info, generate_latest
 
 
-# ============= HTTP Request Metrics =============
+# ============= HTTP Request Metrics ============
 REQUESTS_TOTAL = Counter(
     "goalixa_http_requests_total",
     "Total number of HTTP requests.",
