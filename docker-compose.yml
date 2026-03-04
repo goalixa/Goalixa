@@ -7,6 +7,8 @@ services:
       POSTGRES_PASSWORD: goalixa
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Backup volume for storing backups
+      - backup_data:/backup
     ports:
       - "5432:5432"
     healthcheck:
@@ -29,6 +31,33 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
+  # Backup service - runs periodic database backups
+  backup:
+    build: .
+    command: ["python", "backup_db.py", "--output-dir", "/backup"]
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=goalixa
+      - POSTGRES_USER=goalixa
+      - POSTGRES_PASSWORD=goalixa
+    volumes:
+      # Mount the backup volume to store backups
+      - backup_data:/backup
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"  # Don't restart automatically, use external scheduler if needed
 
 volumes:
   postgres_data:
+  backup_data:
+    # Named volume for persistent backup storage
+
+
+# Usage:
+# 1. Manual backup: docker-compose run --rm backup
+# 2. Scheduled backup: Use a cron job or external scheduler to run: docker-compose run --rm backup
+# 3. Restore backup: docker-compose exec -i db psql -U goalixa -d goalixa < /backup/your_backup_file.sql
