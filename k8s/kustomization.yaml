@@ -13,6 +13,6 @@ resources:
 images:
   - name: ghcr.io/goalixa/goalixa-app
     newName: harbor.goalixa.com/goalixa-app/app
-    newTag: 8cb4299
+    newTag: 604c93c
 
 # Secret is managed separately in the cluster
