@@ -1,17 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: goalixa-app
+  name: core-api
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   labels:
-    app.kubernetes.io/name: app
+    app.kubernetes.io/name: core-api
     app.kubernetes.io/part-of: goalixa
   annotations:
-    argocd-image-updater.argoproj.io/image-list: harbor.goalixa.com/goalixa-app/app
-    argocd-image-updater.argoproj.io/harbor.goalixa.com/goalixa-app/app.update-strategy: latest
-    argocd-image-updater.argoproj.io/harbor.goalixa.com/goalixa-app/app.force-update: "true"
+    argocd-image-updater.argoproj.io/image-list: harbor.goalixa.com/core-api/app
+    argocd-image-updater.argoproj.io/harbor.goalixa.com/core-api/app.update-strategy: latest
+    argocd-image-updater.argoproj.io/harbor.goalixa.com/core-api/app.force-update: "true"
 spec:
   project: default
   source:
@@ -20,7 +20,7 @@ spec:
     path: k8s
   destination:
     server: https://kubernetes.default.svc
-    namespace: goalixa-app
+    namespace: core-api
   syncPolicy:
     automated:
       prune: true

@@ -21,7 +21,7 @@ permissions:
 
 env:
   REGISTRY: harbor.goalixa.com
-  IMAGE_REPOSITORY: goalixa-app/app
+  IMAGE_REPOSITORY: core-api/app
 
 jobs:
   build-and-deploy:
