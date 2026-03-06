@@ -6,7 +6,7 @@ resources:
   - pvc.yaml
   - service.yaml
   - deployment.yaml
-  - ingress.yaml
+  # - ingress.yaml  # Removed - PWA serves frontend at app.goalixa.com, backend API accessed via BFF
   - middleware.yaml
   - ingress-pwa-no-cache.yaml
 
