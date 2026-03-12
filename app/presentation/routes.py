@@ -915,13 +915,22 @@ def register_routes(app, service):
     @auth_required()
     def edit_task_api(task_id):
         payload = _json_payload()
-        service.update_task(task_id, payload.get("name", ""))
-        label_id = payload.get("label_id")
-        if label_id:
+        name = payload.get("name")
+        project_id = payload.get("project_id")
+        if project_id is not None:
             try:
-                service.add_label_to_task(task_id, int(label_id))
+                project_id = int(project_id) if project_id else None
             except (TypeError, ValueError):
-                pass
+                project_id = None
+        priority = payload.get("priority")
+        label_ids = payload.get("label_ids")
+        goal_id = payload.get("goal_id")
+        if goal_id is not None:
+            try:
+                goal_id = int(goal_id) if goal_id else None
+            except (TypeError, ValueError):
+                goal_id = None
+        service.update_task_details(task_id, name=name, project_id=project_id, priority=priority, label_ids=label_ids, goal_id=goal_id)
         return jsonify(_build_tasks_payload())
 
     @app.route("/api/tasks/<int:task_id>/labels", methods=["POST"])

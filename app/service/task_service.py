@@ -615,6 +615,15 @@ class TaskService:
         if name:
             self.repository.update_task(int(task_id), name)
 
+    def update_task_details(self, task_id, name=None, project_id=None, priority=None, label_ids=None, goal_id=None):
+        if name is not None:
+            name = (name or "").strip()
+        self.repository.update_task_details(int(task_id), name=name, project_id=project_id, priority=priority)
+        if label_ids is not None:
+            self.repository.set_task_labels(int(task_id), label_ids)
+        if goal_id is not None:
+            self.repository.set_task_goal(int(task_id), int(goal_id) if goal_id else None)
+
     def list_projects(self):
         projects = self.repository.fetch_projects()
         project_ids = [project["id"] for project in projects]

@@ -821,6 +821,64 @@ class PostgresTaskRepository:
         )
         db.commit()
 
+    def update_task_details(self, task_id, name=None, project_id=None, priority=None):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        updates = []
+        params = []
+        if name is not None:
+            updates.append("name = %s")
+            params.append(name)
+        if project_id is not None:
+            updates.append("project_id = %s")
+            params.append(project_id)
+        if priority is not None:
+            updates.append("priority = %s")
+            params.append(priority)
+        if not updates:
+            return
+        params.extend([task_id, user_id])
+        db.execute(
+            f"UPDATE tasks SET {', '.join(updates)} WHERE id = %s AND user_id = %s",
+            tuple(params),
+        )
+        db.commit()
+
+    def set_task_labels(self, task_id, label_ids):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        owns_task = db.execute(
+            "SELECT 1 FROM tasks WHERE id = %s AND user_id = %s",
+            (task_id, user_id),
+        ).fetchone()
+        if not owns_task:
+            return
+        cleaned_ids = []
+        for label_id in label_ids or []:
+            try:
+                cleaned_ids.append(int(label_id))
+            except (TypeError, ValueError):
+                continue
+        allowed_ids = set()
+        if cleaned_ids:
+            placeholders = ",".join(["%s"] * len(cleaned_ids))
+            rows = db.execute(
+                f"""
+                SELECT id
+                FROM labels
+                WHERE user_id = %s AND id IN ({placeholders})
+                """,
+                (user_id, *cleaned_ids),
+            ).fetchall()
+            allowed_ids = {row["id"] for row in rows}
+        db.execute("DELETE FROM task_labels WHERE task_id = %s", (task_id,))
+        for label_id in sorted(allowed_ids):
+            db.execute(
+                "INSERT INTO task_labels (task_id, label_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                (task_id, label_id),
+            )
+        db.commit()
+
     def set_task_status(self, task_id, status, completed_at):
         db = self._get_db()
         user_id = self._require_user_id()
