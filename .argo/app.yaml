@@ -38,12 +38,18 @@ spec:
         jsonPointers:
           - /spec/containers/0/image
           - /spec/containers/0/env/1  # AUTH_JWT_SECRET
-      - group: \"\"
+      - group: ""
         kind: PersistentVolumeClaim
         name: core-api-data
         jqPathExpressions:
           - .spec.volumeName
           - .spec.storageClassName
+      - group: ""
+        kind: Secret
+        jsonPointers:
+          - /data
+          - /stringData
+          - /metadata
     retry:
       limit: 5
       backoff:
