@@ -37,6 +37,7 @@ spec:
         name: core-api
         jsonPointers:
           - /spec/containers/0/image
+          - /spec/containers/0/env/1  # AUTH_JWT_SECRET
       - group: \"\"
         kind: PersistentVolumeClaim
         name: core-api-data
