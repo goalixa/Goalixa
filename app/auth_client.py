@@ -310,6 +310,7 @@ def auth_required():
 
 def issue_auth_response(user):
     """
+    
     Issue auth response with access and refresh tokens set as cookies.
     Returns JSON response.
     """
