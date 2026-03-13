@@ -946,8 +946,8 @@ def register_routes(app, service):
         return jsonify(_build_tasks_payload())
 
     @app.route("/api/init", methods=["POST"])
-    @auth_required()
     def init_api():
+        """Initialize database tables (no auth required for setup)"""
         service.init_db()
         return jsonify({"ok": True})
 
