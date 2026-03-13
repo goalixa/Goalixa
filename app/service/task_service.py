@@ -881,10 +881,7 @@ class TaskService:
         task_ids = {entry["task_id"] for entry in entries}
         task_id_list = list(task_ids)
         labels_map = self.repository.fetch_task_labels_map(task_id_list)
-        running_map = {
-            task_id: self.repository.is_task_running(task_id)
-            for task_id in task_id_list
-        }
+        running_map = self.repository.fetch_tasks_running_status(task_id_list)
 
         projects = {}
         now = datetime.utcnow()
@@ -1005,10 +1002,7 @@ class TaskService:
         task_ids = {entry["task_id"] for entry in entries}
         task_id_list = list(task_ids)
         labels_map = self.repository.fetch_task_labels_map(task_id_list)
-        running_map = {
-            task_id: self.repository.is_task_running(task_id)
-            for task_id in task_id_list
-        }
+        running_map = self.repository.fetch_tasks_running_status(task_id_list)
 
         days = (end_date - start_date).days + 1
         buckets = []

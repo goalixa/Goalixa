@@ -407,6 +407,46 @@ class PostgresTaskRepository:
                 "UPDATE weekly_goals SET user_id = %s WHERE user_id IS NULL",
                 (default_user_id,),
             )
+
+        # Create performance indexes for frequently queried columns
+        # These indexes significantly improve query performance for common operations
+        index_statements = [
+            # Tasks table indexes - user_id, created_at, status are frequently filtered
+            "CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks(created_at)",
+            "CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)",
+            "CREATE INDEX IF NOT EXISTS idx_tasks_user_status ON tasks(user_id, status)",
+            "CREATE INDEX IF NOT EXISTS idx_tasks_completed_at ON tasks(completed_at)",
+            # Time entries indexes - critical for timer functionality and reporting
+            "CREATE INDEX IF NOT EXISTS idx_time_entries_user_id ON time_entries(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_time_entries_task_id ON time_entries(task_id)",
+            "CREATE INDEX IF NOT EXISTS idx_time_entries_started_at ON time_entries(started_at)",
+            "CREATE INDEX IF NOT EXISTS idx_time_entries_ended_at ON time_entries(ended_at)",
+            "CREATE INDEX IF NOT EXISTS idx_time_entries_task_ended ON time_entries(task_id, ended_at)",
+            # User table indexes (email already has UNIQUE constraint which creates index)
+            # Projects table indexes
+            "CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id)",
+            # Goals table indexes
+            "CREATE INDEX IF NOT EXISTS idx_goals_user_id ON goals(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_goals_status ON goals(status)",
+            # Labels table indexes
+            "CREATE INDEX IF NOT EXISTS idx_labels_user_id ON labels(user_id)",
+            # Habits table indexes
+            "CREATE INDEX IF NOT EXISTS idx_habits_user_id ON habits(user_id)",
+            # Task daily checks indexes
+            "CREATE INDEX IF NOT EXISTS idx_task_daily_checks_task_id ON task_daily_checks(task_id)",
+            "CREATE INDEX IF NOT EXISTS idx_task_daily_checks_log_date ON task_daily_checks(log_date)",
+        ]
+
+        for index_stmt in index_statements:
+            try:
+                db.execute(index_stmt)
+            except Exception as e:
+                # Log but don't fail if index creation fails (might already exist)
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to create index: {e}")
+
         db.commit()
 
     def fetch_weekly_goals(self, week_start=None, week_end=None):
@@ -533,7 +573,11 @@ class PostgresTaskRepository:
         db.commit()
 
     def ensure_user(self, email):
-        """Ensure user exists in the database. Create if not exists."""
+        """Ensure user exists in the database. Create if not exists.
+
+        Uses SERIALIZABLE isolation level to prevent race conditions when
+        multiple concurrent requests try to create the same user.
+        """
         user_id = self._current_user_id()
         if user_id is None:
             return None
@@ -542,73 +586,72 @@ class PostgresTaskRepository:
         if not normalized_email:
             return None
 
-        # Ensure email is not already owned by another user id.
-        email_row = db.execute(
-            'SELECT id FROM "user" WHERE email = %s',
-            (normalized_email,),
-        ).fetchone()
-        if email_row and int(email_row["id"]) != user_id:
-            raise UserEmailConflictError(
-                f'Email "{normalized_email}" is already assigned to user_id={email_row["id"]}.'
+        # Use SERIALIZABLE isolation level to prevent race conditions
+        # This ensures that concurrent transactions are properly serialized
+        db.execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+
+        try:
+            # Check if user already exists with this user_id
+            existing_user = db.execute(
+                'SELECT id, email FROM "user" WHERE id = %s FOR UPDATE',
+                (user_id,),
+            ).fetchone()
+
+            if existing_user:
+                # User exists, verify email matches
+                existing_email = (existing_user.get("email") or "").strip().lower()
+                if existing_email != normalized_email:
+                    db.rollback()
+                    raise UserEmailConflictError(
+                        f"user_id={user_id} is already mapped to a different email."
+                    )
+                db.commit()
+                return user_id
+
+            # User doesn't exist, check if email is already used by another user
+            email_user = db.execute(
+                'SELECT id FROM "user" WHERE email = %s FOR UPDATE',
+                (normalized_email,),
+            ).fetchone()
+
+            if email_user:
+                db.rollback()
+                raise UserEmailConflictError(
+                    f'Email "{normalized_email}" is already assigned to user_id={email_user["id"]}.'
+                )
+
+            # Create user with their email (app DB doesn't need auth data, use placeholder values)
+            columns = ["id", "email"]
+            values = [user_id, normalized_email]
+            existing_columns = self._get_table_columns("user")
+            if "password_hash" in existing_columns:
+                columns.append("password_hash")
+                values.append("placeholder")
+            if "active" in existing_columns:
+                columns.append("active")
+                values.append(True)
+            if "created_at" in existing_columns:
+                columns.append("created_at")
+                values.append(datetime.utcnow().isoformat())
+
+            placeholders = ", ".join(["%s"] * len(columns))
+            column_list = ", ".join(columns)
+
+            # Use INSERT with ON CONFLICT to handle edge cases where
+            # a concurrent transaction might have created the same user
+            db.execute(
+                f'''INSERT INTO "user" ({column_list})
+                VALUES ({placeholders})
+                ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email''',
+                tuple(values),
             )
 
-        # Ensure requested user id is not already mapped to another email.
-        id_row = db.execute(
-            'SELECT email FROM "user" WHERE id = %s',
-            (user_id,),
-        ).fetchone()
-        if id_row:
-            if (id_row.get("email") or "").strip().lower() != normalized_email:
-                raise UserEmailConflictError(
-                    f"user_id={user_id} is already mapped to a different email."
-                )
+            db.commit()
             return user_id
 
-        # Create user with their email (app DB doesn't need auth data, use placeholder values)
-        columns = ["id", "email"]
-        values = [user_id, normalized_email]
-        existing_columns = self._get_table_columns("user")
-        if "password_hash" in existing_columns:
-            columns.append("password_hash")
-            values.append("placeholder")
-        if "active" in existing_columns:
-            columns.append("active")
-            values.append(True)
-        if "created_at" in existing_columns:
-            columns.append("created_at")
-            values.append(datetime.utcnow().isoformat())
-
-        placeholders = ", ".join(["%s"] * len(columns))
-        column_list = ", ".join(columns)
-        db.execute(
-            f'''INSERT INTO "user" ({column_list})
-            VALUES ({placeholders})
-            ON CONFLICT DO NOTHING''',
-            tuple(values),
-        )
-
-        # Re-check after upsert to avoid race windows without DB-level unique errors.
-        post_email_row = db.execute(
-            'SELECT id FROM "user" WHERE email = %s',
-            (normalized_email,),
-        ).fetchone()
-        if post_email_row and int(post_email_row["id"]) != user_id:
+        except Exception as e:
             db.rollback()
-            raise UserEmailConflictError(
-                f'Email "{normalized_email}" is already registered.'
-            )
-
-        post_id_row = db.execute(
-            'SELECT email FROM "user" WHERE id = %s',
-            (user_id,),
-        ).fetchone()
-        if not post_id_row or (post_id_row.get("email") or "").strip().lower() != normalized_email:
-            db.rollback()
-            raise UserEmailConflictError(
-                f"user_id={user_id} is already mapped to a different email."
-            )
-        db.commit()
-        return user_id
+            raise
 
     def ensure_default_project(self, name, created_at):
         db = self._get_db()
@@ -2197,6 +2240,27 @@ class PostgresTaskRepository:
             (task_id, user_id),
         ).fetchone()
         return row is not None
+
+    def fetch_tasks_running_status(self, task_ids):
+        """Bulk fetch running status for multiple tasks.
+
+        Returns a dict mapping task_id -> boolean indicating if task is running.
+        """
+        if not task_ids:
+            return {}
+        db = self._get_db()
+        user_id = self._require_user_id()
+        placeholders = ",".join(["%s"] * len(task_ids))
+        rows = db.execute(
+            f"""
+            SELECT DISTINCT task_id
+            FROM time_entries
+            WHERE task_id IN ({placeholders}) AND ended_at IS NULL AND user_id = %s
+            """,
+            (*task_ids, user_id),
+        ).fetchall()
+        running_task_ids = {row["task_id"] for row in rows}
+        return {task_id: task_id in running_task_ids for task_id in task_ids}
 
     def start_task(self, task_id, started_at):
         db = self._get_db()

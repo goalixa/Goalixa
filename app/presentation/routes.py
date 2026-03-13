@@ -47,8 +47,12 @@ def register_routes(app, service):
             return
         try:
             service.complete_overdue_timers(max_duration_seconds=1500)
-        except Exception:
-            pass
+        except Exception as e:
+            current_app.logger.error(
+                "Failed to complete overdue timers",
+                exc_info=True,
+                extra={"user_id": current_user.id, "error": str(e)}
+            )
 
     def parse_iso(value):
         if not value:
@@ -941,8 +945,11 @@ def register_routes(app, service):
         if label_id:
             try:
                 service.add_label_to_task(task_id, int(label_id))
-            except (TypeError, ValueError):
-                pass
+            except (TypeError, ValueError) as e:
+                current_app.logger.warning(
+                    "Failed to add label to task",
+                    extra={"task_id": task_id, "label_id": label_id, "error": str(e)}
+                )
         return jsonify(_build_tasks_payload())
 
     @app.route("/api/init", methods=["POST"])
@@ -994,8 +1001,11 @@ def register_routes(app, service):
         if label_id:
             try:
                 service.add_label_to_project(project_id, int(label_id))
-            except (TypeError, ValueError):
-                pass
+            except (TypeError, ValueError) as e:
+                current_app.logger.warning(
+                    "Failed to add label to project",
+                    extra={"project_id": project_id, "label_id": label_id, "error": str(e)}
+                )
         return list_projects_api()
 
     @app.route("/api/projects/<int:project_id>/delete", methods=["POST"])
