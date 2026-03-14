@@ -979,7 +979,11 @@ def register_routes(app, service):
     @auth_required()
     def create_project_api():
         payload = _json_payload()
-        service.add_project(payload.get("name", ""), payload.get("label_ids", []))
+        service.add_project(
+            payload.get("name", ""),
+            _coerce_list(payload.get("label_ids")),
+            _coerce_list(payload.get("goal_ids")),
+        )
         return list_projects_api()
 
     @app.route("/api/projects/<int:project_id>/edit", methods=["POST"])
@@ -990,6 +994,7 @@ def register_routes(app, service):
             project_id,
             payload.get("name", ""),
             _coerce_list(payload.get("label_ids")),
+            _coerce_list(payload.get("goal_ids")),
         )
         return list_projects_api()
 

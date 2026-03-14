@@ -1279,6 +1279,41 @@ class PostgresTaskRepository:
             )
         db.commit()
 
+    def set_project_goals(self, project_id, goal_ids):
+        db = self._get_db()
+        user_id = self._require_user_id()
+        owns_project = db.execute(
+            "SELECT 1 FROM projects WHERE id = %s AND user_id = %s",
+            (project_id, user_id),
+        ).fetchone()
+        if not owns_project:
+            return
+        cleaned_ids = []
+        for goal_id in goal_ids or []:
+            try:
+                cleaned_ids.append(int(goal_id))
+            except (TypeError, ValueError):
+                continue
+        allowed_ids = set()
+        if cleaned_ids:
+            placeholders = ",".join(["%s"] * len(cleaned_ids))
+            rows = db.execute(
+                f"""
+                SELECT id
+                FROM goals
+                WHERE user_id = %s AND id IN ({placeholders})
+                """,
+                (user_id, *cleaned_ids),
+            ).fetchall()
+            allowed_ids = {row["id"] for row in rows}
+        db.execute("DELETE FROM goal_projects WHERE project_id = %s", (project_id,))
+        for goal_id in sorted(allowed_ids):
+            db.execute(
+                "INSERT INTO goal_projects (goal_id, project_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                (goal_id, project_id),
+            )
+        db.commit()
+
     def fetch_goals(self):
         db = self._get_db()
         user_id = self._require_user_id()
@@ -2227,6 +2262,30 @@ class PostgresTaskRepository:
                 {"id": row["id"], "name": row["name"], "color": row["color"]}
             )
         return labels_map
+
+    def fetch_project_goals_map(self, project_ids):
+        if not project_ids:
+            return {}
+        db = self._get_db()
+        user_id = self._require_user_id()
+        placeholders = ",".join(["%s"] * len(project_ids))
+        rows = db.execute(
+            f"""
+            SELECT gp.project_id, g.id, g.name, g.description
+            FROM goal_projects gp
+            JOIN goals g ON g.id = gp.goal_id
+            JOIN projects p ON p.id = gp.project_id
+            WHERE p.user_id = %s AND g.user_id = %s AND gp.project_id IN ({placeholders})
+            ORDER BY g.created_at DESC
+            """,
+            (user_id, user_id, *project_ids),
+        ).fetchall()
+        goals_map = {}
+        for row in rows:
+            goals_map.setdefault(row["project_id"], []).append(
+                {"id": row["id"], "name": row["name"], "description": row["description"]}
+            )
+        return goals_map
 
     def is_task_running(self, task_id):
         db = self._get_db()

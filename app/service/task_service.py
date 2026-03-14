@@ -628,12 +628,17 @@ class TaskService:
         projects = self.repository.fetch_projects()
         project_ids = [project["id"] for project in projects]
         labels_map = self.repository.fetch_project_labels_map(project_ids)
+        goals_map = self.repository.fetch_project_goals_map(project_ids)
         return [
             {
                 **dict(project),
                 "labels": labels_map.get(project["id"], []),
                 "label_ids": [
                     label["id"] for label in labels_map.get(project["id"], [])
+                ],
+                "goals": goals_map.get(project["id"], []),
+                "goal_ids": [
+                    goal["id"] for goal in goals_map.get(project["id"], [])
                 ],
             }
             for project in projects
@@ -644,28 +649,36 @@ class TaskService:
         if project is None:
             return None
         labels_map = self.repository.fetch_project_labels_map([project["id"]])
+        goals_map = self.repository.fetch_project_goals_map([project["id"]])
         project_labels = labels_map.get(project["id"], [])
+        project_goals = goals_map.get(project["id"], [])
         return {
             **dict(project),
             "labels": project_labels,
             "label_ids": [label["id"] for label in project_labels],
+            "goals": project_goals,
+            "goal_ids": [goal["id"] for goal in project_goals],
         }
 
-    def add_project(self, name, label_ids=None):
+    def add_project(self, name, label_ids=None, goal_ids=None):
         name = (name or "").strip()
         if name:
             project_id = self.repository.create_project(
                 name, datetime.utcnow().isoformat()
             )
-            for label_id in label_ids or []:
-                self.repository.add_label_to_project(project_id, int(label_id))
+            if label_ids:
+                self.repository.set_project_labels(project_id, label_ids)
+            if goal_ids:
+                self.repository.set_project_goals(project_id, goal_ids)
 
-    def update_project(self, project_id, name, label_ids=None):
+    def update_project(self, project_id, name, label_ids=None, goal_ids=None):
         name = (name or "").strip()
         if name:
             self.repository.update_project(int(project_id), name)
         if label_ids is not None:
             self.repository.set_project_labels(int(project_id), label_ids)
+        if goal_ids is not None:
+            self.repository.set_project_goals(int(project_id), goal_ids)
 
     def delete_project(self, project_id):
         self.repository.delete_project(project_id)
