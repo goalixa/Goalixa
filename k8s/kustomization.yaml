@@ -11,4 +11,4 @@ resources:
 images:
   - name: ghcr.io/goalixa/goalixa-app
     newName: harbor.goalixa.com/core-api/app
-    newTag: 9cd9c10
+    newTag: 38a9ca8
