@@ -1,4 +1,4 @@
-name: Build & Deploy App
+name: Build & Deploy Core-API (Helm)
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
       - '.github/**'
       - '**.md'
       - '.argo/**'
+      - 'helm/**'  # Ignore Helm chart changes to avoid loop
   pull_request:
     branches:
       - main
@@ -15,13 +16,15 @@ on:
       - '.github/**'
       - '**.md'
       - '.argo/**'
+      - 'helm/**'
 
 permissions:
-  contents: write
+  contents: read
+  actions: read
 
 env:
   REGISTRY: harbor.goalixa.com
-  IMAGE_REPOSITORY: core-api/app
+  IMAGE_REPOSITORY: goalixa/core-api
 
 jobs:
   build-and-deploy:
@@ -50,7 +53,6 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=raw,value={{date 'YYYYMMDD-HHmmss'}}-{{sha}}
             type=sha,prefix=
 
       - name: Build and push Docker image
@@ -66,24 +68,92 @@ jobs:
             org.opencontainers.image.source=${{ github.repositoryUrl }}
             org.opencontainers.image.revision=${{ github.sha }}
 
-      - name: Update Kustomize image tag
+      - name: Get image tag
+        id: tag
         run: |
-          # Get the short SHA
           IMAGE_TAG="${GITHUB_SHA:0:7}"
-          # Update the kustomization file with the new image tag
-          sed -i.bak "s/newTag: .*/newTag: ${IMAGE_TAG}/" k8s/kustomization.yaml
-          rm -f k8s/kustomization.yaml.bak
-          echo "✓ Updated k8s/kustomization.yaml with newTag: ${IMAGE_TAG}"
-          grep "newTag:" k8s/kustomization.yaml
+          echo "tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "image=${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
 
-      - name: Commit and push Kustomize changes
+      - name: Setup kubectl
         run: |
-          IMAGE_TAG="${GITHUB_SHA:0:7}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add k8s/kustomization.yaml
-          git commit -m "chore: update image tag to ${IMAGE_TAG} [skip ci]"
-          # Pull latest changes to avoid race conditions
-          git pull --rebase origin main
-          git push origin main
-          echo "✓ Pushed changes - ArgoCD will now deploy the new image"
+          if [ -n "${{ secrets.KUBE_CONFIG }}" ]; then
+            echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > /tmp/kubeconfig
+            echo "KUBECONFIG=/tmp/kubeconfig" >> $GITHUB_ENV
+            echo "HAS_KUBE_CONFIG=true" >> $GITHUB_ENV
+          else
+            echo "HAS_KUBE_CONFIG=false" >> $GITHUB_ENV
+          fi
+
+      - name: Update ArgoCD application
+        if: env.HAS_KUBE_CONFIG == 'true'
+        run: |
+          IMAGE_TAG="${{ steps.tag.outputs.tag }}"
+
+          echo "🔄 Updating ArgoCD application with image tag: ${IMAGE_TAG}"
+
+          # Patch ArgoCD app with new Helm parameter
+          kubectl patch application core-api \
+            -n argocd \
+            --type='merge' \
+            -p="{
+              \"spec\": {
+                \"source\": {
+                  \"helm\": {
+                    \"parameters\": [
+                      {
+                        \"name\": \"image.tag\",
+                        \"value\": \"${IMAGE_TAG}\"
+                      }
+                    ]
+                  }
+                }
+              }
+            }"
+
+          # Trigger immediate sync
+          kubectl annotate application core-api \
+            -n argocd \
+            "force-sync-at=$(date +%s)" \
+            --overwrite
+
+          echo "✅ ArgoCD application updated"
+
+      - name: Summary
+        run: |
+          echo "## ✅ Build & Deploy Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag:** \`${{ steps.tag.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Full Image:** \`${{ steps.tag.outputs.image }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry:** \`${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ env.HAS_KUBE_CONFIG }}" = "true" ]; then
+            echo "- **Deployment Method:** Helm (ArgoCD - Auto-sync)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 🔄 ArgoCD will now:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Detect Helm parameter change" >> $GITHUB_STEP_SUMMARY
+            echo "2. Render Helm chart with image tag: \`${{ steps.tag.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "3. Deploy to Kubernetes" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Deployment Method:** Helm (Manual sync required)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### ⚠️ Manual Action Required" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The \`KUBE_CONFIG\` secret is not configured. Please:" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "1. **Add the secret** to your GitHub repository:" >> $GITHUB_STEP_SUMMARY
+            echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "   # Encode your kubeconfig" >> $GITHUB_STEP_SUMMARY
+            echo "   cat ~/.kube/config | base64 -w 0" >> $GITHUB_STEP_SUMMARY
+            echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "2. **Add it as a secret** named \`KUBE_CONFIG\` in repository settings" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "3. **Or manually trigger ArgoCD sync**:" >> $GITHUB_STEP_SUMMARY
+            echo "   \`\`\`bash" >> $GITHUB_STEP_SUMMARY
+            echo "   kubectl patch application core-api -n argocd --type='merge' \\" >> $GITHUB_STEP_SUMMARY
+            echo "     -p='{\"spec\":{\"source\":{\"helm\":{\"parameters\":[{\"name\":\"image.tag\",\"value\":\"${{ steps.tag.outputs.tag }}\"}]}}}}'" >> $GITHUB_STEP_SUMMARY
+            echo "   kubectl annotate application core-api -n argocd \"force-sync-at=\$(date +%s)\" --overwrite" >> $GITHUB_STEP_SUMMARY
+            echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
