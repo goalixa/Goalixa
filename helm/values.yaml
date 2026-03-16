@@ -1,0 +1,40 @@
+image:
+  registry: harbor.goalixa.com
+  repository: goalixa/core-api
+  tag: "latest"
+  pullPolicy: Always
+
+replicaCount: 1
+
+container:
+  port: 5000
+
+env:
+  LOG_LEVEL: "INFO"
+  DATABASE_URL: ""  # Set via secret
+
+secretName: core-api-secrets
+
+service:
+  type: ClusterIP
+  port: 80
+
+persistence:
+  enabled: true
+  storageClass: local-path
+  accessMode: ReadWriteOnce
+  size: 5Gi
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+
+namespace:
+  name: core-api

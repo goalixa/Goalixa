@@ -1,0 +1,21 @@
+{{- if .Values.persistence.enabled }}
+{{- $existingPVC := lookup "v1" "PersistentVolumeClaim" .Values.namespace.name "auth-data" }}
+{{- if not $existingPVC }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: auth-data
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "core-api.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size }}
+  {{- if .Values.persistence.storageClass }}
+  storageClassName: {{ .Values.persistence.storageClass }}
+  {{- end }}
+{{- end }}
+{{- end }}
