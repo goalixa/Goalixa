@@ -1,6 +1,6 @@
 image:
   registry: harbor.goalixa.com
-  repository: goalixa/core-api
+  repository: core-api/app
   tag: "latest"
   pullPolicy: Always
 
