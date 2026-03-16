@@ -6,18 +6,20 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   labels:
-    app.kubernetes.io/name: core-api
+    app: core-api
     app.kubernetes.io/part-of: goalixa
-  annotations:
-    argocd-image-updater.argoproj.io/image-list: harbor.goalixa.com/core-api/app
-    argocd-image-updater.argoproj.io/harbor.goalixa.com/core-api/app.update-strategy: latest
-    argocd-image-updater.argoproj.io/harbor.goalixa.com/core-api/app.force-update: "true"
 spec:
   project: default
   source:
     repoURL: https://github.com/goalixa/Core-API.git
     targetRevision: main
-    path: k8s
+    path: helm
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: image.tag
+          value: latest
   destination:
     server: https://kubernetes.default.svc
     namespace: core-api
@@ -28,31 +30,8 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - RespectIgnoreDifferences=true
-    managedNamespaceMetadata:
-      labels:
-        app.kubernetes.io/part-of: goalixa
-    ignoreDifferences:
-      - group: apps
-        kind: Deployment
-        name: core-api
-        jsonPointers:
-          - /spec/containers/0/image
-          - /spec/containers/0/env/1  # AUTH_JWT_SECRET
-      - group: ""
-        kind: PersistentVolumeClaim
-        name: core-api-data
-        jqPathExpressions:
-          - .spec.volumeName
-          - .spec.storageClassName
-      - group: ""
-        kind: Secret
-        jsonPointers:
-          - /data
-          - /stringData
-          - /metadata
-    retry:
-      limit: 5
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 3m
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
