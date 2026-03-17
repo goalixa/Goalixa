@@ -31,11 +31,6 @@ spec:
           env:
             - name: LOG_LEVEL
               value: {{ .Values.env.LOG_LEVEL | quote }}
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secretName }}
-                  key: DATABASE_URL
           volumeMounts:
             - name: data
               mountPath: /app/data
