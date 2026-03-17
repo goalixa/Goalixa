@@ -35,3 +35,8 @@ spec:
       kind: Deployment
       jsonPointers:
         - /spec/replicas
+    - group: ""
+      kind: Secret
+      name: core-api-secrets
+      jqPathExpressions:
+        - .data
