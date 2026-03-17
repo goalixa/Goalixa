@@ -31,7 +31,7 @@ def create_app():
     app.config["AUTH_COOKIE_SECURE"] = os.getenv("AUTH_COOKIE_SECURE", "0") == "1"
     app.config["AUTH_COOKIE_DOMAIN"] = os.getenv("AUTH_COOKIE_DOMAIN")
 
-    # Respect Cloudflare/forwarded headers for scheme/host/prefix resolution.
+    # Respect Cloudflare/forwarded headers for scheme/host/prefix resolution
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     register_observability(app)
