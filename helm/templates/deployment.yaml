@@ -31,6 +31,9 @@ spec:
           env:
             - name: LOG_LEVEL
               value: {{ .Values.env.LOG_LEVEL | quote }}
+          envFrom:
+            - secretRef:
+                name: core-api-secrets
           volumeMounts:
             - name: data
               mountPath: /app/data
