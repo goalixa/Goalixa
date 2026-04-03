@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: core-api-staging
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app: core-api
+    app.kubernetes.io/part-of: goalixa
+    environment: staging
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/goalixa/Core-API.git
+    targetRevision: staging
+    path: helm
+    helm:
+      valueFiles:
+        - values-staging.yaml
+      parameters:
+        - name: image.tag
+          value: latest  # Default, overridden by workflow
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: core-api-staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: ""
+      kind: Secret
+      name: core-api-secrets
+      jqPathExpressions:
+        - .data

@@ -1,0 +1,24 @@
+# Staging values for core-api
+# Override default values for staging environment
+
+image:
+  tag: "latest"  # Overridden by GitHub workflow
+
+replicaCount: 1
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+
+namespace:
+  name: core-api-staging
+
+env:
+  LOG_LEVEL: "DEBUG"

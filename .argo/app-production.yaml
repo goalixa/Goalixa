@@ -8,6 +8,7 @@ metadata:
   labels:
     app: core-api
     app.kubernetes.io/part-of: goalixa
+    environment: production
 spec:
   project: default
   source:
@@ -16,10 +17,10 @@ spec:
     path: helm
     helm:
       valueFiles:
-        - values.yaml
+        - values-production.yaml
       parameters:
         - name: image.tag
-          value: latest
+          value: latest  # Default, overridden by workflow
   destination:
     server: https://kubernetes.default.svc
     namespace: core-api
@@ -27,16 +28,24 @@ spec:
     automated:
       prune: true
       selfHeal: true
+      allowEmpty: false
     syncOptions:
       - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
       - RespectIgnoreDifferences=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
   ignoreDifferences:
     - group: apps
       kind: Deployment
       jsonPointers:
-        - /spec/replicas
+        - /spec/replicas  # Allow autoscaling to manage replicas
     - group: ""
       kind: Secret
       name: core-api-secrets
       jqPathExpressions:
-        - .data
+        - .data  # Allow manual secret management

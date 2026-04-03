@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - staging
     paths-ignore:
       - '.github/**'
       - '**.md'
@@ -12,6 +13,7 @@ on:
   pull_request:
     branches:
       - main
+      - staging
     paths-ignore:
       - '.github/**'
       - '**.md'
@@ -53,6 +55,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=staging,enable=${{ github.ref == 'refs/heads/staging' }}
             type=sha,prefix=
 
       - name: Build and push Docker image
@@ -68,12 +71,21 @@ jobs:
             org.opencontainers.image.source=${{ github.repositoryUrl }}
             org.opencontainers.image.revision=${{ github.sha }}
 
-      - name: Get image tag
+      - name: Get image tag and environment
         id: tag
         run: |
           IMAGE_TAG="${GITHUB_SHA:0:7}"
           echo "tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
           echo "image=${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
+
+          # Determine environment based on branch
+          if [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "app_name=core-api-staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "app_name=core-api" >> $GITHUB_OUTPUT
+          fi
 
       - name: Setup kubectl
         run: |
@@ -89,11 +101,13 @@ jobs:
         if: env.HAS_KUBE_CONFIG == 'true'
         run: |
           IMAGE_TAG="${{ steps.tag.outputs.tag }}"
+          APP_NAME="${{ steps.tag.outputs.app_name }}"
+          ENVIRONMENT="${{ steps.tag.outputs.environment }}"
 
-          echo "🔄 Updating ArgoCD application with image tag: ${IMAGE_TAG}"
+          echo "🔄 Updating ArgoCD application '${APP_NAME}' (${ENVIRONMENT}) with image tag: ${IMAGE_TAG}"
 
           # Patch ArgoCD app with new Helm parameter
-          kubectl patch application core-api \
+          kubectl patch application ${APP_NAME} \
             -n argocd \
             --type='merge' \
             -p="{
@@ -112,29 +126,32 @@ jobs:
             }"
 
           # Trigger immediate sync
-          kubectl annotate application core-api \
+          kubectl annotate application ${APP_NAME} \
             -n argocd \
             "force-sync-at=$(date +%s)" \
             --overwrite
 
-          echo "✅ ArgoCD application updated"
+          echo "✅ ArgoCD application '${APP_NAME}' updated for ${ENVIRONMENT}"
 
       - name: Summary
         run: |
-          echo "## ✅ Build & Deploy Complete" >> $GITHUB_STEP_SUMMARY
+          ENVIRONMENT="${{ steps.tag.outputs.environment }}"
+          echo "## ✅ Build & Deploy Complete (${ENVIRONMENT})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** \`${ENVIRONMENT}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Image Tag:** \`${{ steps.tag.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Full Image:** \`${{ steps.tag.outputs.image }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Registry:** \`${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **ArgoCD App:** \`${{ steps.tag.outputs.app_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ env.HAS_KUBE_CONFIG }}" = "true" ]; then
             echo "- **Deployment Method:** Helm (ArgoCD - Auto-sync)" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### 🔄 ArgoCD will now:" >> $GITHUB_STEP_SUMMARY
-            echo "1. Detect Helm parameter change" >> $GITHUB_STEP_SUMMARY
+            echo "1. Detect Helm parameter change for \`${{ steps.tag.outputs.app_name }}\`" >> $GITHUB_STEP_SUMMARY
             echo "2. Render Helm chart with image tag: \`${{ steps.tag.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
-            echo "3. Deploy to Kubernetes" >> $GITHUB_STEP_SUMMARY
+            echo "3. Deploy to Kubernetes namespace: \`${ENVIRONMENT}\`" >> $GITHUB_STEP_SUMMARY
           else
             echo "- **Deployment Method:** Helm (Manual sync required)" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -152,8 +169,8 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "3. **Or manually trigger ArgoCD sync**:" >> $GITHUB_STEP_SUMMARY
             echo "   \`\`\`bash" >> $GITHUB_STEP_SUMMARY
-            echo "   kubectl patch application core-api -n argocd --type='merge' \\" >> $GITHUB_STEP_SUMMARY
+            echo "   kubectl patch application ${{ steps.tag.outputs.app_name }} -n argocd --type='merge' \\" >> $GITHUB_STEP_SUMMARY
             echo "     -p='{\"spec\":{\"source\":{\"helm\":{\"parameters\":[{\"name\":\"image.tag\",\"value\":\"${{ steps.tag.outputs.tag }}\"}]}}}}'" >> $GITHUB_STEP_SUMMARY
-            echo "   kubectl annotate application core-api -n argocd \"force-sync-at=\$(date +%s)\" --overwrite" >> $GITHUB_STEP_SUMMARY
+            echo "   kubectl annotate application ${{ steps.tag.outputs.app_name }} -n argocd \"force-sync-at=\$(date +%s)\" --overwrite" >> $GITHUB_STEP_SUMMARY
             echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
           fi
