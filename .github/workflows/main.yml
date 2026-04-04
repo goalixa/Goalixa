@@ -26,7 +26,6 @@ permissions:
 
 env:
   REGISTRY: harbor.goalixa.com
-  IMAGE_REPOSITORY: core-api/app
 
 jobs:
   build-and-deploy:
@@ -34,6 +33,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set image repository based on branch
+        id: repo
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "repository=core-api-staging/app" >> $GITHUB_OUTPUT
+          else
+            echo "repository=core-api/app" >> $GITHUB_OUTPUT
+          fi
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -52,7 +60,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}
+          images: ${{ env.REGISTRY }}/${{ steps.repo.outputs.repository }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=staging,enable=${{ github.ref == 'refs/heads/staging' }}
@@ -76,7 +84,7 @@ jobs:
         run: |
           IMAGE_TAG="${GITHUB_SHA:0:7}"
           echo "tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
-          echo "image=${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "image=${{ env.REGISTRY }}/${{ steps.repo.outputs.repository }}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
 
           # Determine environment based on branch
           if [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then

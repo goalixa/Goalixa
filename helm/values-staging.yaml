@@ -2,6 +2,8 @@
 # Override default values for staging environment
 
 image:
+  registry: harbor.goalixa.com
+  repository: core-api-staging/app
   tag: "latest"  # Overridden by GitHub workflow
 
 replicaCount: 1
