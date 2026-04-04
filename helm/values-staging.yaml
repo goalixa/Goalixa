@@ -4,7 +4,7 @@
 image:
   registry: harbor.goalixa.com
   repository: core-api-staging/app
-  tag: "latest"  # Overridden by GitHub workflow
+  tag: "latest"
 
 replicaCount: 1
 

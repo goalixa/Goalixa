@@ -20,7 +20,7 @@ spec:
         - values-staging.yaml
       parameters:
         - name: image.tag
-          value: latest  # Default, overridden by workflow
+          value: latest
   destination:
     server: https://kubernetes.default.svc
     namespace: core-api-staging
