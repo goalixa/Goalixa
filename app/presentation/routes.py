@@ -20,7 +20,7 @@ def register_routes(app, service):
 
     @app.route("/health", methods=["GET"])
     def health():
-        """Health check endpoint for Kubernetes probes (no auth required)."""
+        """Health check endpoint for Kubernetes probes (no auth required). """
         return jsonify({"status": "ok"}), 200
 
     @app.before_request
