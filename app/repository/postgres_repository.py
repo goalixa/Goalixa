@@ -2330,9 +2330,14 @@ class PostgresTaskRepository:
         ).fetchone()
         if not owns_task:
             return
+
+        # Get next available ID based on actual data (safest approach)
+        max_id = db.execute("SELECT COALESCE(MAX(id), 0) FROM time_entries").fetchone()["coalesce"]
+        next_id = max_id + 1
+
         db.execute(
-            "INSERT INTO time_entries (user_id, task_id, started_at) VALUES (%s, %s, %s)",
-            (user_id, task_id, started_at),
+            "INSERT INTO time_entries (id, user_id, task_id, started_at) VALUES (%s, %s, %s, %s)",
+            (next_id, user_id, task_id, started_at),
         )
         db.commit()
 
