@@ -2338,7 +2338,8 @@ class PostgresTaskRepository:
                 (user_id, task_id, started_at),
             )
         except psycopg.errors.UniqueViolation:
-            # Sequence drift: get max ID and retry with explicit ID
+            # Sequence drift: rollback failed transaction and retry with explicit ID
+            db.execute("ROLLBACK")
             max_id = db.execute("SELECT COALESCE(MAX(id), 0) FROM time_entries").fetchone()[0]
             db.execute(
                 "INSERT INTO time_entries (id, user_id, task_id, started_at) VALUES (%s, %s, %s, %s)",
