@@ -2339,7 +2339,7 @@ class PostgresTaskRepository:
             )
         except psycopg.errors.UniqueViolation:
             # Sequence drift: get max ID and retry with explicit ID in savepoint
-            max_id = db.execute("SELECT COALESCE(MAX(id), 0) FROM time_entries").fetchone()[0]
+            max_id = db.execute("SELECT COALESCE(MAX(id), 0) FROM time_entries").fetchone()["coalesce"]
             db.execute("SAVEPOINT sp1")
             try:
                 db.execute(
@@ -2348,7 +2348,7 @@ class PostgresTaskRepository:
                 )
             except psycopg.errors.UniqueViolation:
                 # Edge case: another concurrent insert already used this ID, increment and retry
-                max_id = db.execute("SELECT COALESCE(MAX(id), 0) FROM time_entries").fetchone()[0]
+                max_id = db.execute("SELECT COALESCE(MAX(id), 0) FROM time_entries").fetchone()["coalesce"]
                 db.execute("ROLLBACK TO SAVEPOINT sp1")
                 db.execute(
                     "INSERT INTO time_entries (id, user_id, task_id, started_at) VALUES (%s, %s, %s, %s)",
