@@ -2330,10 +2330,22 @@ class PostgresTaskRepository:
         ).fetchone()
         if not owns_task:
             return
-        db.execute(
-            "INSERT INTO time_entries (user_id, task_id, started_at) VALUES (%s, %s, %s)",
-            (user_id, task_id, started_at),
-        )
+
+        # Try insert, handle sequence drift gracefully
+        try:
+            db.execute(
+                "INSERT INTO time_entries (user_id, task_id, started_at) VALUES (%s, %s, %s)",
+                (user_id, task_id, started_at),
+            )
+        except psycopg.errors.UniqueViolation:
+            # Sequence drift: get max ID and retry with explicit ID
+            max_id = db.execute("SELECT COALESCE(MAX(id), 0) FROM time_entries").fetchone()[0]
+            db.execute(
+                "INSERT INTO time_entries (id, user_id, task_id, started_at) VALUES (%s, %s, %s, %s)",
+                (max_id + 1, user_id, task_id, started_at),
+            )
+            # Advance sequence to avoid repeated failures
+            db.execute("SELECT setval('time_entries_id_seq', %s)", (max_id + 1,))
         db.commit()
 
     def stop_task(self, task_id, ended_at):
