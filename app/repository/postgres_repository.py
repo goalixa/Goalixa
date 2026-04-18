@@ -2331,32 +2331,14 @@ class PostgresTaskRepository:
         if not owns_task:
             return
 
-        # Try insert, handle sequence drift gracefully
-        try:
-            db.execute(
-                "INSERT INTO time_entries (user_id, task_id, started_at) VALUES (%s, %s, %s)",
-                (user_id, task_id, started_at),
-            )
-        except psycopg.errors.UniqueViolation:
-            # Sequence drift: get max ID and retry with explicit ID in savepoint
-            max_id = db.execute("SELECT COALESCE(MAX(id), 0) FROM time_entries").fetchone()["coalesce"]
-            db.execute("SAVEPOINT sp1")
-            try:
-                db.execute(
-                    "INSERT INTO time_entries (id, user_id, task_id, started_at) VALUES (%s, %s, %s, %s)",
-                    (max_id + 1, user_id, task_id, started_at),
-                )
-            except psycopg.errors.UniqueViolation:
-                # Edge case: another concurrent insert already used this ID, increment and retry
-                max_id = db.execute("SELECT COALESCE(MAX(id), 0) FROM time_entries").fetchone()["coalesce"]
-                db.execute("ROLLBACK TO SAVEPOINT sp1")
-                db.execute(
-                    "INSERT INTO time_entries (id, user_id, task_id, started_at) VALUES (%s, %s, %s, %s)",
-                    (max_id + 1, user_id, task_id, started_at),
-                )
-            db.execute("RELEASE SAVEPOINT sp1")
-            # Advance sequence to avoid repeated failures
-            db.execute("SELECT setval('time_entries_id_seq', %s)", (max_id + 1,))
+        # Get next available ID based on actual data (safest approach)
+        max_id = db.execute("SELECT COALESCE(MAX(id), 0) FROM time_entries").fetchone()["coalesce"]
+        next_id = max_id + 1
+
+        db.execute(
+            "INSERT INTO time_entries (id, user_id, task_id, started_at) VALUES (%s, %s, %s, %s)",
+            (next_id, user_id, task_id, started_at),
+        )
         db.commit()
 
     def stop_task(self, task_id, ended_at):
