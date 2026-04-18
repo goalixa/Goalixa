@@ -2338,13 +2338,23 @@ class PostgresTaskRepository:
                 (user_id, task_id, started_at),
             )
         except psycopg.errors.UniqueViolation:
-            # Sequence drift: rollback failed transaction and retry with explicit ID
-            db.execute("ROLLBACK")
+            # Sequence drift: get max ID and retry with explicit ID in savepoint
             max_id = db.execute("SELECT COALESCE(MAX(id), 0) FROM time_entries").fetchone()[0]
-            db.execute(
-                "INSERT INTO time_entries (id, user_id, task_id, started_at) VALUES (%s, %s, %s, %s)",
-                (max_id + 1, user_id, task_id, started_at),
-            )
+            db.execute("SAVEPOINT sp1")
+            try:
+                db.execute(
+                    "INSERT INTO time_entries (id, user_id, task_id, started_at) VALUES (%s, %s, %s, %s)",
+                    (max_id + 1, user_id, task_id, started_at),
+                )
+            except psycopg.errors.UniqueViolation:
+                # Edge case: another concurrent insert already used this ID, increment and retry
+                max_id = db.execute("SELECT COALESCE(MAX(id), 0) FROM time_entries").fetchone()[0]
+                db.execute("ROLLBACK TO SAVEPOINT sp1")
+                db.execute(
+                    "INSERT INTO time_entries (id, user_id, task_id, started_at) VALUES (%s, %s, %s, %s)",
+                    (max_id + 1, user_id, task_id, started_at),
+                )
+            db.execute("RELEASE SAVEPOINT sp1")
             # Advance sequence to avoid repeated failures
             db.execute("SELECT setval('time_entries_id_seq', %s)", (max_id + 1,))
         db.commit()
