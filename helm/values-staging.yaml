@@ -22,5 +22,11 @@ autoscaling:
 namespace:
   name: core-api-staging
 
+persistence:
+  enabled: true
+  storageClass: longhorn-v2  # Match existing PVC
+  accessMode: ReadWriteOnce
+  size: 1Gi  # Match existing PVC
+
 env:
   LOG_LEVEL: "DEBUG"
