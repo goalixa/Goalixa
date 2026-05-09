@@ -1,0 +1,102 @@
+{{- if .Values.backup.enabled }}
+---
+# Kubernetes CronJob for Daily PostgreSQL Backups to Mega Cloud
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "core-api.fullname" . }}-db-backup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "core-api.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup
+spec:
+  # Backup schedule (cron format)
+  schedule: "{{ .Values.backup.schedule }}"
+
+  # Keep history of successful and failed jobs
+  successfulJobsHistoryLimit: {{ .Values.backup.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.backup.failedJobsHistoryLimit }}
+
+  # Only one job can run at a time
+  concurrencyPolicy: Forbid
+
+  # Job template
+  jobTemplate:
+    spec:
+      # Retry up to 2 times if backup fails
+      backoffLimit: 2
+
+      template:
+        metadata:
+          labels:
+            {{- include "core-api.labels" . | nindent 12 }}
+            app.kubernetes.io/component: backup
+            job-type: database-backup
+        spec:
+          restartPolicy: OnFailure
+          imagePullSecrets:
+            - name: {{ .Values.imagePullSecrets[0].name }}
+
+          containers:
+            - name: backup
+              image: "{{ .Values.backup.image.registry }}/{{ .Values.backup.image.repository }}:{{ .Values.backup.image.tag }}"
+              imagePullPolicy: {{ .Values.backup.image.pullPolicy }}
+
+              # Environment variables from secrets and config
+              env:
+                # PostgreSQL connection
+                - name: POSTGRES_HOST
+                  value: "postgres.{{ .Release.Namespace }}.svc.cluster.local"
+                - name: POSTGRES_PORT
+                  value: "5432"
+                - name: POSTGRES_DB
+                  value: "goalixa"
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: goalixa-app-db-secret
+                      key: POSTGRES_USER
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: goalixa-app-db-secret
+                      key: POSTGRES_PASSWORD
+
+                # Mega credentials from Vault (via ExternalSecret)
+                - name: MEGA_EMAIL
+                  valueFrom:
+                    secretKeyRef:
+                      name: mega-credentials
+                      key: MEGA_EMAIL
+                - name: MEGA_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: mega-credentials
+                      key: MEGA_PASSWORD
+
+                # Backup configuration
+                - name: MEGA_BACKUP_PATH
+                  value: "{{ .Values.backup.mega.backupPath }}"
+                - name: BACKUP_RETENTION_DAYS
+                  value: "{{ .Values.backup.retention.days }}"
+                - name: BACKUP_RETENTION_WEEKS
+                  value: "{{ .Values.backup.retention.weeks }}"
+                - name: BACKUP_RETENTION_MONTHS
+                  value: "{{ .Values.backup.retention.months }}"
+
+              # Resource limits
+              resources:
+                {{- toYaml .Values.backup.resources | nindent 16 }}
+
+          # Node affinity: prefer worker nodes
+          affinity:
+            nodeAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  preference:
+                    matchExpressions:
+                      - key: node-type
+                        operator: In
+                        values:
+                          - worker
+{{- end }}

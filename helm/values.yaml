@@ -38,3 +38,34 @@ autoscaling:
 
 namespace:
   name: core-api
+
+# Database Backup Configuration
+backup:
+  enabled: true
+  # Backup Docker image
+  image:
+    registry: harbor.goalixa.com
+    repository: goalixa/backup
+    tag: "latest"
+    pullPolicy: Always
+  # Backup schedule (cron format)
+  schedule: "0 2 * * *"  # Daily at 2 AM UTC
+  # Mega storage configuration
+  mega:
+    backupPath: "/goalixa-backups"
+  # Retention policy
+  retention:
+    days: 7     # Keep last 7 daily backups
+    weeks: 4    # Keep 1st of week for 4 weeks
+    months: 3   # Keep 1st of month for 3 months
+  # Resource limits
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  # Job history
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1

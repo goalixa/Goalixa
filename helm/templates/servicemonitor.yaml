@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: core-api
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    {{- include "core-api.labels" . | nindent 4 }}
+    prometheus: prometheus
+spec:
+  selector:
+    {{- include "core-api.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.namespace.name }}
+  sampleLimit: 10000
