@@ -38,20 +38,27 @@ jobs:
         id: config
         run: |
           # Determine environment based on branch
-          if [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+          # For PRs, use the base branch (target); for pushes, use ref
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BRANCH="${{ github.base_ref }}"
+          else
+            BRANCH="${{ github.ref_name }}"
+          fi
+
+          if [[ "$BRANCH" == "staging" ]]; then
             # Staging deployment - always use latest
             echo "repository=core-api-staging/app" >> $GITHUB_OUTPUT
             echo "image_tag=latest" >> $GITHUB_OUTPUT
             echo "environment=staging" >> $GITHUB_OUTPUT
             echo "app_name=core-api-staging" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          elif [[ "$BRANCH" == "main" ]]; then
             # Production deployment - always use latest
             echo "repository=core-api/app" >> $GITHUB_OUTPUT
             echo "image_tag=latest" >> $GITHUB_OUTPUT
             echo "environment=production" >> $GITHUB_OUTPUT
             echo "app_name=core-api" >> $GITHUB_OUTPUT
           else
-            echo "Unsupported branch"
+            echo "Unsupported branch: $BRANCH"
             exit 1
           fi
 

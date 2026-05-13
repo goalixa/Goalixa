@@ -34,8 +34,10 @@ spec:
             job-type: database-backup
         spec:
           restartPolicy: OnFailure
+          {{- with .Values.imagePullSecrets }}
           imagePullSecrets:
-            - name: {{ .Values.imagePullSecrets[0].name }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
 
           containers:
             - name: backup

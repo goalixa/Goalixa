@@ -6,6 +6,9 @@ image:
   repository: core-api-staging/app
   tag: "latest"
 
+imagePullSecrets:
+  - name: harbor-pull
+
 replicaCount: 1
 
 resources:
