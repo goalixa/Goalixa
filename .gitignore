@@ -14,3 +14,4 @@ k8s/secret.yaml
 =
 backup_db.py
 backup.sh
+.gstack/

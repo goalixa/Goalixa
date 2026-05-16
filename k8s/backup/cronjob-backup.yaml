@@ -1,0 +1,118 @@
+---
+# Kubernetes CronJob for Daily PostgreSQL Backups to Mega Cloud
+#
+# This CronJob runs daily at 2 AM UTC to create compressed PostgreSQL backups
+# and upload them to Mega cloud storage with automatic retention policy.
+#
+# Prerequisites:
+#   - Kubernetes cluster with Docker registry access to Harbor
+#   - Backup Docker image built and pushed: harbor.goalixa.com/goalixa/backup:1.0.0
+#   - PostgreSQL service accessible at: postgres.goalixa-db.svc.cluster.local
+#   - goalixa-app-db-secret exists in goalixa-db namespace with DB credentials
+#   - mega-credentials secret synced from Vault via ExternalSecret
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: goalixa-db-backup
+  namespace: goalixa-db
+  labels:
+    app: goalixa-backup
+    service: core-api
+spec:
+  # Run daily at 2 AM UTC (adjust timezone as needed)
+  schedule: "0 2 * * *"
+
+  # Keep history of successful and failed jobs
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+
+  # Only one job can run at a time
+  concurrencyPolicy: Forbid
+
+  # Job template
+  jobTemplate:
+    spec:
+      # Retry up to 2 times if backup fails
+      backoffLimit: 2
+
+      template:
+        metadata:
+          labels:
+            app: goalixa-backup
+            job-type: database-backup
+        spec:
+          restartPolicy: OnFailure
+          imagePullSecrets:
+            - name: harbor-pull
+
+          containers:
+            - name: backup
+              image: harbor.goalixa.com/goalixa/backup:1.0.0
+              imagePullPolicy: Always
+
+              # Environment variables from secrets and config
+              env:
+                # PostgreSQL connection
+                - name: POSTGRES_HOST
+                  value: "postgres.goalixa-db.svc.cluster.local"
+                - name: POSTGRES_PORT
+                  value: "5432"
+                - name: POSTGRES_DB
+                  value: "goalixa"
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: goalixa-app-db-secret
+                      key: POSTGRES_USER
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: goalixa-app-db-secret
+                      key: POSTGRES_PASSWORD
+
+                # Mega credentials from Vault (via ExternalSecret)
+                - name: MEGA_EMAIL
+                  valueFrom:
+                    secretKeyRef:
+                      name: mega-credentials
+                      key: MEGA_EMAIL
+                - name: MEGA_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: mega-credentials
+                      key: MEGA_PASSWORD
+
+                # Backup configuration
+                - name: MEGA_BACKUP_PATH
+                  value: "/goalixa-backups"
+                - name: BACKUP_RETENTION_DAYS
+                  value: "7"
+                - name: BACKUP_RETENTION_WEEKS
+                  value: "4"
+                - name: BACKUP_RETENTION_MONTHS
+                  value: "3"
+
+              # Resource limits
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "500m"
+
+              # Liveness/readiness (not typical for batch jobs, but can help detect issues)
+              # Removed for CronJob as they don't apply to completed pods
+
+          # Node affinity: prefer nodes with sufficient resources
+          affinity:
+            nodeAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  preference:
+                    matchExpressions:
+                      - key: node-type
+                        operator: In
+                        values:
+                          - worker

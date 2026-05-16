@@ -1,0 +1,41 @@
+# PostgreSQL Backup Image for Goalixa
+# Includes pg_dump, megatools, Python 3.11, and backup scripts
+
+FROM ubuntu:22.04
+
+# Add PostgreSQL repository for version 16
+RUN apt-get update && apt-get install -y curl gnupg && \
+    curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
+    echo "deb http://apt.postgresql.org/pub/repos/apt jammy-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
+    apt-get update
+
+# Install dependencies with PostgreSQL 16 client
+RUN apt-get install -y \
+    postgresql-client-16 \
+    python3 \
+    python3-pip \
+    bash \
+    curl \
+    gzip \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python Mega SDK
+RUN pip3 install --no-cache-dir mega.py
+
+# Create symlink for pg_dump to use version 16
+RUN ln -sf /usr/lib/postgresql/16/bin/pg_dump /usr/bin/pg_dump && \
+    ln -sf /usr/lib/postgresql/16/bin/psql /usr/bin/psql
+
+# Copy backup script
+COPY scripts/backup-to-mega.py /usr/local/bin/backup-to-mega
+RUN chmod +x /usr/local/bin/backup-to-mega
+
+# Create backup user with minimal permissions (ignore if exists)
+RUN groupadd -r backup 2>/dev/null || true && useradd -r -g backup backup 2>/dev/null || true
+
+# Set working directory
+WORKDIR /backups
+
+# Default entrypoint
+ENTRYPOINT ["/usr/local/bin/backup-to-mega"]

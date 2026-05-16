@@ -1,75 +1,203 @@
-# Goalixa
+# Goalixa Core-API
 
-Backend-only Flask API for tracking tasks, time entries, goals, projects, habits, reminders, and reports. Uses PostgreSQL for storage and follows a 3-layer structure (presentation, service, repository).
+![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-3.0-black?logo=flask)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-336791?logo=postgresql&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
+
+Backend service for the Goalixa productivity platform. Handles task tracking, time entries, goals, projects, habits, reminders, and reporting.
 
 ## Features
-- JSON APIs under `/api/*`
-- Auth endpoints under `/api/auth/*`
-- Task timer tracking, goals, habits, reminders, reports, and settings
-- Prometheus metrics endpoint at `/metrics`
+
+| Feature | Description |
+|---------|-------------|
+| **Tasks** | CRUD operations, status management, timer tracking |
+| **Projects** | Task organization, project-level reporting |
+| **Goals** | Goal tracking with project/task relationships |
+| **Habits** | Daily habit logging with streak tracking |
+| **Time Entries** | Automatic time tracking from task timers |
+| **Reminders** | Date-based reminder system |
+| **Labels** | Color-coded labels for organizing tasks |
+| **Reports** | Analytics and productivity insights |
+
+## Architecture
+
+```
+┌─────────────────────────────────────┐
+│     Presentation Layer (Routes)     │
+│        app/presentation/*.py        │
+└─────────────┬───────────────────────┘
+              │
+┌─────────────▼───────────────────────┐
+│       Service Layer (Logic)         │
+│         app/service/*.py            │
+└─────────────┬───────────────────────┘
+              │
+┌─────────────▼───────────────────────┐
+│   Repository Layer (Data Access)    │
+│        app/repository/*.py          │
+└─────────────────────────────────────┘
+```
 
 ## Tech Stack
-- Python 3.11
-- Flask
-- PostgreSQL
-- Docker / Docker Compose
+
+- **Python 3.11**
+- **Flask** - Web framework
+- **PostgreSQL** - Database
+- **SQLAlchemy** - ORM
+- **Prometheus** - Metrics
+- **Docker** - Containerization
 
 ## Project Structure
-- `app/presentation/` API routes
-- `app/service/` business logic
-- `app/repository/` data access (PostgreSQL)
-- `main.py` app entrypoint and wiring (DI)
 
-## Local Setup
-1) Create a virtual environment and install dependencies:
+```
+Core-API/
+├── app/
+│   ├── presentation/      # API routes
+│   ├── service/           # Business logic
+│   └── repository/        # Data access
+├── helm/                  # Kubernetes deployment
+├── main.py                # Entry point
+├── requirements.txt
+└── Dockerfile
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.11+
+- PostgreSQL 14+
+- Docker (optional)
+
+### Installation
+
 ```bash
+# Clone the repository
+git clone https://github.com/goalixa/core-api.git
+cd core-api
+
+# Create virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-2) Start PostgreSQL and set `DATABASE_URL`:
+### Configuration
+
+Create a `.env` file:
+
 ```bash
-export DATABASE_URL="postgresql://goalixa:goalixa@localhost:5432/goalixa"
+DATABASE_URL=postgresql://user:password@localhost:5432/goalixa
+JWT_SECRET=your-secret-key
 ```
 
-3) Run the app:
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `DATABASE_URL` | PostgreSQL connection string | Yes |
+| `JWT_SECRET` | Secret for JWT validation | Yes |
+| `LOG_LEVEL` | Logging level | No |
+
+### Run
+
 ```bash
+# Development
 python3 main.py
+
+# With Docker
+docker-compose up --build
 ```
 
-Check `http://localhost:5000/health` and call API routes at `http://localhost:5000/api/...`.
-Prometheus metrics are available at `http://localhost:5000/metrics`.
+The API runs at `http://localhost:5000`.
 
-## Logging Configuration
-The application logs to stdout and supports these environment variables:
+## API Endpoints
 
-- `LOG_LEVEL` (default: `INFO`)
-- `LOG_FORMAT` (default: `%(asctime)s %(levelname)s [%(name)s] %(message)s`)
-- `LOG_DATE_FORMAT` (default: `%Y-%m-%dT%H:%M:%S%z`)
-- `LOG_REQUESTS_ENABLED` (`1`/`0`, default: `1`)
+### Health
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check |
+| GET | `/metrics` | Prometheus metrics |
 
-## Google OAuth (optional)
-To enable "Continue with Google" sign-in, set these environment variables before starting the app:
+### Tasks
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/tasks` | List tasks |
+| POST | `/api/tasks` | Create task |
+| GET | `/api/tasks/{id}` | Get task |
+| PUT | `/api/tasks/{id}` | Update task |
+| DELETE | `/api/tasks/{id}` | Delete task |
+| POST | `/api/tasks/{id}/start` | Start timer |
+| POST | `/api/tasks/{id}/stop` | Stop timer |
+
+### Other Resources
+
+- `/api/projects/*` - Project management
+- `/api/goals/*` - Goal tracking
+- `/api/habits/*` - Habit tracking
+- `/api/time-entries/*` - Time logging
+- `/api/reminders/*` - Reminders
+- `/api/labels/*` - Labels
+- `/api/reports/*` - Reports
+
+## Database Schema
+
+```
+user
+├── projects
+├── labels
+├── tasks
+│   ├── task_labels
+│   ├── time_entries
+│   └── task_daily_checks
+├── goals
+│   ├── goal_projects
+│   ├── goal_tasks
+│   └── goal_subgoals
+├── habits
+│   └── habit_logs
+├── reminders
+├── daily_todos
+└── weekly_goals
+```
+
+## Deployment
+
+### Docker
 
 ```bash
-export GOOGLE_CLIENT_ID="your-client-id"
-export GOOGLE_CLIENT_SECRET="your-client-secret"
+docker build -t goalixa-core-api:latest .
+docker run -p 5000:80 goalixa-core-api:latest
 ```
 
-Make sure your Google OAuth consent screen has the redirect URI:
-`http://localhost:5000/login/google/callback`
+### Kubernetes
 
-## Docker
-Build and run:
 ```bash
-docker compose up --build
+helm upgrade --install core-api ./helm \
+  --namespace goalixa \
+  --create-namespace
 ```
 
-Check `http://localhost:5000/health`.
+## Development
 
-## Database
-PostgreSQL is used for storage. Configure the connection via `DATABASE_URL`.
+### Adding Features
 
-## Notes
-- This is a learning project focused on 3-layer architecture and basic DI.
+1. Create repository method in `app/repository/`
+2. Implement service logic in `app/service/`
+3. Add controller endpoint in `app/presentation/`
+4. Wire dependencies in `main.py`
+
+### Code Style
+
+- Follow PEP 8
+- Use type hints
+- Keep layers separated
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+Built by [Amirreza Rezaie](https://github.com/amirrezarezaie)

@@ -20,7 +20,7 @@ spec:
         - values-production.yaml
       parameters:
         - name: image.tag
-          value: latest  # Default, overridden by workflow
+          value: latest  # Default, can be overridden by workflow
   destination:
     server: https://kubernetes.default.svc
     namespace: core-api
