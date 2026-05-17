@@ -8,7 +8,8 @@ metadata:
     prometheus: prometheus
 spec:
   selector:
-    {{- include "core-api.selectorLabels" . | nindent 6 }}
+    matchLabels:
+      {{- include "core-api.selectorLabels" . | nindent 6 }}
   endpoints:
     - port: http
       path: /metrics
