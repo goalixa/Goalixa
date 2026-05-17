@@ -33,3 +33,7 @@ persistence:
 
 env:
   LOG_LEVEL: "DEBUG"
+
+# Disable backup for staging (backup image not built yet)
+backup:
+  enabled: false
