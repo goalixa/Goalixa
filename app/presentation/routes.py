@@ -20,7 +20,7 @@ def register_routes(app, service):
 
     @app.route("/health", methods=["GET"])
     def health():
-        """Health check endpoint for Kubernetes probes (no auth required). """
+        """Health check endpoint for Kubernetes probes (no auth required).. """
         return jsonify({"status": "ok"}), 200
 
     @app.before_request
@@ -40,7 +40,7 @@ def register_routes(app, service):
 
     @app.before_request
     def auto_complete_overdue_timers():
-        # Keep timer state consistent even when a user returns after token/session gaps.
+        # Keep timer state consistent even when a user returns after token/session gaps.,.
         if request.path == "/health":
             return
         if not current_user.is_authenticated:
