@@ -1024,79 +1024,258 @@ def register_routes(app, service):
     @app.route("/api/daily-focus", methods=["GET"])
     @auth_required()
     def get_daily_focus_api():
-        """Get today's focus list."""
-        date_str = request.args.get("date")
-        focus_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
-        result = service.daily_focus_service.get_focus(focus_date)
-        return jsonify(result)
+        """Get daily focus list for a specific date (defaults to today).
+
+        Query parameters:
+            date (optional): ISO date string (YYYY-MM-DD), defaults to today
+
+        Returns:
+            {items: [...], summary: {...}}
+            Status: 200
+
+        Error responses:
+            404: Focus not found for the date
+        """
+        try:
+            date_str = request.args.get("date")
+            focus_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
+            result = service.daily_focus_service.get_focus(current_user.id, focus_date)
+            if not result or not result.get("items"):
+                return jsonify({"error": "Focus not found"}), 404
+            return jsonify(result), 200
+        except ValueError as e:
+            return jsonify({"error": f"Invalid date format: {str(e)}"}), 400
+        except Exception as e:
+            app.logger.error(f"Error getting daily focus: {str(e)}")
+            return jsonify({"error": "Failed to get daily focus"}), 500
 
     @app.route("/api/daily-focus", methods=["POST"])
     @auth_required()
     def add_to_daily_focus_api():
-        """Add tasks to daily focus."""
-        payload = _json_payload()
-        date_str = payload.get("date", str(datetime.now().date()))
-        focus_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-        task_ids = payload.get("task_ids", [])
-        time_block = payload.get("time_block", "unscheduled")
-        result = service.daily_focus_service.add_tasks(focus_date, task_ids, time_block)
-        return jsonify(result)
+        """Add tasks to daily focus.
+
+        Request body:
+            {
+                "date": "YYYY-MM-DD" (required),
+                "task_ids": [1, 2, 3] (required),
+                "time_block": "morning" (optional: morning/afternoon/evening/unscheduled)
+            }
+
+        Returns:
+            Updated focus list
+            Status: 201 Created
+
+        Error responses:
+            400: Invalid input (bad date, empty task_ids, invalid time_block)
+            401: Unauthorized
+        """
+        try:
+            payload = _json_payload()
+            date_str = payload.get("date")
+            if not date_str:
+                return jsonify({"error": "date is required"}), 400
+
+            focus_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            task_ids = payload.get("task_ids", [])
+            time_block = payload.get("time_block", "unscheduled")
+
+            result = service.daily_focus_service.add_tasks(
+                current_user.id, focus_date, task_ids, time_block
+            )
+            return jsonify(result), 201
+        except ValueError as e:
+            return jsonify({"error": f"Invalid input: {str(e)}"}), 400
+        except Exception as e:
+            app.logger.error(f"Error adding to daily focus: {str(e)}")
+            return jsonify({"error": "Failed to add tasks to daily focus"}), 500
 
     @app.route("/api/daily-focus/reorder", methods=["PUT"])
     @auth_required()
     def reorder_daily_focus_api():
-        """Reorder focus items."""
-        payload = _json_payload()
-        date_str = payload.get("date", str(datetime.now().date()))
-        focus_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-        items = payload.get("items", [])
-        result = service.daily_focus_service.reorder(focus_date, items)
-        return jsonify(result)
+        """Reorder focus items with new positions and time blocks.
+
+        Request body:
+            {
+                "date": "YYYY-MM-DD" (required),
+                "items": [
+                    {"id": 1, "time_block": "morning", "position": 0},
+                    {"id": 2, "time_block": "afternoon", "position": 0}
+                ] (required)
+            }
+
+        Returns:
+            Updated focus list
+            Status: 200 OK
+
+        Error responses:
+            400: Invalid input format or non-sequential positions
+        """
+        try:
+            payload = _json_payload()
+            date_str = payload.get("date")
+            if not date_str:
+                return jsonify({"error": "date is required"}), 400
+
+            focus_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            items = payload.get("items", [])
+
+            result = service.daily_focus_service.reorder(current_user.id, focus_date, items)
+            return jsonify(result), 200
+        except ValueError as e:
+            return jsonify({"error": f"Invalid input: {str(e)}"}), 400
+        except Exception as e:
+            app.logger.error(f"Error reordering daily focus: {str(e)}")
+            return jsonify({"error": "Failed to reorder daily focus"}), 500
 
     @app.route("/api/daily-focus/<int:item_id>", methods=["PUT"])
     @auth_required()
     def update_daily_focus_item_api(item_id):
-        """Update single focus item."""
-        payload = _json_payload()
-        result = service.daily_focus_service.update_item(item_id, payload)
-        return jsonify(result)
+        """Update a single focus item with new time block or schedule.
+
+        Request body:
+            {
+                "time_block": "afternoon" (optional),
+                "scheduled_start": "HH:MM" (optional),
+                "scheduled_end": "HH:MM" (optional)
+            }
+        Only provided fields are updated.
+
+        Returns:
+            Updated focus list
+            Status: 200 OK
+
+        Error responses:
+            404: Item not found or unauthorized
+            400: Invalid input
+        """
+        try:
+            payload = _json_payload()
+            result = service.daily_focus_service.update_item(current_user.id, item_id, payload)
+            return jsonify(result), 200
+        except PermissionError:
+            return jsonify({"error": "Item not found"}), 404
+        except ValueError as e:
+            return jsonify({"error": f"Invalid input: {str(e)}"}), 400
+        except Exception as e:
+            app.logger.error(f"Error updating daily focus item: {str(e)}")
+            return jsonify({"error": "Failed to update daily focus item"}), 500
 
     @app.route("/api/daily-focus/<int:item_id>", methods=["DELETE"])
     @auth_required()
     def remove_from_daily_focus_api(item_id):
-        """Remove task from focus."""
-        success = service.daily_focus_service.remove_task(item_id)
-        return jsonify({"success": success})
+        """Remove a task from daily focus.
+
+        No request body required.
+
+        Returns:
+            {success: true}
+            Status: 204 No Content (or 200 with success response)
+
+        Error responses:
+            404: Item not found or unauthorized
+        """
+        try:
+            success = service.daily_focus_service.remove_task(current_user.id, item_id)
+            return jsonify({"success": success}), 200
+        except PermissionError:
+            return jsonify({"error": "Item not found"}), 404
+        except Exception as e:
+            app.logger.error(f"Error removing from daily focus: {str(e)}")
+            return jsonify({"error": "Failed to remove from daily focus"}), 500
 
     @app.route("/api/daily-focus/<int:item_id>/complete", methods=["POST"])
     @auth_required()
     def complete_daily_focus_item_api(item_id):
-        """Mark focus item complete."""
-        result = service.daily_focus_service.complete_task(item_id)
-        return jsonify(result)
+        """Mark a focus item as complete.
+
+        No request body required.
+
+        Returns:
+            Updated focus list
+            Status: 200 OK
+
+        Error responses:
+            404: Item not found or unauthorized
+        """
+        try:
+            result = service.daily_focus_service.complete_task(current_user.id, item_id)
+            return jsonify(result), 200
+        except PermissionError:
+            return jsonify({"error": "Item not found"}), 404
+        except Exception as e:
+            app.logger.error(f"Error completing daily focus item: {str(e)}")
+            return jsonify({"error": "Failed to complete daily focus item"}), 500
 
     @app.route("/api/daily-focus/auto-fill", methods=["POST"])
     @auth_required()
     def auto_fill_daily_focus_api():
-        """Auto-fill with high priority tasks."""
-        payload = _json_payload() or {}
-        date_str = payload.get("date", str(datetime.now().date()))
-        focus_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-        max_tasks = payload.get("max_tasks", 5)
-        priority = payload.get("priority", "high")
-        result = service.daily_focus_service.auto_fill(focus_date, max_tasks, priority)
-        return jsonify(result)
+        """Auto-fill daily focus with high-priority incomplete tasks.
+
+        Request body:
+            {
+                "date": "YYYY-MM-DD" (optional, defaults to today),
+                "max_tasks": 5 (optional, defaults to 5),
+                "priority": "high" (optional: high/medium/low, defaults to high)
+            }
+        All fields optional; uses defaults if not provided.
+
+        Returns:
+            Updated focus list
+            Status: 200 OK
+
+        Error responses:
+            400: Invalid input
+        """
+        try:
+            payload = _json_payload() or {}
+            date_str = payload.get("date", str(datetime.now().date()))
+            focus_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            max_tasks = payload.get("max_tasks", 5)
+            priority = payload.get("priority", "high")
+
+            result = service.daily_focus_service.auto_fill(
+                current_user.id, focus_date, max_tasks, priority
+            )
+            return jsonify(result), 200
+        except ValueError as e:
+            return jsonify({"error": f"Invalid input: {str(e)}"}), 400
+        except Exception as e:
+            app.logger.error(f"Error auto-filling daily focus: {str(e)}")
+            return jsonify({"error": "Failed to auto-fill daily focus"}), 500
 
     @app.route("/api/daily-focus/carry-over", methods=["POST"])
     @auth_required()
     def carry_over_daily_focus_api():
-        """Carry over incomplete tasks to today."""
-        payload = _json_payload() or {}
-        from_date_str = payload.get("from_date")
-        if not from_date_str:
-            return jsonify({"error": "from_date is required"}), 400
-        from_date = datetime.strptime(from_date_str, "%Y-%m-%d").date()
-        to_date_str = payload.get("to_date", str(datetime.now().date()))
-        to_date = datetime.strptime(to_date_str, "%Y-%m-%d").date()
-        result = service.daily_focus_service.carry_over(from_date, to_date)
-        return jsonify(result)
+        """Carry over incomplete tasks from one date to another.
+
+        Request body:
+            {
+                "from_date": "YYYY-MM-DD" (required),
+                "to_date": "YYYY-MM-DD" (optional, defaults to today)
+            }
+        from_date is required. to_date defaults to today.
+
+        Returns:
+            Updated focus list for to_date
+            Status: 200 OK
+
+        Error responses:
+            400: Invalid input or from_date >= to_date
+        """
+        try:
+            payload = _json_payload() or {}
+            from_date_str = payload.get("from_date")
+            if not from_date_str:
+                return jsonify({"error": "from_date is required"}), 400
+
+            from_date = datetime.strptime(from_date_str, "%Y-%m-%d").date()
+            to_date_str = payload.get("to_date", str(datetime.now().date()))
+            to_date = datetime.strptime(to_date_str, "%Y-%m-%d").date()
+
+            result = service.daily_focus_service.carry_over(current_user.id, from_date, to_date)
+            return jsonify(result), 200
+        except ValueError as e:
+            return jsonify({"error": f"Invalid input: {str(e)}"}), 400
+        except Exception as e:
+            app.logger.error(f"Error carrying over daily focus: {str(e)}")
+            return jsonify({"error": "Failed to carry over daily focus"}), 500
