@@ -345,6 +345,24 @@ class PostgresTaskRepository:
                 FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE
             )
             """,
+            """
+            CREATE TABLE IF NOT EXISTS daily_focus (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+                focus_date DATE NOT NULL,
+                task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+                position INTEGER NOT NULL DEFAULT 0,
+                time_block VARCHAR(20) DEFAULT 'unscheduled',
+                scheduled_start TIME,
+                scheduled_end TIME,
+                is_completed BOOLEAN DEFAULT FALSE,
+                completed_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT uq_daily_focus_user_date_task UNIQUE(user_id, focus_date, task_id),
+                CONSTRAINT chk_time_block CHECK (time_block IN ('morning', 'afternoon', 'evening', 'unscheduled'))
+            )
+            """,
         ]
         for statement in statements:
             db.execute(statement)
@@ -436,6 +454,9 @@ class PostgresTaskRepository:
             # Task daily checks indexes
             "CREATE INDEX IF NOT EXISTS idx_task_daily_checks_task_id ON task_daily_checks(task_id)",
             "CREATE INDEX IF NOT EXISTS idx_task_daily_checks_log_date ON task_daily_checks(log_date)",
+            # Daily focus indexes - critical for daily planning functionality
+            "CREATE INDEX IF NOT EXISTS idx_daily_focus_user_date ON daily_focus(user_id, focus_date)",
+            "CREATE INDEX IF NOT EXISTS idx_daily_focus_task ON daily_focus(task_id)",
         ]
 
         for index_stmt in index_statements:
@@ -446,6 +467,31 @@ class PostgresTaskRepository:
                 import logging
                 logger = logging.getLogger(__name__)
                 logger.warning(f"Failed to create index: {e}")
+
+        # Create trigger for daily_focus updated_at timestamp
+        try:
+            db.execute("""
+                CREATE OR REPLACE FUNCTION update_daily_focus_updated_at()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    NEW.updated_at = CURRENT_TIMESTAMP;
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+            """)
+            db.execute("""
+                DROP TRIGGER IF EXISTS trg_daily_focus_updated_at ON daily_focus;
+            """)
+            db.execute("""
+                CREATE TRIGGER trg_daily_focus_updated_at
+                    BEFORE UPDATE ON daily_focus
+                    FOR EACH ROW
+                    EXECUTE FUNCTION update_daily_focus_updated_at();
+            """)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to create daily_focus trigger: {e}")
 
         db.commit()
 
@@ -2510,3 +2556,280 @@ class PostgresTaskRepository:
             """,
             (user_id, user_id, end_iso, start_iso),
         ).fetchall()
+
+    # ===== DAILY FOCUS METHODS =====
+
+    def get_daily_focus(self, focus_date):
+        """Get user's daily focus list with task details."""
+        db = self._get_db()
+        user_id = self._require_user_id()
+        rows = db.execute(
+            """
+            SELECT
+                df.id,
+                df.task_id,
+                df.position,
+                df.time_block,
+                df.scheduled_start,
+                df.scheduled_end,
+                df.is_completed,
+                df.completed_at,
+                df.created_at,
+                t.name as task_name,
+                t.priority as task_priority,
+                t.status as task_status,
+                t.project_id,
+                p.name as project_name,
+                t.is_running,
+                COALESCE(t.total_seconds, 0) as time_tracked_seconds
+            FROM daily_focus df
+            JOIN tasks t ON df.task_id = t.id
+            LEFT JOIN projects p ON t.project_id = p.id
+            WHERE df.user_id = %s AND df.focus_date = %s
+            ORDER BY df.time_block, df.position
+            """,
+            (user_id, focus_date),
+        ).fetchall()
+
+        # Group by time block
+        blocks = {
+            "morning": [],
+            "afternoon": [],
+            "evening": [],
+            "unscheduled": [],
+        }
+        for row in rows:
+            block_key = row["time_block"] or "unscheduled"
+            blocks[block_key].append(dict(row))
+
+        # Calculate summary
+        total = len(rows)
+        completed = sum(1 for row in rows if row["is_completed"])
+
+        return {
+            "date": focus_date.isoformat(),
+            "blocks": blocks,
+            "summary": {
+                "total": total,
+                "completed": completed,
+                "remaining": total - completed,
+            },
+        }
+
+    def add_to_daily_focus(self, focus_date, task_ids, time_block="unscheduled"):
+        """Add tasks to daily focus. Returns updated focus list."""
+        db = self._get_db()
+        user_id = self._require_user_id()
+
+        # Get max position for the time block
+        max_pos_row = db.execute(
+            """
+            SELECT COALESCE(MAX(position), -1) as max_pos
+            FROM daily_focus
+            WHERE user_id = %s AND focus_date = %s AND time_block = %s
+            """,
+            (user_id, focus_date, time_block),
+        ).fetchone()
+        max_pos = max_pos_row["max_pos"] + 1 if max_pos_row else 0
+
+        # Insert new items (handle duplicates gracefully)
+        for idx, task_id in enumerate(task_ids):
+            try:
+                db.execute(
+                    """
+                    INSERT INTO daily_focus (user_id, focus_date, task_id, position, time_block)
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT (user_id, focus_date, task_id) DO NOTHING
+                    """,
+                    (user_id, focus_date, task_id, max_pos + idx, time_block),
+                )
+            except Exception:
+                # Silently skip duplicate or invalid task_id
+                pass
+
+        db.commit()
+        return self.get_daily_focus(focus_date)
+
+    def reorder_daily_focus(self, focus_date, items):
+        """Reorder focus items. Items: [{id, time_block, position}]"""
+        db = self._get_db()
+        user_id = self._require_user_id()
+
+        for item in items:
+            item_id = item.get("id")
+            time_block = item.get("time_block", "unscheduled")
+            position = item.get("position", 0)
+
+            # Verify ownership before updating
+            owned = db.execute(
+                """
+                SELECT id FROM daily_focus
+                WHERE id = %s AND user_id = %s
+                """,
+                (item_id, user_id),
+            ).fetchone()
+
+            if owned:
+                db.execute(
+                    """
+                    UPDATE daily_focus
+                    SET time_block = %s, position = %s
+                    WHERE id = %s AND user_id = %s
+                    """,
+                    (time_block, position, item_id, user_id),
+                )
+
+        db.commit()
+        return self.get_daily_focus(focus_date)
+
+    def update_daily_focus_item(self, item_id, updates):
+        """Update single focus item (time_block, scheduled times)."""
+        db = self._get_db()
+        user_id = self._require_user_id()
+
+        # Verify ownership
+        owned = db.execute(
+            """
+            SELECT focus_date FROM daily_focus
+            WHERE id = %s AND user_id = %s
+            """,
+            (item_id, user_id),
+        ).fetchone()
+
+        if not owned:
+            return None
+
+        # Build update query
+        allowed_fields = {
+            "time_block": "time_block",
+            "scheduled_start": "scheduled_start",
+            "scheduled_end": "scheduled_end",
+        }
+        set_clauses = []
+        params = []
+        for key, field in allowed_fields.items():
+            if key in updates:
+                set_clauses.append(f"{field} = %s")
+                params.append(updates[key])
+
+        if not set_clauses:
+            return None
+
+        params.append(item_id)
+        params.append(user_id)
+        db.execute(
+            f"""
+            UPDATE daily_focus
+            SET {", ".join(set_clauses)}
+            WHERE id = %s AND user_id = %s
+            """,
+            params,
+        )
+        db.commit()
+
+        # Return updated focus list
+        focus_date = owned["focus_date"]
+        return self.get_daily_focus(focus_date)
+
+    def remove_from_daily_focus(self, item_id):
+        """Remove task from daily focus."""
+        db = self._get_db()
+        user_id = self._require_user_id()
+
+        db.execute(
+            """
+            DELETE FROM daily_focus
+            WHERE id = %s AND user_id = %s
+            """,
+            (item_id, user_id),
+        )
+        db.commit()
+        return True
+
+    def complete_daily_focus_item(self, item_id):
+        """Mark focus item as completed."""
+        db = self._get_db()
+        user_id = self._require_user_id()
+
+        owned = db.execute(
+            """
+            SELECT focus_date FROM daily_focus
+            WHERE id = %s AND user_id = %s
+            """,
+            (item_id, user_id),
+        ).fetchone()
+
+        if not owned:
+            return None
+
+        db.execute(
+            """
+            UPDATE daily_focus
+            SET is_completed = TRUE, completed_at = CURRENT_TIMESTAMP
+            WHERE id = %s AND user_id = %s
+            """,
+            (item_id, user_id),
+        )
+        db.commit()
+        return self.get_daily_focus(owned["focus_date"])
+
+    def auto_fill_daily_focus(self, focus_date, max_tasks=5, priority="high"):
+        """Auto-add high priority tasks not already in focus."""
+        db = self._get_db()
+        user_id = self._require_user_id()
+
+        # Find high priority tasks not already in focus
+        available = db.execute(
+            """
+            SELECT t.id FROM tasks t
+            WHERE t.user_id = %s
+              AND t.priority = %s
+              AND t.status = 'active'
+              AND t.id NOT IN (
+                SELECT task_id FROM daily_focus
+                WHERE user_id = %s AND focus_date = %s
+              )
+            LIMIT %s
+            """,
+            (user_id, priority, user_id, focus_date, max_tasks),
+        ).fetchall()
+
+        # Add to unscheduled block
+        task_ids = [row["id"] for row in available]
+        if task_ids:
+            return self.add_to_daily_focus(focus_date, task_ids, "unscheduled")
+
+        return self.get_daily_focus(focus_date)
+
+    def carry_over_daily_focus(self, from_date, to_date):
+        """Move incomplete tasks from previous day to new day."""
+        db = self._get_db()
+        user_id = self._require_user_id()
+
+        # Find incomplete items from from_date
+        incomplete = db.execute(
+            """
+            SELECT task_id FROM daily_focus
+            WHERE user_id = %s AND focus_date = %s AND is_completed = FALSE
+            """,
+            (user_id, from_date),
+        ).fetchall()
+
+        task_ids = [row["task_id"] for row in incomplete]
+
+        if task_ids:
+            # Add to new date (will skip duplicates)
+            self.add_to_daily_focus(to_date, task_ids, "unscheduled")
+
+            # Remove from old date
+            for task_id in task_ids:
+                db.execute(
+                    """
+                    DELETE FROM daily_focus
+                    WHERE user_id = %s AND focus_date = %s AND task_id = %s
+                    """,
+                    (user_id, from_date, task_id),
+                )
+
+        db.commit()
+        return self.get_daily_focus(to_date)

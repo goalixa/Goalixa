@@ -12,6 +12,7 @@ from app.auth.routes import register_auth_routes
 from app.presentation.routes import register_routes
 from app.repository.postgres_repository import PostgresTaskRepository
 from app.service.task_service import TaskService
+from app.service.daily_focus_service import DailyFocusService
 
 
 def create_app():
@@ -44,6 +45,7 @@ def create_app():
     app.config["DATABASE_URL"] = database_url
     repository = PostgresTaskRepository(database_url)
     service = TaskService(repository)
+    service.daily_focus_service = DailyFocusService(repository)
 
     register_routes(app, service)
     app.teardown_appcontext(repository.close_db)

@@ -1018,3 +1018,85 @@ def register_routes(app, service):
     def delete_project_api(project_id):
         service.delete_project(project_id)
         return list_projects_api()
+
+    # ===== DAILY FOCUS ROUTES =====
+
+    @app.route("/api/daily-focus", methods=["GET"])
+    @auth_required()
+    def get_daily_focus_api():
+        """Get today's focus list."""
+        date_str = request.args.get("date")
+        focus_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
+        result = service.daily_focus_service.get_focus(focus_date)
+        return jsonify(result)
+
+    @app.route("/api/daily-focus", methods=["POST"])
+    @auth_required()
+    def add_to_daily_focus_api():
+        """Add tasks to daily focus."""
+        payload = _json_payload()
+        date_str = payload.get("date", str(datetime.now().date()))
+        focus_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        task_ids = payload.get("task_ids", [])
+        time_block = payload.get("time_block", "unscheduled")
+        result = service.daily_focus_service.add_tasks(focus_date, task_ids, time_block)
+        return jsonify(result)
+
+    @app.route("/api/daily-focus/reorder", methods=["PUT"])
+    @auth_required()
+    def reorder_daily_focus_api():
+        """Reorder focus items."""
+        payload = _json_payload()
+        date_str = payload.get("date", str(datetime.now().date()))
+        focus_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        items = payload.get("items", [])
+        result = service.daily_focus_service.reorder(focus_date, items)
+        return jsonify(result)
+
+    @app.route("/api/daily-focus/<int:item_id>", methods=["PUT"])
+    @auth_required()
+    def update_daily_focus_item_api(item_id):
+        """Update single focus item."""
+        payload = _json_payload()
+        result = service.daily_focus_service.update_item(item_id, payload)
+        return jsonify(result)
+
+    @app.route("/api/daily-focus/<int:item_id>", methods=["DELETE"])
+    @auth_required()
+    def remove_from_daily_focus_api(item_id):
+        """Remove task from focus."""
+        success = service.daily_focus_service.remove_task(item_id)
+        return jsonify({"success": success})
+
+    @app.route("/api/daily-focus/<int:item_id>/complete", methods=["POST"])
+    @auth_required()
+    def complete_daily_focus_item_api(item_id):
+        """Mark focus item complete."""
+        result = service.daily_focus_service.complete_task(item_id)
+        return jsonify(result)
+
+    @app.route("/api/daily-focus/auto-fill", methods=["POST"])
+    @auth_required()
+    def auto_fill_daily_focus_api():
+        """Auto-fill with high priority tasks."""
+        payload = _json_payload() or {}
+        date_str = payload.get("date", str(datetime.now().date()))
+        focus_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        max_tasks = payload.get("max_tasks", 5)
+        priority = payload.get("priority", "high")
+        result = service.daily_focus_service.auto_fill(focus_date, max_tasks, priority)
+        return jsonify(result)
+
+    @app.route("/api/daily-focus/carry-over", methods=["POST"])
+    @auth_required()
+    def carry_over_daily_focus_api():
+        """Carry over incomplete tasks to today."""
+        payload = _json_payload() or {}
+        from_date_str = payload.get("from_date")
+        if not from_date_str:
+            return jsonify({"error": "from_date is required"}), 400
+        from_date = datetime.strptime(from_date_str, "%Y-%m-%d").date()
+        to_date_str = payload.get("to_date", str(datetime.now().date()))
+        to_date = datetime.strptime(to_date_str, "%Y-%m-%d").date()
+        result = service.daily_focus_service.carry_over(from_date, to_date)
+        return jsonify(result)
