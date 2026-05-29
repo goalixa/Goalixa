@@ -2580,8 +2580,18 @@ class PostgresTaskRepository:
                 t.status as task_status,
                 t.project_id,
                 p.name as project_name,
-                t.is_running,
-                COALESCE(t.total_seconds, 0) as time_tracked_seconds
+                EXISTS(
+                    SELECT 1 FROM time_entries te
+                    WHERE te.task_id = t.id AND te.ended_at IS NULL
+                ) as is_running,
+                COALESCE((
+                    SELECT SUM(
+                        EXTRACT(EPOCH FROM (
+                            COALESCE(te.ended_at::timestamp, NOW()) - te.started_at::timestamp
+                        ))
+                    )::integer
+                    FROM time_entries te WHERE te.task_id = t.id
+                ), 0) as time_tracked_seconds
             FROM daily_focus df
             JOIN tasks t ON df.task_id = t.id
             LEFT JOIN projects p ON t.project_id = p.id

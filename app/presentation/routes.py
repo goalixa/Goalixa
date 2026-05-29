@@ -1040,8 +1040,9 @@ def register_routes(app, service):
             date_str = request.args.get("date")
             focus_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
             result = service.daily_focus_service.get_focus(current_user.id, focus_date)
-            if not result or not result.get("items"):
-                return jsonify({"error": "Focus not found"}), 404
+            # Return empty focus list if none exists (not an error)
+            if not result:
+                result = {"date": focus_date.isoformat(), "items": [], "blocks": {}, "summary": {"total": 0, "completed": 0}}
             return jsonify(result), 200
         except ValueError as e:
             return jsonify({"error": f"Invalid date format: {str(e)}"}), 400
