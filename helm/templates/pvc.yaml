@@ -1,10 +1,10 @@
 {{- if .Values.persistence.enabled }}
-{{- $existingPVC := lookup "v1" "PersistentVolumeClaim" .Values.namespace.name "auth-data" }}
+{{- $existingPVC := lookup "v1" "PersistentVolumeClaim" .Values.namespace.name "core-api-data" }}
 {{- if not $existingPVC }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: auth-data
+  name: core-api-data
   namespace: {{ .Values.namespace.name }}
   labels:
     {{- include "core-api.labels" . | nindent 4 }}

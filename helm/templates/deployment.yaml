@@ -44,4 +44,4 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: auth-data
+            claimName: core-api-data
