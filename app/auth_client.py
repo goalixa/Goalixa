@@ -21,15 +21,17 @@ _pending_refreshes = {}
 
 
 class AuthUser:
-    def __init__(self, user_id=None, email=""):
+    def __init__(self, user_id=None, email="", role="user"):
         self.id = user_id
         self.email = email
+        self.role = role
         self.is_authenticated = user_id is not None
+        self.is_admin = role == "admin"
 
 
 class AnonymousUser(AuthUser):
     def __init__(self):
-        super().__init__(user_id=None, email="")
+        super().__init__(user_id=None, email="", role="user")
 
 
 current_user = LocalProxy(lambda: getattr(g, "auth_user", AnonymousUser()))
@@ -77,7 +79,7 @@ def _load_user_from_request():
             except (TypeError, ValueError):
                 pass
             else:
-                return AuthUser(user_id=user_id, email=payload.get("email", ""))
+                return AuthUser(user_id=user_id, email=payload.get("email", ""), role=payload.get("role", "user"))
 
     # Access token missing or invalid, try refresh token
     refresh_token = request.cookies.get(refresh_cookie_name)
@@ -108,7 +110,7 @@ def _load_user_from_request():
                     # Use the tokens from the pending refresh
                     g.new_access_token = pending_tokens["access_token"]
                     g.new_refresh_token = pending_tokens.get("refresh_token")
-                    return AuthUser(user_id=user_id, email=payload.get("email", ""))
+                    return AuthUser(user_id=user_id, email=payload.get("email", ""), role=payload.get("role", "user"))
 
                 is_valid = token_repo.is_token_valid(payload["jti"], user_id)
                 current_app.logger.info("Refresh token validation result", extra={"user_id": user_id, "jti": payload.get("jti"), "is_valid": is_valid})
@@ -127,7 +129,7 @@ def _load_user_from_request():
                             if pending_tokens and pending_tokens.get("access_token"):
                                 g.new_access_token = pending_tokens["access_token"]
                                 g.new_refresh_token = pending_tokens.get("refresh_token")
-                                return AuthUser(user_id=user_id, email=payload.get("email", ""))
+                                return AuthUser(user_id=user_id, email=payload.get("email", ""), role=payload.get("role", "user"))
 
                         # If we still don't have tokens, try to proceed with rotation
                         # The token might have been rotated but we missed the pending window
@@ -146,7 +148,7 @@ def _load_user_from_request():
                                 ttl_minutes=access_ttl,
                             )
                             g.new_access_token = new_access_token
-                            return AuthUser(user_id=user_id, email=payload.get("email", ""))
+                            return AuthUser(user_id=user_id, email=payload.get("email", ""), role=payload.get("role", "user"))
 
                         # Auto-issue new access token and rotate refresh token
                         new_access_token = create_access_token(
@@ -197,7 +199,7 @@ def _load_user_from_request():
                         # Signal to set new access AND refresh token cookies in after_request
                         g.new_access_token = new_access_token
                         g.new_refresh_token = new_refresh_token_jwt
-                        return AuthUser(user_id=user_id, email=payload.get("email", ""))
+                        return AuthUser(user_id=user_id, email=payload.get("email", ""), role=payload.get("role", "user"))
 
                     finally:
                         # Only release if we acquired the lock
@@ -231,7 +233,7 @@ def _load_user_from_request():
                 except (TypeError, ValueError):
                     pass
                 else:
-                    return AuthUser(user_id=user_id, email=payload.get("email", ""))
+                    return AuthUser(user_id=user_id, email=payload.get("email", ""), role=payload.get("role", "user"))
 
     # Also check Authorization header for access/refresh tokens
     auth_header = request.headers.get("Authorization", "")
@@ -245,7 +247,7 @@ def _load_user_from_request():
             except (TypeError, ValueError):
                 pass
             else:
-                return AuthUser(user_id=user_id, email=payload.get("email", ""))
+                return AuthUser(user_id=user_id, email=payload.get("email", ""), role=payload.get("role", "user"))
 
     current_app.logger.debug("No valid token found, returning AnonymousUser",
         extra={"path": request.path, "has_access_cookie": bool(request.cookies.get(access_cookie_name)), "has_refresh_cookie": bool(refresh_token)})
@@ -302,6 +304,29 @@ def auth_required():
             if skip_auth or current_user.is_authenticated:
                 return func(*args, **kwargs)
             return jsonify({"error": "unauthorized"}), 401
+
+        return wrapper
+
+    return decorator
+
+
+def admin_required():
+    """Decorator to require admin role."""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Skip auth check if SKIP_AUTH is enabled
+            skip_auth = current_app.config.get("SKIP_AUTH", False)
+            if skip_auth:
+                return func(*args, **kwargs)
+            
+            if not current_user.is_authenticated:
+                return jsonify({"error": "unauthorized"}), 401
+                
+            if not current_user.is_admin:
+                return jsonify({"error": "forbidden: admin access required"}), 403
+                
+            return func(*args, **kwargs)
 
         return wrapper
 

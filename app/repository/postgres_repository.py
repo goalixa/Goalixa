@@ -2001,6 +2001,78 @@ class PostgresTaskRepository:
             (user_id, log_date),
         ).fetchall()
 
+    def fetch_user_stats(self):
+        """Fetch platform-wide user statistics."""
+        db = self._get_db()
+        now = datetime.utcnow()
+        today = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+        week_ago = (now - timedelta(days=7)).isoformat()
+        month_ago = (now - timedelta(days=30)).isoformat()
+
+        stats = {}
+        
+        # Total users
+        row = db.execute('SELECT COUNT(*) as count FROM "user"').fetchone()
+        stats["total_users"] = row["count"] if row else 0
+
+        # Active users (active flag)
+        row = db.execute('SELECT COUNT(*) as count FROM "user" WHERE active = TRUE').fetchone()
+        stats["active_users"] = row["count"] if row else 0
+        stats["inactive_users"] = stats["total_users"] - stats["active_users"]
+
+        # New users
+        row = db.execute('SELECT COUNT(*) as count FROM "user" WHERE created_at >= %s', (today,)).fetchone()
+        stats["new_users_today"] = row["count"] if row else 0
+
+        row = db.execute('SELECT COUNT(*) as count FROM "user" WHERE created_at >= %s', (week_ago,)).fetchone()
+        stats["new_users_week"] = row["count"] if row else 0
+
+        row = db.execute('SELECT COUNT(*) as count FROM "user" WHERE created_at >= %s', (month_ago,)).fetchone()
+        stats["new_users_month"] = row["count"] if row else 0
+
+        return stats
+
+    def fetch_all_users(self, page=1, per_page=20):
+        """Fetch all users with pagination."""
+        db = self._get_db()
+        offset = (page - 1) * per_page
+        
+        users = db.execute(
+            f'SELECT id, email, created_at, active FROM "user" ORDER BY created_at DESC LIMIT %s OFFSET %s',
+            (per_page, offset),
+        ).fetchall()
+        
+        row = db.execute('SELECT COUNT(*) as count FROM "user"').fetchone()
+        total_count = row["count"] if row else 0
+        
+        return users, total_count
+
+    def fetch_user_by_id(self, user_id):
+        """Fetch a single user by ID."""
+        db = self._get_db()
+        return db.execute(
+            'SELECT id, email, created_at, active FROM "user" WHERE id = %s',
+            (user_id,),
+        ).fetchone()
+
+    def update_user_active_status(self, user_id, active):
+        """Enable or disable a user."""
+        db = self._get_db()
+        db.execute(
+            'UPDATE "user" SET active = %s WHERE id = %s',
+            (active, user_id),
+        )
+        db.commit()
+
+    def delete_user_completely(self, user_id):
+        """Delete a user and all their data."""
+        # This is a dangerous operation, used for GDPR compliance or admin cleanup
+        db = self._get_db()
+        # The CASCADE on foreign keys should handle most of this if set up correctly
+        # but we'll be explicit for some tables if needed.
+        db.execute('DELETE FROM "user" WHERE id = %s', (user_id,))
+        db.commit()
+
     def create_todo(self, name, log_date, created_at):
         db = self._get_db()
         user_id = self._require_user_id()

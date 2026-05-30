@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 from flask import jsonify, request
 from werkzeug.datastructures import MultiDict
 
-from app.auth_client import auth_required, current_user
+from app.auth_client import auth_required, current_user, admin_required
 from app.repository.postgres_repository import UserEmailConflictError
 
 
@@ -17,6 +17,93 @@ def register_routes(app, service):
         "complete",
         "reopen",
     }
+
+    @app.route("/api/analytics", methods=["GET"])
+    @admin_required()
+    def api_get_analytics():
+        """Get platform-wide analytics."""
+        try:
+            stats = service.repository.fetch_user_stats()
+            return jsonify(stats)
+        except Exception as e:
+            app.logger.error(f"Error fetching analytics: {str(e)}")
+            return jsonify({"error": "Failed to fetch analytics"}), 500
+
+    @app.route("/api/users", methods=["GET"])
+    @admin_required()
+    def api_list_users():
+        """List all users with pagination."""
+        try:
+            page = int(request.args.get("page", 1))
+            per_page = int(request.args.get("per_page", 20))
+            
+            users_rows, total_count = service.repository.fetch_all_users(page=page, per_page=per_page)
+            
+            users = []
+            for row in users_rows:
+                users.append({
+                    "id": row["id"],
+                    "email": row["email"],
+                    "created_at": row["created_at"],
+                    "active": row["active"],
+                })
+                
+            return jsonify({
+                "users": users,
+                "total_count": total_count,
+                "page": page,
+                "per_page": per_page,
+            })
+        except Exception as e:
+            app.logger.error(f"Error listing users: {str(e)}")
+            return jsonify({"error": "Failed to list users"}), 500
+
+    @app.route("/api/users/<int:user_id>/status", methods=["PATCH"])
+    @admin_required()
+    def api_update_user_status(user_id):
+        """Enable or disable a user."""
+        try:
+            data = request.get_json(silent=True) or {}
+            active = data.get("active")
+            if active is None:
+                return jsonify({"error": "active status is required"}), 400
+                
+            service.repository.update_user_active_status(user_id, bool(active))
+            return jsonify({"success": True, "user_id": user_id, "active": bool(active)})
+        except Exception as e:
+            app.logger.error(f"Error updating user status: {str(e)}")
+            return jsonify({"error": "Failed to update user status"}), 500
+
+    @app.route("/api/users/<int:user_id>", methods=["GET"])
+    @admin_required()
+    def api_get_user(user_id):
+        """Get user details."""
+        try:
+            # We need a method in repo to get a single user
+            user = service.repository.fetch_user_by_id(user_id)
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+            return jsonify({
+                "id": user["id"],
+                "email": user["email"],
+                "created_at": user["created_at"],
+                "active": user["active"],
+                # We can add more fields here like task count, etc.
+            })
+        except Exception as e:
+            app.logger.error(f"Error fetching user: {str(e)}")
+            return jsonify({"error": "Failed to fetch user"}), 500
+
+    @app.route("/api/users/<int:user_id>", methods=["DELETE"])
+    @admin_required()
+    def api_delete_user(user_id):
+        """Delete a user."""
+        try:
+            service.repository.delete_user_completely(user_id)
+            return jsonify({"success": True, "message": "User deleted", "user_id": user_id})
+        except Exception as e:
+            app.logger.error(f"Error deleting user: {str(e)}")
+            return jsonify({"error": "Failed to delete user"}), 500
 
     @app.route("/health", methods=["GET"])
     def health():
